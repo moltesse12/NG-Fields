@@ -1,0 +1,49 @@
+# Obsidian
+.trash/
+.obsidian/workspace.json
+.obsidian/workspace
+.obsidian/plugins/*/main.js
+
+# OS files
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# Logs
+*.log
+*.err
+
+# Editor temp files
+*.swp
+*.swo
+*~
+~$*
+
+# Archives & binaries (too large for git)
+*.zip
+*.jar
+*.gz
+*.tar
+*.rar
+*.7z
+*.war
+*.ear
+
+# Build artifacts & dependencies
+99_ARCHIVES/monolithique/*/wrapper/dists/
+99_ARCHIVES/monolithique/*/build/
+99_ARCHIVES/monolithique/*/.gradle/
+99_ARCHIVES/monolithique/*/node_modules/
+
+# 99_ARCHIVES/ — Dossier d'archives (trop volumineux pour Git)
+99_ARCHIVES/
+
+# 100_Formation/ — PDFs de formation
+100_Formation/*.pdf
+
+# Large binaries
+*.exe
+*.msi
+*.dll
+*.so
+*.dylib

@@ -1,0 +1,11 @@
+{
+  "id": "day-planner-og",
+  "name": "Day Planner (OG)",
+  "version": "0.8.0",
+  "minAppVersion": "1.11.0",
+  "description": "Plan your day and setup pomodoro timers; fork of original by James Lynch (which stopped at 0.5.8) to preserve simple planner behavior.",
+  "isDesktopOnly": false,
+  "author": "James Lynch, continued by Erin Schnabel",
+  "authorUrl": "https://github.com/ebullient",
+  "fundingUrl": "https://buymeacoffee.com/ebullient"
+}
