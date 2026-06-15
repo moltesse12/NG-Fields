@@ -41,6 +41,9 @@ Desktop.ini
 # 100_Formation/ — PDFs de formation
 100_Formation/*.pdf
 
+# Git worktrees
+*.worktrees/
+
 # Large binaries
 *.exe
 *.msi
