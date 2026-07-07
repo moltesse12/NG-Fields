@@ -10,6 +10,7 @@ import { SidebarSupportCardComponent } from './sidebar-support-card.component';
   imports: [NavMainComponent, NavUserComponent, SidebarSupportCardComponent],
   templateUrl: './app-sidebar.component.html',
   styleUrl: './app-sidebar.component.css',
+  host: { 'display': 'block' },
 })
 export class AppSidebarComponent {
   sidebar = inject(SidebarService);

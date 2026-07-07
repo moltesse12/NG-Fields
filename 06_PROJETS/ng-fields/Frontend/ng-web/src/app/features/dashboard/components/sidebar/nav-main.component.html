@@ -1,8 +1,10 @@
-<nav class="flex-1 overflow-auto p-2 no-scrollbar">
+<nav class="flex-1 overflow-auto no-scrollbar">
   @for (group of groups; track group.id) {
     <div class="relative flex w-full min-w-0 flex-col p-2">
-      @if (group.label && sidebar.sidebarOpen()) {
-        <div class="flex h-8 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70">
+      @if (group.label) {
+        <div
+          class="flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0"
+        >
           {{ group.label }}
         </div>
       }
@@ -11,94 +13,158 @@
           @for (item of group.items; track item.id) {
             <li class="group/menu-item relative">
               @if (item.subItems && item.subItems.length > 0) {
-                @if (!sidebar.sidebarOpen() && sidebar.collapsibleMode() === 'icon') {
-                  <div class="relative">
-                    <button (click)="toggleSubmenu('dropdown-' + item.id)" class="flex w-8 h-8 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" [class.bg-sidebar-accent]="isAnySubItemActive(item)">
-                      @if (item.icon) {
-                        <app-icon [name]="item.icon" />
-                      } @else {
-                        <span class="flex size-4 items-center justify-center rounded-xs font-medium text-[10px] outline">{{ item.title.slice(0, 1) }}</span>
-                      }
-                    </button>
+                <div class="relative">
+                  <button
+                    (click)="sidebar.sidebarOpen() ? toggleSubmenu(item.id) : toggleSubmenu('dropdown-' + item.id)"
+                    class="flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm ring-sidebar-ring outline-hidden transition-[width,height,padding] duration-200 ease-linear group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-5 [&_svg]:shrink-0 [&>span:last-child]:truncate"
+                    [class.bg-sidebar-accent]="isAnySubItemActive(item)"
+                    [class.font-medium]="isAnySubItemActive(item)"
+                  >
+                    @if (item.icon) {
+                      <app-icon [name]="item.icon" size="20" />
+                    } @else {
+                      <span
+                        class="flex size-4 items-center justify-center rounded-xs font-medium text-[10px] outline"
+                        >{{ item.title.slice(0, 1) }}</span
+                      >
+                    }
+                    <span class="truncate group-data-[collapsible=icon]:hidden">{{
+                      item.title
+                    }}</span>
+                    <app-icon
+                      name="chevron-right"
+                      class="ml-auto shrink-0 transition-transform duration-200 group-data-[collapsible=icon]:hidden"
+                      [class.rotate-90]="isExpanded(item.id)"
+                    />
+                  </button>
+                  @if (item.badge) {
+                    <div
+                      class="pointer-events-none absolute right-1 top-1.5 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium group-data-[collapsible=icon]:hidden"
+                    >
+                      <span
+                        class="rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+                        [class.border-green-600]="item.badge === 'new'"
+                        [class.text-green-600]="item.badge === 'new'"
+                        [class.border-muted-foreground]="item.badge === 'soon'"
+                        [class.text-muted-foreground]="item.badge === 'soon'"
+                        >{{ item.badge }}</span
+                      >
+                    </div>
+                  }
+                  @if (!sidebar.sidebarOpen()) {
                     @if (expanded['dropdown-' + item.id]) {
-                      <div class="absolute left-full top-0 z-50 ml-1 w-48 rounded-lg border bg-popover p-1 shadow-md">
+                      <div
+                        class="absolute left-full top-0 z-50 ml-1 w-48 rounded-lg border bg-popover p-1 shadow-md"
+                      >
                         @for (sub of item.subItems; track sub.id) {
-                          <a [routerLink]="sub.url" [attr.target]="sub.newTab ? '_blank' : null" class="relative flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-popover-foreground hover:bg-accent" [class.font-medium]="isActive(sub.url)" [class.bg-accent]="isActive(sub.url)">
+                          <a
+                            [routerLink]="sub.url"
+                            [attr.target]="sub.newTab ? '_blank' : null"
+                            class="relative flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-popover-foreground hover:bg-accent"
+                            [class.font-medium]="isActive(sub.url)"
+                            [class.bg-accent]="isActive(sub.url)"
+                          >
                             @if (sub.icon) {
                               <app-icon [name]="sub.icon" />
                             }
                             <span class="truncate">{{ sub.title }}</span>
                             @if (sub.badge) {
-                              <span class="ml-auto rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase" [class.border-green-600]="sub.badge === 'new'" [class.text-green-600]="sub.badge === 'new'" [class.border-muted-foreground]="sub.badge === 'soon'" [class.text-muted-foreground]="sub.badge === 'soon'">{{ sub.badge }}</span>
+                              <span
+                                class="ml-auto rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+                                [class.border-green-600]="sub.badge === 'new'"
+                                [class.text-green-600]="sub.badge === 'new'"
+                                [class.border-muted-foreground]="sub.badge === 'soon'"
+                                [class.text-muted-foreground]="sub.badge === 'soon'"
+                                >{{ sub.badge }}</span
+                              >
                             }
                           </a>
                         }
                       </div>
                     }
-                  </div>
-                } @else {
-                  <div>
-                    <button (click)="toggleSubmenu(item.id)" class="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" [class.bg-sidebar-accent]="isAnySubItemActive(item)" [class.font-medium]="isAnySubItemActive(item)">
-                      @if (item.icon) {
-                        <app-icon [name]="item.icon" />
-                      } @else {
-                        <span class="flex size-4 items-center justify-center rounded-xs font-medium text-[10px] outline">{{ item.title.slice(0, 1) }}</span>
+                  } @else if (isExpanded(item.id)) {
+                    <ul
+                      class="mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-sidebar-border px-2.5 py-0.5"
+                    >
+                      @for (sub of item.subItems; track sub.id) {
+                        <li class="group/menu-sub-item relative">
+                          <a
+                            [routerLink]="sub.url"
+                            [attr.target]="sub.newTab ? '_blank' : null"
+                            class="flex min-w-0 items-center gap-2 rounded-md px-2 py-1 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden"
+                            [class.font-medium]="isActive(sub.url)"
+                            [class.bg-sidebar-accent]="isActive(sub.url)"
+                          >
+                            @if (sub.icon) {
+                              <app-icon [name]="sub.icon" />
+                            }
+                            <span class="truncate">{{ sub.title }}</span>
+                            @if (sub.badge) {
+                              <span
+                                class="ml-auto rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+                                [class.border-green-600]="sub.badge === 'new'"
+                                [class.text-green-600]="sub.badge === 'new'"
+                                [class.border-muted-foreground]="sub.badge === 'soon'"
+                                [class.text-muted-foreground]="sub.badge === 'soon'"
+                                >{{ sub.badge }}</span
+                              >
+                            }
+                          </a>
+                        </li>
                       }
-                      <span class="truncate">{{ item.title }}</span>
-                      <app-icon name="chevron-right" class="ml-auto shrink-0 transition-transform duration-200" [class.rotate-90]="isExpanded(item.id)" />
-                    </button>
-                    @if (item.badge) {
-                      <div class="pointer-events-none absolute right-1 top-1.5 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium">
-                        <span class="rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase" [class.border-green-600]="item.badge === 'new'" [class.text-green-600]="item.badge === 'new'" [class.border-muted-foreground]="item.badge === 'soon'" [class.text-muted-foreground]="item.badge === 'soon'">{{ item.badge }}</span>
-                      </div>
-                    }
-                    @if (isExpanded(item.id)) {
-                      <ul class="mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-sidebar-border px-2.5 py-0.5">
-                        @for (sub of item.subItems; track sub.id) {
-                          <li class="group/menu-sub-item relative">
-                            <a [routerLink]="sub.url" [attr.target]="sub.newTab ? '_blank' : null" class="flex min-w-0 items-center gap-2 rounded-md px-2 py-1 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" [class.font-medium]="isActive(sub.url)" [class.bg-sidebar-accent]="isActive(sub.url)">
-                              @if (sub.icon) {
-                                <app-icon [name]="sub.icon" />
-                              }
-                              <span class="truncate">{{ sub.title }}</span>
-                              @if (sub.badge) {
-                                <span class="ml-auto rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase" [class.border-green-600]="sub.badge === 'new'" [class.text-green-600]="sub.badge === 'new'" [class.border-muted-foreground]="sub.badge === 'soon'" [class.text-muted-foreground]="sub.badge === 'soon'">{{ sub.badge }}</span>
-                              }
-                            </a>
-                          </li>
-                        }
-                      </ul>
-                    }
-                  </div>
-                }
+                    </ul>
+                  }
+                </div>
               } @else if (item.disabled) {
-                <div class="flex items-center gap-2 rounded-md p-2 text-sm text-sidebar-foreground/40 cursor-not-allowed" [class.justify-center]="!sidebar.sidebarOpen()" [class.w-8]="!sidebar.sidebarOpen()" [class.h-8]="!sidebar.sidebarOpen()">
-                  @if (item.icon && sidebar.sidebarOpen()) {
-                    <app-icon [name]="item.icon" class="opacity-40" />
+                <div
+                  class="flex items-center gap-2 overflow-hidden rounded-md p-2 text-sm text-sidebar-foreground/40 cursor-not-allowed ring-sidebar-ring outline-hidden transition-[width,height,padding] duration-200 ease-linear group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-2! [&_svg]:size-5 [&_svg]:shrink-0"
+                >
+                  @if (item.icon) {
+                    <app-icon [name]="item.icon" size="20" class="opacity-40" />
                   }
-                  @if (item.icon && !sidebar.sidebarOpen()) {
-                    <app-icon [name]="item.icon" class="opacity-40" />
-                  }
-                  @if (sidebar.sidebarOpen()) {
-                    <span class="truncate">{{ item.title }}</span>
-                  }
-                  @if (item.badge && sidebar.sidebarOpen()) {
-                    <span class="ml-auto rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase" [class.border-green-600]="item.badge === 'new'" [class.text-green-600]="item.badge === 'new'" [class.border-muted-foreground]="item.badge === 'soon'" [class.text-muted-foreground]="item.badge === 'soon'">{{ item.badge }}</span>
+                  <span class="truncate group-data-[collapsible=icon]:hidden">{{
+                    item.title
+                  }}</span>
+                  @if (item.badge) {
+                    <span
+                      class="ml-auto rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase group-data-[collapsible=icon]:hidden"
+                      [class.border-green-600]="item.badge === 'new'"
+                      [class.text-green-600]="item.badge === 'new'"
+                      [class.border-muted-foreground]="item.badge === 'soon'"
+                      [class.text-muted-foreground]="item.badge === 'soon'"
+                      >{{ item.badge }}</span
+                    >
                   }
                 </div>
               } @else {
-                <a [routerLink]="item.url" [attr.target]="item.newTab ? '_blank' : null" class="flex items-center gap-2 rounded-md p-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" [class.justify-center]="!sidebar.sidebarOpen()" [class.w-8]="!sidebar.sidebarOpen()" [class.h-8]="!sidebar.sidebarOpen()" [class.bg-sidebar-accent]="isActive(item.url)" [class.font-medium]="isActive(item.url)">
+                <a
+                  [routerLink]="item.url"
+                  [attr.target]="item.newTab ? '_blank' : null"
+                  class="flex items-center gap-2 overflow-hidden rounded-md p-2 text-sm text-sidebar-foreground ring-sidebar-ring outline-hidden transition-[width,height,padding] duration-200 ease-linear group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:p-2! hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground [&_svg]:size-5 [&_svg]:shrink-0 [&>span:last-child]:truncate"
+                  [class.bg-sidebar-accent]="isActive(item.url)"
+                  [class.font-medium]="isActive(item.url)"
+                >
                   @if (item.icon) {
-                    <app-icon [name]="item.icon" />
+                    <app-icon [name]="item.icon" size="20" />
                   }
-                  @if (sidebar.sidebarOpen()) {
-                    <span class="truncate">{{ item.title }}</span>
+                  <span class="truncate group-data-[collapsible=icon]:hidden">{{
+                    item.title
+                  }}</span>
+                  @if (!item.icon) {
+                    <span
+                      class="hidden group-data-[collapsible=icon]:flex size-4 items-center justify-center rounded-xs font-medium text-[10px] outline"
+                      >{{ item.title.slice(0, 1) }}</span
+                    >
                   }
-                  @if (!item.icon && !sidebar.sidebarOpen()) {
-                    <span class="flex size-4 items-center justify-center rounded-xs font-medium text-[10px] outline">{{ item.title.slice(0, 1) }}</span>
-                  }
-                  @if (item.badge && sidebar.sidebarOpen()) {
-                    <span class="ml-auto rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase" [class.border-green-600]="item.badge === 'new'" [class.text-green-600]="item.badge === 'new'" [class.border-muted-foreground]="item.badge === 'soon'" [class.text-muted-foreground]="item.badge === 'soon'">{{ item.badge }}</span>
+                  @if (item.badge) {
+                    <span
+                      class="ml-auto rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase group-data-[collapsible=icon]:hidden"
+                      [class.border-green-600]="item.badge === 'new'"
+                      [class.text-green-600]="item.badge === 'new'"
+                      [class.border-muted-foreground]="item.badge === 'soon'"
+                      [class.text-muted-foreground]="item.badge === 'soon'"
+                      >{{ item.badge }}</span
+                    >
                   }
                 </a>
               }

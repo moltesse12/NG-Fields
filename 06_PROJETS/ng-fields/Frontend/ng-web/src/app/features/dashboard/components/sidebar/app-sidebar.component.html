@@ -1,5 +1,5 @@
 <div class="group peer hidden text-sidebar-foreground md:block"
-     data-state="expanded"
+     [attr.data-state]="sidebar.sidebarOpen() ? 'expanded' : 'collapsed'"
      data-variant="sidebar"
      [attr.data-collapsible]="!sidebar.sidebarOpen() ? 'icon' : ''"
      data-side="left">
@@ -17,14 +17,14 @@
 
       <a href="/dashboard/overview" class="flex h-14 items-center gap-2 px-4">
         <img src="/logo.png" alt="NG-STARs" class="size-6" />
-        <span class="font-semibold text-base">NG-STARs</span>
+        <span class="font-semibold text-base group-data-[collapsible=icon]:hidden">NG-STARs</span>
       </a>
 
-      <div class="flex min-h-0 flex-1 flex-col overflow-auto no-scrollbar group-data-[collapsible=icon]:overflow-hidden p-2 space-y-1">
+      <div class="no-scrollbar flex min-h-0 flex-1 flex-col gap-0 overflow-auto group-data-[collapsible=icon]:overflow-hidden">
         <app-nav-main />
       </div>
 
-      <div class="p-2 space-y-1">
+      <div class="flex flex-col gap-2 p-2">
         <app-sidebar-support-card />
         <app-nav-user />
       </div>

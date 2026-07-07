@@ -1,11 +1,11 @@
 <div
   class="group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar"
-  style="--sidebar-width: 16rem; --sidebar-width-icon: 3rem"
+  style="--sidebar-width: 16rem; --sidebar-width-icon: 4rem"
 >
   <app-sidebar></app-sidebar>
   <main class="relative flex w-full flex-1 flex-col bg-background min-w-0 overflow-x-hidden">
     <header
-      class="flex h-16 shrink-0 items-center gap-2 border-b sticky top-0 z-50 bg-background/50 backdrop-blur-md"
+      class="flex h-16 shrink-0 items-center gap-2 border-b sticky top-0 z-50 bg-background/50 backdrop-blur-md transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-16"
     >
       <div class="flex w-full items-center justify-between px-4 lg:px-6">
         <div class="flex items-center gap-1 lg:gap-2">
@@ -25,7 +25,7 @@
         </div>
       </div>
     </header>
-    <div class="flex-1 overflow-x-hidden p-4 md:p-6">
+    <div class="min-h-0 min-w-0 flex-1 overflow-x-hidden p-4 md:p-6">
       <router-outlet />
     </div>
   </main>
