@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TechnicianDetailView } from '../../technicians/components/schemas/technician.schema';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-technician-header',
   standalone: true,
   imports: [CommonModule],

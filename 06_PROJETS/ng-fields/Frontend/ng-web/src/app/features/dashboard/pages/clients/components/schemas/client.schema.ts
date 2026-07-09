@@ -15,7 +15,6 @@ export interface Client {
   createdAt: string;
   lastInterventionAt?: string;
   contact: ClientContact;
-  billing: BillingInfo;
   interventions: {
     total: number;
     resolved: number;
@@ -29,13 +28,6 @@ export interface ClientContact {
   email: string;
   phone: string;
   mobile: string;
-}
-
-export interface BillingInfo {
-  invoiceEmail: string;
-  paymentTerms: string;
-  creditLimit: number;
-  balance: number;
 }
 
 export interface ClientDetailView extends Client {

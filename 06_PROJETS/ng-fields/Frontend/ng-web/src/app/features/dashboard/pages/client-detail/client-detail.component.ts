@@ -1,9 +1,13 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, DestroyRef, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { RouterModule } from '@angular/router';
-import { ClientDetailView } from '../clients/components/schemas/client.schema';
-import mockDetailData from './components/mocks/client-detail-mock.json';
+import { forkJoin } from 'rxjs';
+import { ClientService } from '../../../../core/services/client.service';
+import { InterventionService } from '../../../../core/services/intervention.service';
+import { ClientResponse } from '../../../../shared/models/client.dto';
+import { InterventionResponse } from '../../../../shared/models/intervention.dto';
 import { ClientHeaderComponent } from './components/client-header.component';
 import { ClientInfoComponent } from './components/client-info.component';
 import { ClientInterventionsHistoryComponent } from './components/client-interventions-history.component';
@@ -13,6 +17,7 @@ import { ClientNotesComponent } from './components/client-notes.component';
 import { ClientActionsComponent } from './components/client-actions.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-client-detail',
   standalone: true,
   imports: [
@@ -30,48 +35,58 @@ import { ClientActionsComponent } from './components/client-actions.component';
   styleUrl: './client-detail.component.css',
 })
 export class ClientDetailComponent implements OnInit {
-  client = signal<ClientDetailView | null>(null);
+  private destroyRef = inject(DestroyRef);
+  private route = inject(ActivatedRoute);
+  private clientService = inject(ClientService);
+  private interventionService = inject(InterventionService);
+
+  client = signal<ClientResponse | null>(null);
+  interventions = signal<InterventionResponse[]>([]);
+  notes = signal<string>('');
   isLoading = signal(true);
   error = signal<string | null>(null);
 
-  constructor(private route: ActivatedRoute) {}
+  historyInterventions = computed(() =>
+    this.interventions().filter(i => i.status === 'COMPLETED'),
+  );
+  upcomingInterventions = computed(() =>
+    this.interventions().filter(i => i.status !== 'COMPLETED'),
+  );
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const id = params.get('id');
-      this.loadClient(id);
+      if (id) this.loadClient(id);
     });
   }
 
-  private loadClient(id: string | null): void {
-    if (!id) {
-      this.error.set('ID client manquant');
-      this.isLoading.set(false);
-      return;
-    }
+  private loadClient(id: string): void {
+    this.isLoading.set(true);
+    this.error.set(null);
 
-    setTimeout(() => {
-      try {
-        this.client.set(mockDetailData as unknown as ClientDetailView);
+    forkJoin({
+      client: this.clientService.getClient(id),
+      interventions: this.interventionService.getInterventionsByClient(id),
+    }).subscribe({
+      next: ({ client, interventions }) => {
+        this.client.set(client);
+        this.interventions.set(interventions);
         this.isLoading.set(false);
-      } catch {
+      },
+      error: () => {
         this.error.set('Erreur lors du chargement du client');
         this.isLoading.set(false);
-      }
-    }, 300);
+      },
+    });
   }
 
-  onStatusChange(newStatus: string): void {
+  onStatusChange(active: boolean): void {
     const current = this.client();
     if (!current) return;
-    current.status = newStatus as any;
-    this.client.set({ ...current });
+    this.client.set({ ...current, active });
   }
 
   onNotesUpdate(newNotes: string): void {
-    const current = this.client();
-    if (!current) return;
-    current.notes = newNotes;
-    this.client.set({ ...current });
+    this.notes.set(newNotes);
   }
 }

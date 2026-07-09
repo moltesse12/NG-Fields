@@ -1,4 +1,4 @@
-import { Component, Directive } from '@angular/core';
+import { Component, Directive , ChangeDetectionStrategy } from '@angular/core';
 
 @Directive({
   selector: 'img[appAvatarImage]',
@@ -10,6 +10,7 @@ import { Component, Directive } from '@angular/core';
 export class AvatarImageDirective {}
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'span[appAvatarFallback]',
   standalone: true,
   template: '<ng-content />',
@@ -21,6 +22,7 @@ export class AvatarImageDirective {}
 export class AvatarFallbackComponent {}
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'span[appAvatar]',
   standalone: true,
   template: `

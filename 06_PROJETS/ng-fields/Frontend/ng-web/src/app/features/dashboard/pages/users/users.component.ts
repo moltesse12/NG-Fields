@@ -1,18 +1,13 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { IconComponent } from '../../../../shared/ui/icon/icon.component';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'ADMIN' | 'MANAGER' | 'TECHNICIAN';
-  status: 'active' | 'inactive';
-  joinedDate: Date;
-}
+import { UserService } from '../../../../core/services/user.service';
+import { UserResponse } from '../../../../shared/models/user.dto';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-users',
   standalone: true,
   imports: [CommonModule, FormsModule, IconComponent],
@@ -23,7 +18,7 @@ interface User {
           <h1 class="text-3xl font-bold tracking-tight">Utilisateurs</h1>
           <p class="text-sm text-muted-foreground">Gérer les membres de l'organisation et leurs accès</p>
         </div>
-        <button class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+        <button (click)="router.navigate(['/dashboard/users/new'])" class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
           <app-icon name="circle-plus" />
           Ajouter
         </button>
@@ -72,10 +67,10 @@ interface User {
                   <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
                       <div class="flex h-10 w-10 items-center justify-center rounded-full bg-secondary font-medium text-sm">
-                        {{ user.name.charAt(0) }}{{ user.name.split(' ')[1]?.charAt(0) || '' }}
+                        {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
                       </div>
                       <div>
-                        <p class="text-sm font-medium">{{ user.name }}</p>
+                        <p class="text-sm font-medium">{{ user.firstName }} {{ user.lastName }}</p>
                         <p class="text-xs text-muted-foreground">{{ user.email }}</p>
                       </div>
                     </div>
@@ -93,15 +88,15 @@ interface User {
                   </td>
                   <td class="px-6 py-4">
                     <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
-                      [class.bg-green-100]="user.status === 'active'" [class.text-green-800]="user.status === 'active'"
-                      [class.bg-gray-100]="user.status === 'inactive'" [class.text-gray-800]="user.status === 'inactive'"
+                      [class.bg-green-100]="user.active" [class.text-green-800]="user.active"
+                      [class.bg-gray-100]="!user.active" [class.text-gray-800]="!user.active"
                     >
-                      <span class="h-2 w-2 rounded-full" [class.bg-green-500]="user.status === 'active'" [class.bg-gray-400]="user.status === 'inactive'"></span>
-                      @if (user.status === 'active') { Actif }
-                      @if (user.status === 'inactive') { Inactif }
+                      <span class="h-2 w-2 rounded-full" [class.bg-green-500]="user.active" [class.bg-gray-400]="!user.active"></span>
+                      @if (user.active) { Actif }
+                      @if (!user.active) { Inactif }
                     </span>
                   </td>
-                  <td class="px-6 py-4 text-muted-foreground">{{ user.joinedDate | date:'mediumDate' }}</td>
+                  <td class="px-6 py-4 text-muted-foreground">{{ user.createdAt | date:'mediumDate' }}</td>
                   <td class="px-6 py-4 text-right">
                     <button class="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted">
                       Modifier
@@ -117,32 +112,33 @@ interface User {
   `,
   styles: [':host { display: block; }'],
 })
-export class UsersComponent {
+export class UsersComponent implements OnInit {
+  protected router = inject(Router);
+  private userService = inject(UserService);
+
   searchQuery = signal('');
   roleFilter = signal('all');
   statusFilter = signal('all');
+  users = signal<UserResponse[]>([]);
 
-  users = signal<User[]>([
-    { id: '1', name: 'David Katoh', email: 'david.katoh@ng-fields.com', role: 'ADMIN', status: 'active', joinedDate: new Date('2026-01-15') },
-    { id: '2', name: 'Marie Laurent', email: 'marie.laurent@ng-fields.com', role: 'MANAGER', status: 'active', joinedDate: new Date('2026-02-20') },
-    { id: '3', name: 'Jean Dupont', email: 'jean.dupont@ng-fields.com', role: 'TECHNICIAN', status: 'active', joinedDate: new Date('2026-03-10') },
-    { id: '4', name: 'Sophie Bernard', email: 'sophie.bernard@ng-fields.com', role: 'TECHNICIAN', status: 'active', joinedDate: new Date('2026-03-15') },
-    { id: '5', name: 'Pierre Martin', email: 'pierre.martin@ng-fields.com', role: 'TECHNICIAN', status: 'inactive', joinedDate: new Date('2026-04-01') },
-    { id: '6', name: 'Amélie Nayo', email: 'amelie.nayo@ng-fields.com', role: 'MANAGER', status: 'active', joinedDate: new Date('2026-03-22') },
-    { id: '7', name: 'Kofi Mensah', email: 'kofi.mensah@ng-fields.com', role: 'TECHNICIAN', status: 'active', joinedDate: new Date('2026-04-10') },
-  ]);
+  ngOnInit() {
+    this.userService.getUsers().subscribe(res => this.users.set(res.content));
+  }
 
   filteredUsers = computed(() => {
     let result = this.users();
     const query = this.searchQuery().toLowerCase();
     if (query) {
-      result = result.filter(u => u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query));
+      const fullName = (u: UserResponse) => `${u.firstName} ${u.lastName}`;
+      result = result.filter(u => fullName(u).toLowerCase().includes(query) || u.email.toLowerCase().includes(query));
     }
     if (this.roleFilter() !== 'all') {
       result = result.filter(u => u.role === this.roleFilter());
     }
-    if (this.statusFilter() !== 'all') {
-      result = result.filter(u => u.status === this.statusFilter());
+    if (this.statusFilter() === 'active') {
+      result = result.filter(u => u.active);
+    } else if (this.statusFilter() === 'inactive') {
+      result = result.filter(u => !u.active);
     }
     return result;
   });

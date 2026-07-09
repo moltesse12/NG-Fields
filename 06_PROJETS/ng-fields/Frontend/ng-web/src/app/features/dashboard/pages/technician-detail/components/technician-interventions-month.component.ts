@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InterventionRecord } from '../../technicians/components/schemas/technician.schema';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-technician-interventions-month',
   standalone: true,
   imports: [CommonModule],

@@ -1,8 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal , ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../../../shared/ui/icon/icon.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-settings',
   standalone: true,
   imports: [FormsModule, IconComponent],

@@ -1,11 +1,13 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Intervention } from './schemas/intervention.schema';
+import { RouterModule } from '@angular/router';
+import { InterventionResponse } from '../../../../../shared/models/intervention.dto';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-intervention-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <div class="rounded-lg border bg-card p-4 md:p-6">
       <div class="text-sm font-medium mb-4">Détails de l'intervention</div>
@@ -13,56 +15,47 @@ import { Intervention } from './schemas/intervention.schema';
       <div class="grid gap-4 md:grid-cols-2">
         <div class="space-y-3">
           <div>
-            <span class="text-xs text-muted-foreground uppercase tracking-wide">Contact principal</span>
-            <p class="font-medium">{{ intervention.client.contact }}</p>
-            <p class="text-xs text-muted-foreground">{{ intervention.client.phone }}</p>
+            <span class="text-xs text-muted-foreground uppercase tracking-wide">Client</span>
+            <p class="font-medium">
+              <a [routerLink]="['/dashboard/clients', intervention.clientId]" class="text-blue-600 hover:underline">{{ intervention.clientName }}</a>
+            </p>
           </div>
           <div>
             <span class="text-xs text-muted-foreground uppercase tracking-wide">Adresse</span>
-            <p class="text-sm">{{ intervention.client.address }}</p>
+            <p class="text-sm">{{ intervention.clientAddress || '—' }}</p>
           </div>
           <div>
             <span class="text-xs text-muted-foreground uppercase tracking-wide">Email</span>
-            <p class="text-sm"><a href="mailto:{{ intervention.client.email }}" class="text-blue-600 hover:underline dark:text-blue-400">{{ intervention.client.email }}</a></p>
+            <p class="text-sm"><a href="mailto:{{ intervention.clientEmail }}" class="text-blue-600 hover:underline dark:text-blue-400">{{ intervention.clientEmail }}</a></p>
+          </div>
+          <div>
+            <span class="text-xs text-muted-foreground uppercase tracking-wide">Téléphone</span>
+            <p class="text-sm">{{ intervention.clientPhone || '—' }}</p>
           </div>
         </div>
 
         <div class="space-y-3">
           <div>
             <span class="text-xs text-muted-foreground uppercase tracking-wide">Technicien assigné</span>
-            <div class="flex items-center gap-2 mt-1">
-              <img [src]="intervention.technician.avatar" alt="{{ intervention.technician.name }}" class="size-8 rounded-full bg-muted" />
-              <div>
-                <p class="font-medium text-sm">{{ intervention.technician.name }}</p>
-                <p class="text-xs text-muted-foreground">{{ intervention.technician.phone }}</p>
-              </div>
-            </div>
+            <p class="font-medium text-sm">{{ intervention.assignedTo || '—' }}</p>
           </div>
+          @if (intervention.equipmentType) {
+            <div>
+              <span class="text-xs text-muted-foreground uppercase tracking-wide">Équipement</span>
+              <p class="text-sm">{{ intervention.equipmentType }}{{ intervention.equipmentBrand ? ' - ' + intervention.equipmentBrand : '' }}{{ intervention.equipmentModel ? ' / ' + intervention.equipmentModel : '' }}</p>
+            </div>
+          }
         </div>
       </div>
 
-      <div class="border-t mt-4 pt-4 grid gap-4 md:grid-cols-2">
-        <div>
-          <span class="text-xs text-muted-foreground uppercase tracking-wide">Durée estimée</span>
-          <p class="text-2xl font-bold">{{ intervention.estimatedDuration }} min</p>
-        </div>
-        @if (intervention.actualDuration !== undefined) {
+      @if (intervention.durationMinutes) {
+        <div class="border-t mt-4 pt-4 grid gap-4 md:grid-cols-2">
           <div>
-            <span class="text-xs text-muted-foreground uppercase tracking-wide">Durée réelle</span>
-            <p class="text-2xl font-bold">{{ intervention.actualDuration }} min</p>
-            @if (intervention.actualDuration < intervention.estimatedDuration) {
-              <p class="text-xs text-green-600 dark:text-green-400">
-                ✓ {{ intervention.estimatedDuration - intervention.actualDuration }} min de gain
-              </p>
-            }
-            @if (intervention.actualDuration > intervention.estimatedDuration) {
-              <p class="text-xs text-red-600 dark:text-red-400">
-                ! {{ intervention.actualDuration - intervention.estimatedDuration }} min de dépassement
-              </p>
-            }
+            <span class="text-xs text-muted-foreground uppercase tracking-wide">Durée</span>
+            <p class="text-2xl font-bold">{{ intervention.durationMinutes }} min</p>
           </div>
-        }
-      </div>
+        </div>
+      }
 
       <div class="border-t mt-4 pt-4">
         <span class="text-xs text-muted-foreground uppercase tracking-wide block mb-3">Chronologie</span>
@@ -73,18 +66,18 @@ import { Intervention } from './schemas/intervention.schema';
           </div>
           <div class="flex justify-between">
             <span>Planifiée le</span>
-            <span class="font-medium">{{ formatDate(intervention.scheduledAt) }}</span>
+            <span class="font-medium">{{ formatDate(intervention.interventionDate) }}</span>
           </div>
-          @if (intervention.startedAt) {
+          @if (intervention.startTime) {
             <div class="flex justify-between">
               <span>Commencée le</span>
-              <span class="font-medium">{{ formatDate(intervention.startedAt) }}</span>
+              <span class="font-medium">{{ formatDate(intervention.startTime) }}</span>
             </div>
           }
-          @if (intervention.completedAt) {
+          @if (intervention.endTime) {
             <div class="flex justify-between">
               <span>Terminée le</span>
-              <span class="font-medium">{{ formatDate(intervention.completedAt) }}</span>
+              <span class="font-medium">{{ formatDate(intervention.endTime) }}</span>
             </div>
           }
         </div>
@@ -94,9 +87,10 @@ import { Intervention } from './schemas/intervention.schema';
   styles: [':host { display: block; }'],
 })
 export class InterventionDetailsComponent {
-  @Input() intervention!: Intervention;
+  @Input() intervention!: InterventionResponse;
 
-  formatDate(date: string): string {
+  formatDate(date: string | null): string {
+    if (!date) return '—';
     return new Date(date).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'long',

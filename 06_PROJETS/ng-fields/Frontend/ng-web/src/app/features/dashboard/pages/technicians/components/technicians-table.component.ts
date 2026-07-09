@@ -1,9 +1,10 @@
-import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Technician, TechnicianSkill } from './schemas/technician.schema';
+import { TechnicianResponse } from '../../../../../shared/models/technician.dto';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-technicians-table',
   standalone: true,
   imports: [CommonModule, FormsModule],
@@ -11,57 +12,50 @@ import { Technician, TechnicianSkill } from './schemas/technician.schema';
   styleUrl: './technicians-table.component.css',
 })
 export class TechniciansTableComponent {
-  @Input() technicians: Technician[] = [];
-  @Output() onTechnicianClick = new EventEmitter<number>();
+  @Input() technicians: TechnicianResponse[] = [];
+  @Output() onTechnicianClick = new EventEmitter<string>();
 
-  sortColumn = signal<string>('lastName');
+  sortColumn = signal<keyof TechnicianResponse>('lastName');
   sortDirection = signal<'asc' | 'desc'>('asc');
   pageSize = signal(10);
   currentPage = signal(1);
-  selectedIds = signal<Set<number>>(new Set());
+  selectedIds = signal<Set<string>>(new Set());
   visibleColumns = signal<Set<string>>(
-    new Set(['name', 'skills', 'status', 'thisMonth', 'availability', 'rating'])
+    new Set(['firstName', 'status', 'email', 'phone'])
   );
   filterStatus = signal<string>('');
 
   pageSizeOptions = [10, 20, 30, 50];
-  allColumns = [
-    { key: 'name', label: 'Nom' },
-    { key: 'skills', label: 'Compétences' },
-    { key: 'status', label: 'Statut' },
-    { key: 'thisMonth', label: 'Interventions (mois)' },
-    { key: 'availability', label: 'Disponibilité' },
-    { key: 'rating', label: 'Évaluation' },
+  allColumns: { key: keyof TechnicianResponse; label: string }[] = [
+    { key: 'firstName', label: 'Nom' },
     { key: 'email', label: 'Email' },
     { key: 'phone', label: 'Téléphone' },
-    { key: 'hireDate', label: 'Embauché le' },
+    { key: 'status', label: 'Statut' },
+    { key: 'active', label: 'Actif' },
+    { key: 'createdAt', label: 'Créé le' },
   ];
 
   filteredData = computed(() => {
     const status = this.filterStatus();
-    return status ? this.technicians.filter(t => t.status === status) : this.technicians;
+    if (!status) return this.technicians;
+    return this.technicians.filter(t => t.status === status);
   });
 
   sortedData = computed(() => {
     const col = this.sortColumn();
     const dir = this.sortDirection();
-    const sorted = [...this.filteredData()].sort((a, b) => {
-      let aVal: any = (a as any)[col];
-      let bVal: any = (b as any)[col];
-      if (col === 'name') {
-        aVal = `${a.firstName} ${a.lastName}`;
-        bVal = `${b.firstName} ${b.lastName}`;
-      }
-      if (col === 'thisMonth') {
-        aVal = a.interventions.thisMonth;
-        bVal = b.interventions.thisMonth;
+    return [...this.filteredData()].sort((a, b) => {
+      const aVal = a[col];
+      const bVal = b[col];
+      if (col === 'active') {
+        const cmp = Number(bVal) - Number(aVal);
+        return dir === 'asc' ? cmp : -cmp;
       }
       const cmp = typeof aVal === 'number' && typeof bVal === 'number'
         ? aVal - bVal
-        : String(aVal || '').localeCompare(String(bVal || ''));
+        : String(aVal ?? '').localeCompare(String(bVal ?? ''));
       return dir === 'asc' ? cmp : -cmp;
     });
-    return sorted;
   });
 
   paginatedData = computed(() => {
@@ -77,7 +71,7 @@ export class TechniciansTableComponent {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
-      this.sortColumn.set(column);
+      this.sortColumn.set(column as keyof TechnicianResponse);
       this.sortDirection.set('asc');
     }
   }
@@ -95,17 +89,12 @@ export class TechniciansTableComponent {
 
   toggleAllRows(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    if (checked) {
-      this.selectedIds.set(new Set(this.paginatedData().map(r => r.id)));
-    } else {
-      this.selectedIds.set(new Set());
-    }
+    this.selectedIds.set(checked ? new Set(this.paginatedData().map(r => r.id)) : new Set());
   }
 
-  toggleRow(id: number): void {
+  toggleRow(id: string): void {
     const set = new Set(this.selectedIds());
-    if (set.has(id)) set.delete(id);
-    else set.add(id);
+    set.has(id) ? set.delete(id) : set.add(id);
     this.selectedIds.set(set);
   }
 
@@ -114,14 +103,13 @@ export class TechniciansTableComponent {
     return page.length > 0 && page.every(r => this.selectedIds().has(r.id));
   }
 
-  isSelected(id: number): boolean {
+  isSelected(id: string): boolean {
     return this.selectedIds().has(id);
   }
 
   toggleColumn(key: string): void {
     const set = new Set(this.visibleColumns());
-    if (set.has(key)) set.delete(key);
-    else set.add(key);
+    set.has(key) ? set.delete(key) : set.add(key);
     this.visibleColumns.set(set);
   }
 
@@ -143,25 +131,16 @@ export class TechniciansTableComponent {
     const map: Record<string, string> = {
       'AVAILABLE': 'Disponible',
       'BUSY': 'Occupé',
-      'ON_LEAVE': 'En congé',
+      'ON_LEAVE': 'Congé',
       'INACTIVE': 'Inactif',
     };
     return map[status] || status;
   }
 
-  skillsDisplay(skills: TechnicianSkill[]): string {
-    return skills.slice(0, 2).map(s => s.name).join(', ') + (skills.length > 2 ? '...' : '');
-  }
-
-  ratingDisplay(rating: { average: number; count: number }): string {
-    return `${rating.average.toFixed(1)}/5 (${rating.count})`;
-  }
-
-  formatDate(date: string): string {
+  formatDate(date: string | undefined | null): string {
+    if (!date) return '—';
     return new Date(date).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+      year: 'numeric', month: 'short', day: 'numeric',
     });
   }
 

@@ -1,4 +1,4 @@
-import { Component, input, ViewContainerRef, effect, inject } from '@angular/core';
+import { Component, input, ViewContainerRef, effect, inject , ChangeDetectionStrategy } from '@angular/core';
 import {
   LucideLayoutDashboard, LucideChartBar, LucideBanknote, LucideGauge, LucideListTodo,
   LucideShoppingBag, LucideGraduationCap, LucideForklift, LucideServer, LucideWrench,
@@ -7,6 +7,7 @@ import {
   LucideSquareArrowUpRight, LucideCirclePlus, LucidePanelLeft, LucideChevronRight,
   LucideCircleUser, LucideCreditCard, LucideLogOut, LucideEllipsisVertical, LucideMessageSquareDot,
   LucideSearch, LucideTrendingUp, LucideAlertTriangle, LucideMapPin, LucideClock,
+  LucideChevronLeft, LucideCheck,
 } from '@lucide/angular';
 
 const iconMap: Record<string, any> = {
@@ -45,9 +46,12 @@ const iconMap: Record<string, any> = {
   'alert-triangle': LucideAlertTriangle,
   'map-pin': LucideMapPin,
   'clock': LucideClock,
+  'chevron-left': LucideChevronLeft,
+  'check': LucideCheck,
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-icon',
   standalone: true,
   template: '',

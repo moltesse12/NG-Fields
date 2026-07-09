@@ -1,4 +1,4 @@
-import { Component, input, HostBinding } from '@angular/core';
+import { Component, input, HostBinding , ChangeDetectionStrategy } from '@angular/core';
 
 export type BadgeVariant = 'default' | 'secondary' | 'outline' | 'destructive';
 
@@ -10,6 +10,7 @@ const variantClasses: Record<BadgeVariant, string> = {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'span[appBadge]',
   standalone: true,
   template: '<ng-content />',

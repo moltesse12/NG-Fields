@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, ThemeMode, ThemePreset } from '../../../../core/theme/theme.service';
 import { SidebarService, SidebarLayoutMode, SidebarCollapsibleMode } from '../../../../core/sidebar/sidebar.service';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-layout-controls',
   standalone: true,
   imports: [CommonModule],

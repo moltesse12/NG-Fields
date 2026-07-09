@@ -22,12 +22,6 @@
       "phone": "+228 90 12 34 56",
       "mobile": "+228 90 12 34 56"
     },
-    "billing": {
-      "invoiceEmail": "invoice@lometextile.tg",
-      "paymentTerms": "Net 30",
-      "creditLimit": 50000,
-      "balance": 5200
-    },
     "interventions": {
       "total": 24,
       "resolved": 22,
@@ -56,12 +50,6 @@
       "email": "a.mensah@agroplus.tg",
       "phone": "+228 91 22 33 44",
       "mobile": "+228 91 22 33 44"
-    },
-    "billing": {
-      "invoiceEmail": "billing@agroplus.tg",
-      "paymentTerms": "Net 45",
-      "creditLimit": 75000,
-      "balance": 12500
     },
     "interventions": {
       "total": 18,
@@ -92,12 +80,6 @@
       "phone": "+228 92 44 55 66",
       "mobile": "+228 92 44 55 66"
     },
-    "billing": {
-      "invoiceEmail": "accounting@maritimefoods.tg",
-      "paymentTerms": "Net 30",
-      "creditLimit": 100000,
-      "balance": 0
-    },
     "interventions": {
       "total": 42,
       "resolved": 40,
@@ -125,12 +107,6 @@
       "email": "k.mensah@sokodeenergie.tg",
       "phone": "+228 93 55 66 77",
       "mobile": "+228 93 55 66 77"
-    },
-    "billing": {
-      "invoiceEmail": "finance@sokodeenergie.tg",
-      "paymentTerms": "Net 60",
-      "creditLimit": 60000,
-      "balance": 18500
     },
     "interventions": {
       "total": 12,
@@ -161,12 +137,6 @@
       "phone": "+228 94 66 77 88",
       "mobile": "+228 94 66 77 88"
     },
-    "billing": {
-      "invoiceEmail": "billing@golfeix.tg",
-      "paymentTerms": "Net 30",
-      "creditLimit": 55000,
-      "balance": 3200
-    },
     "interventions": {
       "total": 15,
       "resolved": 15,
@@ -194,12 +164,6 @@
       "email": "a.tsevi@karadist.tg",
       "phone": "+228 95 77 88 99",
       "mobile": "+228 95 77 88 99"
-    },
-    "billing": {
-      "invoiceEmail": "invoice@karadist.tg",
-      "paymentTerms": "Net 45",
-      "creditLimit": 45000,
-      "balance": 9800
     },
     "interventions": {
       "total": 20,

@@ -1,6 +1,7 @@
-import { Component, input, HostBinding } from '@angular/core';
+import { Component, input, HostBinding , ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'span[appSeparator]',
   standalone: true,
   template: '',

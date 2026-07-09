@@ -68,7 +68,6 @@ export const sidebarItems: NavGroup[] = [
       { id: 'page-calendar', title: 'Calendar', url: '/dashboard/calendar', icon: 'calendar', disabled: true },
       { id: 'page-kanban', title: 'Kanban', url: '/dashboard/kanban', icon: 'kanban', disabled: true },
       { id: 'page-tasks', title: 'Tasks', url: '/dashboard/tasks', icon: 'check-square', disabled: true },
-      { id: 'invoice', title: 'Invoice', url: '/dashboard/invoice', icon: 'receipt-text', disabled: true },
       { id: 'page-users', title: 'Users', url: '/dashboard/users', icon: 'users', disabled: true },
       { id: 'page-roles', title: 'Roles', url: '/dashboard/roles', icon: 'lock', disabled: true },
     ],

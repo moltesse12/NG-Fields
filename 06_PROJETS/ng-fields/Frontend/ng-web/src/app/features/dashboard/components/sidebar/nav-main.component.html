@@ -52,7 +52,7 @@
                     </div>
                   }
                   @if (!sidebar.sidebarOpen()) {
-                    @if (expanded['dropdown-' + item.id]) {
+                    @if (expanded()['dropdown-' + item.id]) {
                       <div
                         class="absolute left-full top-0 z-50 ml-1 w-48 rounded-lg border bg-popover p-1 shadow-md"
                       >

@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { InterventionSummary } from '../../clients/components/schemas/client.schema';
+import { InterventionResponse } from '../../../../../shared/models/intervention.dto';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-client-interventions-history',
   standalone: true,
   imports: [CommonModule],
@@ -19,15 +20,15 @@ import { InterventionSummary } from '../../clients/components/schemas/client.sch
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
                   <span class="text-xs rounded-full px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    {{ intervention.type }}
+                    {{ intervention.status }}
                   </span>
                 </div>
                 <div class="flex items-center gap-3 text-xs text-muted-foreground">
                   <span class="font-medium text-blue-600">{{ intervention.reference }}</span>
-                  <span>{{ intervention.technician }}</span>
-                  <span>{{ formatDate(intervention.date) }}</span>
-                  @if (intervention.duration) {
-                    <span>{{ intervention.duration }} min</span>
+                  <span>{{ intervention.assignedTo }}</span>
+                  <span>{{ formatDate(intervention.interventionDate) }}</span>
+                  @if (intervention.durationMinutes) {
+                    <span>{{ intervention.durationMinutes }} min</span>
                   }
                 </div>
               </div>
@@ -40,9 +41,10 @@ import { InterventionSummary } from '../../clients/components/schemas/client.sch
   styles: [':host { display: block; }'],
 })
 export class ClientInterventionsHistoryComponent {
-  @Input() interventions: InterventionSummary[] = [];
+  @Input() interventions: InterventionResponse[] = [];
 
-  formatDate(date: string): string {
+  formatDate(date: string | null): string {
+    if (!date) return '—';
     return new Date(date).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'short',

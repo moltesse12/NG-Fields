@@ -1,15 +1,16 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-dropdown-menu',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
     <div class="relative inline-block">
       <div (click)="toggle()" class="cursor-pointer"><ng-content select="[trigger]"></ng-content></div>
-      @if (isOpen) {
+      @if (isOpen()) {
         <div class="absolute right-0 top-full z-50 mt-1 min-w-[200px] rounded-lg border bg-popover p-1 shadow-md">
           @for (item of items(); track item.id) {
             @if (item.separator) {
@@ -33,7 +34,7 @@ import { RouterModule } from '@angular/router';
 })
 export class DropdownMenuComponent {
   items = input<{ id: string; label: string; url?: string; separator?: boolean; onClick?: () => void }[]>([]);
-  isOpen = false;
-  toggle(): void { this.isOpen = !this.isOpen; }
-  close(): void { this.isOpen = false; }
+  isOpen = signal(false);
+  toggle(): void { this.isOpen.update(v => !v); }
+  close(): void { this.isOpen.set(false); }
 }

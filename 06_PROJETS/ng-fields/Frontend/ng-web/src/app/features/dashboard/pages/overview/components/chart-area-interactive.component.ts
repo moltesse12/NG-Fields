@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, ElementRef, viewChild, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, viewChild, signal , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration } from 'chart.js/auto';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-chart-area-interactive',
   standalone: true,
   imports: [CommonModule, FormsModule],

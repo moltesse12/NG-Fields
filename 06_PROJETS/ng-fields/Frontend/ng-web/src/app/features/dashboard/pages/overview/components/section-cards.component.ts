@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 interface StatCard {
@@ -12,6 +12,7 @@ interface StatCard {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-section-cards',
   standalone: true,
   imports: [CommonModule],

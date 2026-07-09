@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { authRoleGuard } from './core/auth/auth-role.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -56,17 +57,37 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'users/new',
+        loadComponent: () =>
+          import('./features/dashboard/pages/users/user-form.component').then(
+            (m) => m.UserFormComponent,
+          ),
+        canActivate: [authRoleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./features/dashboard/pages/users/users.component').then(
             (m) => m.UsersComponent,
           ),
+        canActivate: [authRoleGuard],
+        data: { roles: ['ADMIN'] },
       },
       {
         path: 'roles',
         loadComponent: () =>
           import('./features/dashboard/pages/roles/roles.component').then(
             (m) => m.RolesComponent,
+          ),
+        canActivate: [authRoleGuard],
+        data: { roles: ['ADMIN'] },
+      },
+      {
+        path: 'interventions/new',
+        loadComponent: () =>
+          import('./features/dashboard/pages/intervention/components/intervention-form/intervention-form.component').then(
+            (m) => m.InterventionFormComponent,
           ),
       },
       {
@@ -85,6 +106,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'clients/new',
+        loadComponent: () =>
+          import('./features/dashboard/pages/clients/components/client-form/client-form.component').then(
+            (m) => m.ClientFormComponent,
+          ),
+      },
+      {
         path: 'clients',
         pathMatch: 'full',
         loadComponent: () =>
@@ -97,6 +125,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/pages/client-detail/client-detail.component').then(
             (m) => m.ClientDetailComponent,
+          ),
+      },
+      {
+        path: 'technicians/new',
+        loadComponent: () =>
+          import('./features/dashboard/pages/technicians/components/technician-form/technician-form.component').then(
+            (m) => m.TechnicianFormComponent,
           ),
       },
       {
@@ -120,6 +155,8 @@ export const routes: Routes = [
           import('./features/dashboard/pages/analytics/analytics.component').then(
             (m) => m.AnalyticsComponent,
           ),
+        canActivate: [authRoleGuard],
+        data: { roles: ['ADMIN', 'MANAGER'] },
       },
       {
         path: 'exports',
@@ -127,6 +164,8 @@ export const routes: Routes = [
           import('./features/dashboard/pages/exports/exports.component').then(
             (m) => m.ExportsComponent,
           ),
+        canActivate: [authRoleGuard],
+        data: { roles: ['ADMIN', 'MANAGER'] },
       },
       {
         path: 'settings',
@@ -134,6 +173,8 @@ export const routes: Routes = [
           import('./features/dashboard/pages/settings/settings.component').then(
             (m) => m.SettingsComponent,
           ),
+        canActivate: [authRoleGuard],
+        data: { roles: ['ADMIN'] },
       },
     ],
   },

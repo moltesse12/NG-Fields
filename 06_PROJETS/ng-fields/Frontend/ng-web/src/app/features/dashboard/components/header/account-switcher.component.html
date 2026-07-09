@@ -1,11 +1,11 @@
 <div class="relative inline-block">
-  <div (click)="toggle()" class="flex items-center gap-2 cursor-pointer rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
+  <button type="button" (click)="toggle()" class="flex items-center gap-2 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground">
     <div class="size-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
       {{ user.name.split(' ').map(w => w[0]).join('').slice(0, 2) }}
     </div>
     <span class="hidden text-sm font-medium lg:inline">{{ user.name }}</span>
     <svg class="hidden size-3 lg:block" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-  </div>
+  </button>
   @if (isOpen()) {
     <div class="absolute right-0 top-full z-50 mt-1 min-w-[200px] rounded-lg border bg-popover p-1 shadow-md" (click)="close()">
       @for (item of menuItems; track item.id) {
@@ -16,9 +16,9 @@
             {{ item.label }}
           </a>
         } @else {
-          <div (click)="handleAction(item)" class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent cursor-pointer">
+          <button type="button" (click)="handleAction(item)" class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent">
             {{ item.label }}
-          </div>
+          </button>
         }
       }
     </div>

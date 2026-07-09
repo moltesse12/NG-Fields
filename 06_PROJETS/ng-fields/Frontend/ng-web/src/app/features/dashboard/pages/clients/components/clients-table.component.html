@@ -4,11 +4,10 @@
       <h2 class="text-sm font-medium">Liste des clients</h2>
     </div>
     <div class="flex flex-col gap-2 md:flex-row md:items-center">
-      <select [(ngModel)]="filterStatus" (ngModelChange)="currentPage.set(1)" class="rounded border bg-background px-2 py-1 text-xs">
+      <select [(ngModel)]="filterActive" (ngModelChange)="currentPage.set(1)" class="rounded border bg-background px-2 py-1 text-xs">
         <option value="">Tous les statuts</option>
-        <option value="ACTIVE">Actifs</option>
-        <option value="INACTIVE">Inactifs</option>
-        <option value="SUSPENDED">Suspendus</option>
+        <option value="active">Actifs</option>
+        <option value="inactive">Inactifs</option>
       </select>
 
       <span class="text-xs text-muted-foreground">Colonnes :</span>
@@ -56,46 +55,33 @@
             <td class="w-10 px-3 py-2" (click)="$event.stopPropagation()">
               <input type="checkbox" [checked]="isSelected(client.id)" (change)="toggleRow(client.id)" class="size-4" />
             </td>
-            @if (isColumnVisible('name')) {
-              <td class="px-3 py-2 font-medium">{{ client.name }}</td>
+            @if (isColumnVisible('companyName')) {
+              <td class="px-3 py-2 font-medium">{{ client.companyName }}</td>
             }
-            @if (isColumnVisible('type')) {
-              <td class="px-3 py-2 text-sm">{{ client.type }}</td>
+            @if (isColumnVisible('reference')) {
+              <td class="px-3 py-2 text-sm text-muted-foreground">{{ client.reference }}</td>
             }
-            @if (isColumnVisible('status')) {
+            @if (isColumnVisible('active')) {
               <td class="px-3 py-2">
-                <span class="inline-block rounded-full px-2 py-0.5 text-xs font-medium {{ statusBadgeClass(client.status) }}">
-                  {{ statusLabel(client.status) }}
+                <span class="inline-block rounded-full px-2 py-0.5 text-xs font-medium {{ statusBadgeClass(client.active) }}">
+                  {{ statusLabel(client.active) }}
                 </span>
               </td>
             }
-            @if (isColumnVisible('contact')) {
-              <td class="px-3 py-2 text-sm">{{ client.contact.name }}</td>
+            @if (isColumnVisible('contactName')) {
+              <td class="px-3 py-2 text-sm">{{ client.contactName || '—' }}</td>
             }
             @if (isColumnVisible('email')) {
               <td class="px-3 py-2 text-xs text-muted-foreground">{{ client.email }}</td>
             }
             @if (isColumnVisible('phone')) {
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ client.phone }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ client.phone || '—' }}</td>
             }
-            @if (isColumnVisible('city')) {
-              <td class="px-3 py-2 text-sm">{{ client.city }}</td>
+            @if (isColumnVisible('address')) {
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ client.address || '—' }}</td>
             }
             @if (isColumnVisible('createdAt')) {
               <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDate(client.createdAt) }}</td>
-            }
-            @if (isColumnVisible('lastInterventionAt')) {
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDate(client.lastInterventionAt) }}</td>
-            }
-            @if (isColumnVisible('interventions')) {
-              <td class="px-3 py-2 text-sm">
-                <div class="flex gap-1">
-                  <span class="rounded-full px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium dark:bg-blue-900/30 dark:text-blue-400">
-                    {{ client.interventions.total }}
-                  </span>
-                  <span class="text-xs text-muted-foreground">({{ client.interventions.resolved }} résolues)</span>
-                </div>
-              </td>
             }
           </tr>
         }

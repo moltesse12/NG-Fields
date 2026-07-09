@@ -1,4 +1,4 @@
-import { Component, Directive, input, output, signal } from '@angular/core';
+import { Component, Directive, Input, input, output, signal , ChangeDetectionStrategy } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
 
 @Directive({
@@ -26,6 +26,7 @@ export class DropdownTriggerDirective {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: '[appDropdownContent]',
   standalone: true,
   imports: [OverlayModule],
@@ -47,14 +48,17 @@ export class DropdownTriggerDirective {
 })
 export class DropdownContentComponent {
   readonly isOpen = input(false);
+  readonly closed = output<void>();
 
-  origin: any;
+  @Input() origin: any;
   positions = [
     { originX: 'start' as const, originY: 'bottom' as const, overlayX: 'start' as const, overlayY: 'top' as const },
     { originX: 'start' as const, originY: 'top' as const, overlayX: 'start' as const, overlayY: 'bottom' as const },
   ];
 
-  close(): void {}
+  close(): void {
+    this.closed.emit();
+  }
 }
 
 @Directive({

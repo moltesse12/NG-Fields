@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal , ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { sidebarItems, type NavMainItem, type NavGroup } from '../../../../core/navigation/sidebar-items';
 import { SidebarService } from '../../../../core/sidebar/sidebar.service';
 import { IconComponent } from '../../../../shared/ui/icon/icon.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-nav-main',
   standalone: true,
   imports: [RouterModule, IconComponent],
@@ -13,7 +14,7 @@ import { IconComponent } from '../../../../shared/ui/icon/icon.component';
 })
 export class NavMainComponent {
   groups = sidebarItems;
-  expanded: Record<string, boolean> = {};
+  expanded = signal<Record<string, boolean>>({});
   router = inject(Router);
   sidebar = inject(SidebarService);
 
@@ -28,11 +29,11 @@ export class NavMainComponent {
   }
 
   toggleSubmenu(id: string): void {
-    this.expanded[id] = !this.expanded[id];
+    this.expanded.update(v => ({ ...v, [id]: !v[id] }));
   }
 
   isExpanded(id: string): boolean {
-    return this.expanded[id] ?? (this.isAnySubItemActive(this.findItem(id)));
+    return this.expanded()[id] ?? (this.isAnySubItemActive(this.findItem(id)));
   }
 
   private findItem(id: string): NavMainItem {

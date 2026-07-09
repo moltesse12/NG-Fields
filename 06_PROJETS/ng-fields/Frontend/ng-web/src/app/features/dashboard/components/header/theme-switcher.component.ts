@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService, ThemeMode } from '../../../../core/theme/theme.service';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-theme-switcher',
   standalone: true,
   imports: [CommonModule],

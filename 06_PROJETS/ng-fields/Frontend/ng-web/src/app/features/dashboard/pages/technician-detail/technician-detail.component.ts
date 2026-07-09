@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TechnicianDetailView } from '../technicians/components/schemas/technician.schema';
@@ -14,6 +14,7 @@ import { TechnicianNotesComponent } from './components/technician-notes.componen
 import { TechnicianActionsComponent } from './components/technician-actions.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-technician-detail',
   standalone: true,
   imports: [

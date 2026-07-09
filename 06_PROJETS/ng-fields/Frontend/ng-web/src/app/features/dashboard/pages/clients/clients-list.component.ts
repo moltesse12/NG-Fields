@@ -1,11 +1,12 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Client } from './components/schemas/client.schema';
-import clientsData from './components/mocks/clients-mock.json';
+import { ClientResponse } from '../../../../shared/models/client.dto';
+import { ClientService } from '../../../../core/services/client.service';
 import { ClientsTableComponent } from './components/clients-table.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-clients-list',
   standalone: true,
   imports: [CommonModule, ClientsTableComponent],
@@ -13,33 +14,25 @@ import { ClientsTableComponent } from './components/clients-table.component';
   styleUrl: './clients-list.component.css',
 })
 export class ClientsListComponent implements OnInit {
-  clients = signal<Client[]>([]);
+  private clientService = inject(ClientService);
+  private router = inject(Router);
+
+  clients = signal<ClientResponse[]>([]);
   isLoading = signal(true);
   error = signal<string | null>(null);
 
-  constructor(private router: Router) {}
-
   ngOnInit(): void {
-    this.loadClients();
+    this.clientService.getClients(0, 100).subscribe({
+      next: res => { this.clients.set(res.content); this.isLoading.set(false); },
+      error: () => { this.error.set('Erreur lors du chargement des clients'); this.isLoading.set(false); },
+    });
   }
 
-  private loadClients(): void {
-    setTimeout(() => {
-      try {
-        this.clients.set(clientsData as Client[]);
-        this.isLoading.set(false);
-      } catch {
-        this.error.set('Erreur lors du chargement des clients');
-        this.isLoading.set(false);
-      }
-    }, 300);
-  }
-
-  onClientClick(clientId: number): void {
+  onClientClick(clientId: string): void {
     this.router.navigate(['/dashboard/clients', clientId]);
   }
 
   onCreateClient(): void {
-    console.log('Créer nouveau client');
+    this.router.navigate(['/dashboard/clients/new']);
   }
 }

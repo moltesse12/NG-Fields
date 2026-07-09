@@ -1,17 +1,17 @@
 <button (click)="isOpen.set(true)" class="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground">
   <svg class="size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-  <span class="hidden sm:inline">Search...</span>
+  <span class="hidden sm:inline">Rechercher...</span>
   <kbd class="ml-auto hidden rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline">Ctrl+J</kbd>
 </button>
 
 @if (isOpen()) {
-  <div class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" (click)="close()">
+  <div role="dialog" aria-modal="true" class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]" (click)="close()" cdkTrapFocus cdkTrapFocusAutoCapture>
     <div class="w-full max-w-lg rounded-xl border bg-popover shadow-2xl overflow-hidden" (click)="$event.stopPropagation()">
       <div class="flex items-center gap-2 border-b px-4 py-3">
         <svg class="size-4 shrink-0 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         <input
           [(ngModel)]="query"
-          placeholder="Search pages..."
+          placeholder="Rechercher des pages..."
           class="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           autofocus
         />
@@ -24,7 +24,7 @@
           </a>
         }
         @if (filteredItems.length === 0) {
-          <p class="px-2 py-4 text-center text-sm text-muted-foreground">No results found.</p>
+          <p class="px-2 py-4 text-center text-sm text-muted-foreground">Aucun r&eacute;sultat.</p>
         }
       </div>
     </div>

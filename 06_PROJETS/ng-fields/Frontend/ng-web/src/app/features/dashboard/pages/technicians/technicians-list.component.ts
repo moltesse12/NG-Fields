@@ -1,11 +1,12 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Technician } from './components/schemas/technician.schema';
-import techniciansData from './components/mocks/technicians-mock.json';
+import { TechnicianResponse } from '../../../../shared/models/technician.dto';
+import { TechnicianService } from '../../../../core/services/technician.service';
 import { TechniciansTableComponent } from './components/technicians-table.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-technicians-list',
   standalone: true,
   imports: [CommonModule, TechniciansTableComponent],
@@ -13,33 +14,25 @@ import { TechniciansTableComponent } from './components/technicians-table.compon
   styleUrl: './technicians-list.component.css',
 })
 export class TechniciansListComponent implements OnInit {
-  technicians = signal<Technician[]>([]);
+  private technicianService = inject(TechnicianService);
+  private router = inject(Router);
+
+  technicians = signal<TechnicianResponse[]>([]);
   isLoading = signal(true);
   error = signal<string | null>(null);
 
-  constructor(private router: Router) {}
-
   ngOnInit(): void {
-    this.loadTechnicians();
+    this.technicianService.getTechnicians(0, 100).subscribe({
+      next: res => { this.technicians.set(res.content); this.isLoading.set(false); },
+      error: () => { this.error.set('Erreur lors du chargement des techniciens'); this.isLoading.set(false); },
+    });
   }
 
-  private loadTechnicians(): void {
-    setTimeout(() => {
-      try {
-        this.technicians.set(techniciansData as Technician[]);
-        this.isLoading.set(false);
-      } catch {
-        this.error.set('Erreur lors du chargement des techniciens');
-        this.isLoading.set(false);
-      }
-    }, 300);
-  }
-
-  onTechnicianClick(technicianId: number): void {
+  onTechnicianClick(technicianId: string): void {
     this.router.navigate(['/dashboard/technicians', technicianId]);
   }
 
   onCreateTechnician(): void {
-    console.log('Créer nouveau technicien');
+    this.router.navigate(['/dashboard/technicians/new']);
   }
 }

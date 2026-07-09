@@ -1,0 +1,203 @@
+<div class="max-w-3xl mx-auto p-4 md:p-6">
+  @if (isSubmitted()) {
+    <div class="flex flex-col items-center justify-center py-16">
+      <app-icon name="check" [size]="48" class="text-green-500" />
+      <h2 class="mt-4 text-xl font-bold">Intervention créée</h2>
+      <p class="text-sm text-muted-foreground mt-2">L'intervention a été enregistrée avec succès.</p>
+      <button (click)="router.navigate(['/dashboard/interventions'])" class="mt-6 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90">
+        Retour aux interventions
+      </button>
+    </div>
+  } @else {
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold">Nouvelle intervention</h1>
+        <p class="text-sm text-muted-foreground">Étape {{ currentStep() }} / {{ totalSteps }}</p>
+      </div>
+      <button (click)="cancel()" class="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">Annuler</button>
+    </div>
+
+    <div class="flex gap-1.5 mb-8">
+      @for (step of [1,2,3,4,5,6,7,8]; track step) {
+        <div class="h-2 flex-1 rounded-full transition-colors"
+          [class.bg-primary]="currentStep() >= step"
+          [class.bg-muted]="currentStep() < step">
+        </div>
+      }
+    </div>
+
+    <form [formGroup]="form">
+      @if (currentStep() === 1) {
+        <div class="space-y-4">
+          <h2 class="text-lg font-semibold">Informations générales</h2>
+          <div>
+            <label class="block text-sm font-medium mb-1">Site *</label>
+            <input formControlName="siteName" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Nom du site" />
+            @if (form.get('siteName')?.invalid && form.get('siteName')?.touched) {
+              <p class="text-xs text-red-500 mt-1">Champ requis</p>
+            }
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Date d'intervention *</label>
+            <input type="date" formControlName="interventionDate" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+            @if (form.get('interventionDate')?.invalid && form.get('interventionDate')?.touched) {
+              <p class="text-xs text-red-500 mt-1">Champ requis</p>
+            }
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Type d'intervention *</label>
+            <select formControlName="interventionType" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <option value="">Sélectionner...</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="repair">Réparation</option>
+              <option value="installation">Installation</option>
+              <option value="inspection">Inspection</option>
+            </select>
+            @if (form.get('interventionType')?.invalid && form.get('interventionType')?.touched) {
+              <p class="text-xs text-red-500 mt-1">Champ requis</p>
+            }
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Priorité</label>
+            <select formControlName="priority" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <option value="low">Basse</option>
+              <option value="medium">Moyenne</option>
+              <option value="high">Haute</option>
+              <option value="critical">Critique</option>
+            </select>
+          </div>
+        </div>
+      }
+
+      @if (currentStep() === 2) {
+        <div class="space-y-4">
+          <h2 class="text-lg font-semibold">Matériel concerné</h2>
+          <div>
+            <label class="block text-sm font-medium mb-1">Technologie</label>
+            <input formControlName="technology" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Type de technologie" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Équipement</label>
+            <input formControlName="equipment" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Référence de l'équipement" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Situation / Localisation</label>
+            <textarea formControlName="situation" rows="3" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Localisation précise du matériel"></textarea>
+          </div>
+        </div>
+      }
+
+      @if (currentStep() === 3) {
+        <div class="space-y-4">
+          <h2 class="text-lg font-semibold">Diagnostic</h2>
+          <div>
+            <label class="block text-sm font-medium mb-1">Type de panne</label>
+            <input formControlName="panneType" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Ex: Panne électrique" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Description</label>
+            <textarea formControlName="description" rows="4" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Description détaillée du problème"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Cause probable</label>
+            <input formControlName="cause" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Cause identifiée" />
+          </div>
+        </div>
+      }
+
+      @if (currentStep() === 4) {
+        <div class="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <app-icon name="receipt-text" [size]="48" />
+          <p class="mt-4 text-lg font-medium">Pièces &amp; Consommables</p>
+          <p class="text-sm">Cette section sera disponible dans une prochaine version</p>
+        </div>
+      }
+
+      @if (currentStep() === 5) {
+        <div class="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <app-icon name="wrench" [size]="48" />
+          <p class="mt-4 text-lg font-medium">Photos &amp; Annexes</p>
+          <p class="text-sm">Cette section sera disponible dans une prochaine version</p>
+        </div>
+      }
+
+      @if (currentStep() === 6) {
+        <div class="space-y-4">
+          <h2 class="text-lg font-semibold">Travail effectué</h2>
+          <div>
+            <label class="block text-sm font-medium mb-1">Actions réalisées *</label>
+            <textarea formControlName="actions" rows="4" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Décrire les actions effectuées"></textarea>
+            @if (form.get('actions')?.invalid && form.get('actions')?.touched) {
+              <p class="text-xs text-red-500 mt-1">Champ requis</p>
+            }
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Durée (heures)</label>
+            <input type="number" formControlName="duration" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" min="0" step="0.5" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Technicien référent</label>
+            <input formControlName="technicianId" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="ID du technicien" />
+          </div>
+        </div>
+      }
+
+      @if (currentStep() === 7) {
+        <div class="space-y-4">
+          <h2 class="text-lg font-semibold">Validation &amp; Clôture</h2>
+          <div>
+            <label class="block text-sm font-medium mb-1">Statut final *</label>
+            <select formControlName="status" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <option value="resolved">Résolu</option>
+              <option value="pending">En attente</option>
+              <option value="escalated">Escaladé</option>
+              <option value="cancelled">Annulé</option>
+            </select>
+            @if (form.get('status')?.invalid && form.get('status')?.touched) {
+              <p class="text-xs text-red-500 mt-1">Champ requis</p>
+            }
+          </div>
+          <div>
+            <label class="flex items-center gap-2 text-sm">
+              <input type="checkbox" formControlName="technicianSignature" class="rounded" />
+              Signature du technicien
+            </label>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Observation</label>
+            <textarea formControlName="observation" rows="3" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Commentaire final..."></textarea>
+          </div>
+        </div>
+      }
+
+      @if (currentStep() === 8) {
+        <div class="flex flex-col items-center justify-center py-16 text-muted-foreground">
+          <app-icon name="user-cog" [size]="48" />
+          <p class="mt-4 text-lg font-medium">Signatures</p>
+          <p class="text-sm">Cette section sera disponible dans une prochaine version</p>
+        </div>
+      }
+    </form>
+
+    <div class="flex justify-between mt-8">
+      <button (click)="prevStep()" [disabled]="currentStep() === 1"
+        class="inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm hover:bg-muted disabled:opacity-30">
+        <app-icon name="chevron-left" /> Précédent
+      </button>
+
+      @if (currentStep() < totalSteps) {
+        <button (click)="nextStep()"
+          class="inline-flex items-center gap-1.5 rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+          Suivant <app-icon name="chevron-right" />
+        </button>
+      }
+
+      @if (currentStep() === totalSteps) {
+        <button (click)="onSubmit()" [disabled]="form.invalid || isSubmitting()"
+          class="inline-flex items-center gap-1.5 rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+          @if (isSubmitting()) { Enregistrement... } @else { Enregistrer }
+        </button>
+      }
+    </div>
+  }
+</div>

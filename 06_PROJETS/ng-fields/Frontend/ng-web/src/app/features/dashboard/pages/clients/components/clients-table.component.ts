@@ -1,9 +1,10 @@
-import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Client } from './schemas/client.schema';
+import { ClientResponse } from '../../../../../shared/models/client.dto';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-clients-table',
   standalone: true,
   imports: [CommonModule, FormsModule],
@@ -11,60 +12,52 @@ import { Client } from './schemas/client.schema';
   styleUrl: './clients-table.component.css',
 })
 export class ClientsTableComponent {
-  @Input() clients: Client[] = [];
-  @Output() onClientClick = new EventEmitter<number>();
+  @Input() clients: ClientResponse[] = [];
+  @Output() onClientClick = new EventEmitter<string>();
 
-  sortColumn = signal<keyof Client>('name');
+  sortColumn = signal<keyof ClientResponse>('companyName');
   sortDirection = signal<'asc' | 'desc'>('asc');
   pageSize = signal(10);
   currentPage = signal(1);
-  selectedIds = signal<Set<number>>(new Set());
-  visibleColumns = signal<Set<keyof Client>>(
-    new Set(['name', 'type', 'status', 'contact', 'email', 'phone', 'interventions'])
+  selectedIds = signal<Set<string>>(new Set());
+  visibleColumns = signal<Set<keyof ClientResponse>>(
+    new Set(['companyName', 'active', 'contactName', 'email', 'phone', 'createdAt'])
   );
-  filterStatus = signal<string>('');
+  filterActive = signal<string>('');
 
   pageSizeOptions = [10, 20, 30, 50];
-  allColumns: { key: keyof Client; label: string }[] = [
-    { key: 'name', label: 'Nom' },
-    { key: 'type', label: 'Type' },
-    { key: 'status', label: 'Statut' },
-    { key: 'contact', label: 'Contact principal' },
+  allColumns: { key: keyof ClientResponse; label: string }[] = [
+    { key: 'companyName', label: 'Raison sociale' },
+    { key: 'reference', label: 'Référence' },
+    { key: 'active', label: 'Statut' },
+    { key: 'contactName', label: 'Contact' },
     { key: 'email', label: 'Email' },
     { key: 'phone', label: 'Téléphone' },
-    { key: 'city', label: 'Ville' },
+    { key: 'address', label: 'Adresse' },
     { key: 'createdAt', label: 'Créé le' },
-    { key: 'lastInterventionAt', label: 'Dernière intervention' },
-    { key: 'interventions', label: 'Interventions' },
   ];
 
   filteredData = computed(() => {
-    const status = this.filterStatus();
-    return status
-      ? this.clients.filter(c => c.status === status)
-      : this.clients;
+    const filter = this.filterActive();
+    if (!filter) return this.clients;
+    return this.clients.filter(c => filter === 'active' ? c.active : !c.active);
   });
 
   sortedData = computed(() => {
     const col = this.sortColumn();
     const dir = this.sortDirection();
-    const sorted = [...this.filteredData()].sort((a, b) => {
-      let aVal = a[col];
-      let bVal = b[col];
-      if (col === 'contact') {
-        aVal = (aVal as any)?.name || '';
-        bVal = (bVal as any)?.name || '';
-      }
-      if (col === 'interventions') {
-        aVal = (aVal as any)?.total || 0;
-        bVal = (bVal as any)?.total || 0;
+    return [...this.filteredData()].sort((a, b) => {
+      const aVal = a[col];
+      const bVal = b[col];
+      if (col === 'active') {
+        const cmp = Number(bVal) - Number(aVal);
+        return dir === 'asc' ? cmp : -cmp;
       }
       const cmp = typeof aVal === 'number' && typeof bVal === 'number'
         ? aVal - bVal
-        : String(aVal || '').localeCompare(String(bVal || ''));
+        : String(aVal ?? '').localeCompare(String(bVal ?? ''));
       return dir === 'asc' ? cmp : -cmp;
     });
-    return sorted;
   });
 
   paginatedData = computed(() => {
@@ -76,7 +69,7 @@ export class ClientsTableComponent {
 
   totalPages = computed(() => Math.ceil(this.sortedData().length / this.pageSize()));
 
-  sortBy(column: keyof Client): void {
+  sortBy(column: keyof ClientResponse): void {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
@@ -98,20 +91,12 @@ export class ClientsTableComponent {
 
   toggleAllRows(event: Event): void {
     const checked = (event.target as HTMLInputElement).checked;
-    if (checked) {
-      this.selectedIds.set(new Set(this.paginatedData().map(r => r.id)));
-    } else {
-      this.selectedIds.set(new Set());
-    }
+    this.selectedIds.set(checked ? new Set(this.paginatedData().map(r => r.id)) : new Set());
   }
 
-  toggleRow(id: number): void {
+  toggleRow(id: string): void {
     const set = new Set(this.selectedIds());
-    if (set.has(id)) {
-      set.delete(id);
-    } else {
-      set.add(id);
-    }
+    set.has(id) ? set.delete(id) : set.add(id);
     this.selectedIds.set(set);
   }
 
@@ -120,48 +105,34 @@ export class ClientsTableComponent {
     return page.length > 0 && page.every(r => this.selectedIds().has(r.id));
   }
 
-  isSelected(id: number): boolean {
+  isSelected(id: string): boolean {
     return this.selectedIds().has(id);
   }
 
-  toggleColumn(key: keyof Client): void {
+  toggleColumn(key: keyof ClientResponse): void {
     const set = new Set(this.visibleColumns());
-    if (set.has(key)) {
-      set.delete(key);
-    } else {
-      set.add(key);
-    }
+    set.has(key) ? set.delete(key) : set.add(key);
     this.visibleColumns.set(set);
   }
 
-  isColumnVisible(key: keyof Client): boolean {
+  isColumnVisible(key: keyof ClientResponse): boolean {
     return this.visibleColumns().has(key);
   }
 
-  statusBadgeClass(status: string): string {
-    const map: Record<string, string> = {
-      'ACTIVE': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-      'INACTIVE': 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
-      'SUSPENDED': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    };
-    return map[status] || 'bg-gray-100 text-gray-700';
+  statusBadgeClass(active: boolean): string {
+    return active
+      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+      : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400';
   }
 
-  statusLabel(status: string): string {
-    const map: Record<string, string> = {
-      'ACTIVE': 'Actif',
-      'INACTIVE': 'Inactif',
-      'SUSPENDED': 'Suspendu',
-    };
-    return map[status] || status;
+  statusLabel(active: boolean): string {
+    return active ? 'Actif' : 'Inactif';
   }
 
-  formatDate(date: string | undefined): string {
+  formatDate(date: string | undefined | null): string {
     if (!date) return '—';
     return new Date(date).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+      year: 'numeric', month: 'short', day: 'numeric',
     });
   }
 

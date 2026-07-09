@@ -1,9 +1,10 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { Intervention } from './schemas/intervention.schema';
+import { InterventionResponse } from '../../../../../shared/models/intervention.dto';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-intervention-header',
   standalone: true,
   imports: [CommonModule, RouterModule],
@@ -12,23 +13,18 @@ import { Intervention } from './schemas/intervention.schema';
       <div class="flex items-start justify-between gap-4 mb-4">
         <div>
           <h1 class="text-3xl font-bold">{{ intervention.reference }}</h1>
-          <p class="text-sm text-muted-foreground mt-1">{{ intervention.description }}</p>
+          <p class="text-sm text-muted-foreground mt-1">{{ intervention.reportedIssue }}</p>
         </div>
-        <div class="flex gap-2">
-          <span class="inline-block rounded-full px-3 py-1 text-xs font-medium {{ statusBadgeClass() }}">
-            {{ statusLabel() }}
-          </span>
-          <span class="inline-block rounded-full px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-            {{ intervention.type }}
-          </span>
-        </div>
+        <span class="inline-block rounded-full px-3 py-1 text-xs font-medium {{ statusBadgeClass() }}">
+          {{ statusLabel() }}
+        </span>
       </div>
 
       <div class="grid gap-4 md:grid-cols-4 text-sm">
         <div>
           <span class="text-muted-foreground">Client</span>
           <p class="font-medium">
-            <a [routerLink]="['/dashboard/clients', intervention.client.id]" class="text-blue-600 hover:underline">{{ intervention.client.name }}</a>
+            <a [routerLink]="['/dashboard/clients', intervention.clientId]" class="text-blue-600 hover:underline">{{ intervention.clientName }}</a>
           </p>
         </div>
         <div>
@@ -37,13 +33,11 @@ import { Intervention } from './schemas/intervention.schema';
         </div>
         <div>
           <span class="text-muted-foreground">Planifiée le</span>
-          <p class="font-medium">{{ formatDate(intervention.scheduledAt) }}</p>
+          <p class="font-medium">{{ formatDate(intervention.interventionDate) }}</p>
         </div>
         <div>
-          <span class="text-muted-foreground">Technician</span>
-          <p class="font-medium">
-            <a [routerLink]="['/dashboard/technicians', intervention.technician.id]" class="text-blue-600 hover:underline">{{ intervention.technician.name }}</a>
-          </p>
+          <span class="text-muted-foreground">Technicien</span>
+          <p class="font-medium">{{ intervention.assignedTo || '—' }}</p>
         </div>
       </div>
     </div>
@@ -51,7 +45,7 @@ import { Intervention } from './schemas/intervention.schema';
   styles: [':host { display: block; }'],
 })
 export class InterventionHeaderComponent {
-  @Input() intervention!: Intervention;
+  @Input() intervention!: InterventionResponse;
   @Output() onStatusChange = new EventEmitter<string>();
 
   statusLabel(): string {
@@ -74,7 +68,8 @@ export class InterventionHeaderComponent {
     return map[this.intervention.status] || 'bg-gray-100 text-gray-700';
   }
 
-  formatDate(date: string): string {
+  formatDate(date: string | null): string {
+    if (!date) return '—';
     return new Date(date).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'long',

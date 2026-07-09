@@ -33,15 +33,12 @@
       <div class="grid gap-6 lg:grid-cols-3">
         <div class="lg:col-span-2 space-y-6">
           <app-intervention-details [intervention]="inter" />
-          <app-intervention-files [attachments]="inter.attachments" />
-          <app-intervention-notes [notes]="inter.notes" (onNoteAdded)="onNoteAdded($event)" />
+          <app-intervention-notes [notes]="inter.notes ?? ''" (onNoteAdded)="onNoteAdded($event)" />
         </div>
 
         <div class="space-y-6">
-          <app-intervention-timeline [entries]="inter.timeline" />
           <app-intervention-actions
             [intervention]="inter"
-            (onAssign)="onAssign($event)"
             (onStatusChange)="onStatusChange($event)"
           />
         </div>

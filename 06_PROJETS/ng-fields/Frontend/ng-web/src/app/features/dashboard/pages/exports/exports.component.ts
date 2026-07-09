@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IconComponent } from '../../../../shared/ui/icon/icon.component';
 
@@ -12,6 +12,7 @@ interface ExportJob {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-exports',
   standalone: true,
   imports: [CommonModule, IconComponent],

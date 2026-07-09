@@ -1,4 +1,4 @@
-import { Component, Directive, input, output, signal } from '@angular/core';
+import { Component, Directive, Input, input, output, signal , ChangeDetectionStrategy } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { NgClass } from '@angular/common';
 
@@ -27,6 +27,7 @@ export class SheetTriggerDirective {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: '[appSheetContent]',
   standalone: true,
   imports: [OverlayModule, NgClass],
@@ -52,11 +53,16 @@ export class SheetTriggerDirective {
 export class SheetContentComponent {
   readonly isOpen = input(false);
   readonly side = input<'left' | 'right'>('right');
+  readonly closed = output<void>();
 
-  origin: any;
-  positions: any[] = [];
+  @Input() origin: any;
+  positions = [
+    { originX: 'start' as const, originY: 'bottom' as const, overlayX: 'start' as const, overlayY: 'top' as const },
+  ];
 
-  close(): void {}
+  close(): void {
+    this.closed.emit();
+  }
 }
 
 @Directive({

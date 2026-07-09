@@ -1,28 +1,37 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { users } from '../../../../core/navigation/sidebar-items';
+import { map } from 'rxjs/operators';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-account-switcher',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './account-switcher.component.html',
   styleUrl: './account-switcher.component.css',
 })
-export class AccountSwitcherComponent {
+export class AccountSwitcherComponent implements OnInit {
   private auth = inject(AuthService);
-  user = users[0];
+  user: { name: string; email: string } = { name: 'Chargement...', email: '' };
   isOpen = signal(false);
 
   menuItems = [
-    { id: 'profile', label: 'Profile', url: '/dashboard/profile' },
-    { id: 'settings', label: 'Account Settings', url: '/dashboard/settings' },
-    { id: 'billing', label: 'Billing', url: '/dashboard/billing' },
+    { id: 'profile', label: 'Profil', url: '/dashboard/profile' },
+    { id: 'settings', label: 'Paramètres', url: '/dashboard/settings' },
     { id: 'sep1', label: '', separator: true },
-    { id: 'logout', label: 'Log out', onClick: () => this.auth.logout() },
+    { id: 'logout', label: 'Déconnexion', onClick: () => this.auth.logout() },
   ];
+
+  ngOnInit(): void {
+    this.auth.userData$.subscribe(data => {
+      const ud = data?.userData || data;
+      if (ud?.preferred_username || ud?.name) {
+        this.user = { name: ud.preferred_username || ud.name, email: ud.email || '' };
+      }
+    });
+  }
 
   toggle(): void { this.isOpen.update(v => !v); }
   close(): void { this.isOpen.set(false); }

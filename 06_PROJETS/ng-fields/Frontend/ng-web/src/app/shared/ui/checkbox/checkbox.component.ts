@@ -1,7 +1,8 @@
-import { Component, input, output, HostBinding } from '@angular/core';
+import { Component, input, output, HostBinding, HostListener , ChangeDetectionStrategy } from '@angular/core';
 import { NgClass } from '@angular/common';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'span[appCheckbox]',
   standalone: true,
   imports: [NgClass],
@@ -54,5 +55,17 @@ export class CheckboxComponent {
     if (!this.disabled()) {
       this.checkedChange.emit(!this.checked());
     }
+  }
+
+  @HostListener('click')
+  onClick(): void {
+    this.toggle();
+  }
+
+  @HostListener('keydown.enter', ['$event'])
+  @HostListener('keydown.space', ['$event'])
+  onKeydown(event: Event): void {
+    event.preventDefault();
+    this.toggle();
   }
 }

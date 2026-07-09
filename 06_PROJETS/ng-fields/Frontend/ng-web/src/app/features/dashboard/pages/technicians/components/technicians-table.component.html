@@ -57,29 +57,14 @@
             <td class="w-10 px-3 py-2" (click)="$event.stopPropagation()">
               <input type="checkbox" [checked]="isSelected(tech.id)" (change)="toggleRow(tech.id)" class="size-4" />
             </td>
-            @if (isColumnVisible('name')) {
-              <td class="px-3 py-2 font-medium">
-                <div class="flex items-center gap-2">
-                  <img [src]="tech.avatar" alt="{{ tech.firstName }}" class="size-6 rounded-full" />
-                  {{ tech.firstName }} {{ tech.lastName }}
-                </div>
-              </td>
+            @if (isColumnVisible('firstName')) {
+              <td class="px-3 py-2 font-medium">{{ tech.firstName }} {{ tech.lastName }}</td>
             }
-            @if (isColumnVisible('skills')) {
-              <td class="px-3 py-2 text-xs">
-                <div class="flex flex-wrap gap-1">
-                  @for (skill of tech.skills.slice(0, 3); track skill.name) {
-                    <span class="inline-block rounded-full px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                      {{ skill.name }}
-                    </span>
-                  }
-                  @if (tech.skills.length > 3) {
-                    <span class="inline-block rounded-full px-2 py-0.5 bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
-                      +{{ tech.skills.length - 3 }}
-                    </span>
-                  }
-                </div>
-              </td>
+            @if (isColumnVisible('email')) {
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ tech.email }}</td>
+            }
+            @if (isColumnVisible('phone')) {
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ tech.phone || '—' }}</td>
             }
             @if (isColumnVisible('status')) {
               <td class="px-3 py-2">
@@ -88,38 +73,11 @@
                 </span>
               </td>
             }
-            @if (isColumnVisible('thisMonth')) {
-              <td class="px-3 py-2 text-sm">{{ tech.interventions.thisMonth }}</td>
+            @if (isColumnVisible('active')) {
+              <td class="px-3 py-2 text-sm">{{ tech.active ? 'Actif' : 'Inactif' }}</td>
             }
-            @if (isColumnVisible('availability')) {
-              <td class="px-3 py-2 text-xs text-muted-foreground">
-                @if (tech.status === 'AVAILABLE') {
-                  <span class="text-green-600 dark:text-green-400">✓ Disponible</span>
-                }
-                @if (tech.status === 'BUSY') {
-                  <span class="text-blue-600 dark:text-blue-400">En intervention</span>
-                }
-                @if (tech.status === 'ON_LEAVE') {
-                  <span class="text-yellow-600 dark:text-yellow-400">Congé</span>
-                }
-              </td>
-            }
-            @if (isColumnVisible('rating')) {
-              <td class="px-3 py-2 text-sm">
-                <div class="flex items-center gap-1">
-                  <span>⭐ {{ tech.rating.average.toFixed(1) }}</span>
-                  <span class="text-xs text-muted-foreground">({{ tech.rating.count }})</span>
-                </div>
-              </td>
-            }
-            @if (isColumnVisible('email')) {
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ tech.email }}</td>
-            }
-            @if (isColumnVisible('phone')) {
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ tech.phone }}</td>
-            }
-            @if (isColumnVisible('hireDate')) {
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDate(tech.hireDate) }}</td>
+            @if (isColumnVisible('createdAt')) {
+              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDate(tech.createdAt) }}</td>
             }
           </tr>
         }

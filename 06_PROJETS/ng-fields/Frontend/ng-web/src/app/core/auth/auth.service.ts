@@ -1,6 +1,15 @@
 import { Injectable } from '@angular/core';
-import { OidcSecurityService } from 'angular-auth-oidc-client';
+import { OidcSecurityService, UserDataResult } from 'angular-auth-oidc-client';
 import { Observable, map } from 'rxjs';
+
+export interface AuthUser {
+  sub: string;
+  email: string;
+  preferred_username: string;
+  realm_access: { roles: string[] };
+  given_name?: string;
+  family_name?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -10,7 +19,7 @@ export class AuthService {
     return this.oidc.isAuthenticated$.pipe(map((r) => r.isAuthenticated));
   }
 
-  get userData$(): Observable<any> {
+  get userData$(): Observable<UserDataResult> {
     return this.oidc.userData$;
   }
 

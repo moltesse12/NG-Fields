@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, viewChild, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, viewChild, signal, computed , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration } from 'chart.js/auto';
@@ -55,6 +55,7 @@ interface AlertItem {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-analytics',
   standalone: true,
   imports: [CommonModule, FormsModule, IconComponent],

@@ -1,10 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject , ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { timer, race } from 'rxjs';
-import { first, tap, mapTo } from 'rxjs/operators';
+import { first, tap } from 'rxjs/operators';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-callback',
   standalone: true,
   templateUrl: './callback.component.html',

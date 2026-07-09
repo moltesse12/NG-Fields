@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ClientRating } from '../../technicians/components/schemas/technician.schema';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-technician-ratings',
   standalone: true,
   imports: [CommonModule],

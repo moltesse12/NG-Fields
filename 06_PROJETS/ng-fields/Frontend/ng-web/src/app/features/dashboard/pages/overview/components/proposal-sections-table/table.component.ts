@@ -1,4 +1,4 @@
-import { Component, signal, computed, ElementRef, viewChild } from '@angular/core';
+import { Component, signal, computed, ElementRef, viewChild , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -16,6 +16,7 @@ interface TabDef {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-proposal-sections-table',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],

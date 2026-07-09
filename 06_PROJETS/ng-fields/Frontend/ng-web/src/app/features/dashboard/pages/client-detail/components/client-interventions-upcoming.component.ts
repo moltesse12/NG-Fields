@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { InterventionSummary } from '../../clients/components/schemas/client.schema';
+import { InterventionResponse } from '../../../../../shared/models/intervention.dto';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-client-interventions-upcoming',
   standalone: true,
   imports: [CommonModule],
@@ -19,23 +20,18 @@ import { InterventionSummary } from '../../clients/components/schemas/client.sch
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
                   <span class="text-xs rounded-full px-2 py-0.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-                    {{ intervention.type }}
+                    {{ intervention.status }}
                   </span>
                 </div>
                 <div class="flex items-center gap-3 text-xs text-muted-foreground">
                   <span class="font-medium text-blue-600">{{ intervention.reference }}</span>
-                  <span>{{ intervention.technician }}</span>
-                  <span>{{ formatDate(intervention.date) }}</span>
-                  @if (intervention.duration) {
-                    <span>{{ intervention.duration }} min</span>
+                  <span>{{ intervention.assignedTo }}</span>
+                  <span>{{ formatDate(intervention.interventionDate) }}</span>
+                  @if (intervention.durationMinutes) {
+                    <span>{{ intervention.durationMinutes }} min</span>
                   }
                 </div>
               </div>
-              <button class="text-muted-foreground hover:text-foreground ml-2">
-                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="12 5 19 12 12 19"/><polyline points="5 12 12 19 5 26"/>
-                </svg>
-              </button>
             </div>
           }
         </div>
@@ -45,9 +41,10 @@ import { InterventionSummary } from '../../clients/components/schemas/client.sch
   styles: [':host { display: block; }'],
 })
 export class ClientInterventionsUpcomingComponent {
-  @Input() interventions: InterventionSummary[] = [];
+  @Input() interventions: InterventionResponse[] = [];
 
-  formatDate(date: string): string {
+  formatDate(date: string | null): string {
+    if (!date) return '—';
     return new Date(date).toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'short',

@@ -1,0 +1,67 @@
+<div class="max-w-2xl mx-auto p-4 md:p-6">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold">Nouveau client</h1>
+      <p class="text-sm text-muted-foreground">Ajouter un client à votre portefeuille</p>
+    </div>
+    <button (click)="cancel()" class="rounded-md border px-3 py-1.5 text-sm hover:bg-muted">Annuler</button>
+  </div>
+
+  <form [formGroup]="form" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Raison sociale *</label>
+        <input formControlName="companyName" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="NG-STARs" />
+        @if (form.get('companyName')?.invalid && form.get('companyName')?.touched) {
+          <p class="text-xs text-red-500 mt-1">Champ requis</p>
+        }
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Nom du contact *</label>
+        <input formControlName="contactName" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Jean Dupont" />
+        @if (form.get('contactName')?.invalid && form.get('contactName')?.touched) {
+          <p class="text-xs text-red-500 mt-1">Champ requis</p>
+        }
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Email *</label>
+        <input type="email" formControlName="email" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="contact@exemple.com" />
+        @if (form.get('email')?.invalid && form.get('email')?.touched) {
+          <p class="text-xs text-red-500 mt-1">Email invalide</p>
+        }
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Téléphone</label>
+        <input type="tel" formControlName="phone" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="+225 00 00 00 00" />
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Adresse</label>
+      <input formControlName="address" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Adresse complète" />
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Ville</label>
+        <input formControlName="city" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Abidjan" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Pays</label>
+        <input formControlName="country" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Notes</label>
+      <textarea formControlName="notes" rows="3" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Informations complémentaires..."></textarea>
+    </div>
+  </form>
+
+  <div class="flex justify-between mt-8">
+    <button (click)="cancel()" class="rounded-md border px-4 py-2 text-sm hover:bg-muted">Annuler</button>
+    <button (click)="onSubmit()" [disabled]="form.invalid || isSubmitting()"
+      class="rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+      @if (isSubmitting()) { Création en cours... } @else { Créer le client }
+    </button>
+  </div>
+</div>

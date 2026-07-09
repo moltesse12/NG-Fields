@@ -1,9 +1,10 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Intervention } from './schemas/intervention.schema';
+import { InterventionResponse } from '../../../../../shared/models/intervention.dto';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-intervention-actions',
   standalone: true,
   imports: [CommonModule, FormsModule],
@@ -27,20 +28,6 @@ import { Intervention } from './schemas/intervention.schema';
           }
         }
 
-        <button (click)="showTechSelect = !showTechSelect" class="w-full rounded-md bg-purple-100 px-3 py-2 text-xs font-medium text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50">
-          Assigner un technicien
-        </button>
-        @if (showTechSelect) {
-          <select [(ngModel)]="selectedTechId" (change)="assignTechnician()" class="w-full rounded-md border bg-background p-2 text-xs">
-            <option value="">Sélectionner un technicien...</option>
-            <option value="1">Koffi Adjovi</option>
-            <option value="2">Ama Kponou</option>
-            <option value="3">Yao Mensah</option>
-            <option value="4">Abla Nyaku</option>
-            <option value="5">Kossi Dogbe</option>
-          </select>
-        }
-
         <button class="w-full rounded-md bg-green-100 px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50">
           Télécharger rapport
         </button>
@@ -55,25 +42,32 @@ import { Intervention } from './schemas/intervention.schema';
       </div>
 
       <div class="mt-4 rounded-md bg-muted p-2 text-xs text-muted-foreground">
-        <p>Status : <strong>{{ intervention.status }}</strong></p>
-        <p>Technicien : <strong>{{ intervention.technician.name }}</strong></p>
+        <p>Statut : <strong>{{ statusLabel() }}</strong></p>
+        <p>Technicien : <strong>{{ intervention.assignedTo || '—' }}</strong></p>
       </div>
     </div>
   `,
   styles: [':host { display: block; }'],
 })
 export class InterventionActionsComponent {
-  @Input() intervention!: Intervention;
+  @Input() intervention!: InterventionResponse;
   @Output() onStatusChange = new EventEmitter<string>();
-  @Output() onAssign = new EventEmitter<number>();
 
   showStatusSelect = false;
-  showTechSelect = false;
   selectedStatus = '';
-  selectedTechId = '';
 
   canChangeTo(status: string): boolean {
     return this.intervention.status !== status;
+  }
+
+  statusLabel(): string {
+    const map: Record<string, string> = {
+      'PENDING': 'Planifiée',
+      'IN_PROGRESS': 'En cours',
+      'COMPLETED': 'Terminée',
+      'CANCELLED': 'Annulée',
+    };
+    return map[this.intervention.status] || 'Inconnu';
   }
 
   changeStatus(): void {
@@ -81,14 +75,6 @@ export class InterventionActionsComponent {
       this.onStatusChange.emit(this.selectedStatus);
       this.showStatusSelect = false;
       this.selectedStatus = '';
-    }
-  }
-
-  assignTechnician(): void {
-    if (this.selectedTechId) {
-      this.onAssign.emit(parseInt(this.selectedTechId, 10));
-      this.showTechSelect = false;
-      this.selectedTechId = '';
     }
   }
 }

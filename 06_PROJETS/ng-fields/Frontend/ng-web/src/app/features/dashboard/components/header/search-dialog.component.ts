@@ -1,13 +1,15 @@
-import { Component, HostListener, signal } from '@angular/core';
+import { Component, HostListener, signal , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { sidebarItems } from '../../../../core/navigation/sidebar-items';
 import { FormsModule } from '@angular/forms';
+import { A11yModule } from '@angular/cdk/a11y';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-search-dialog',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, A11yModule],
   templateUrl: './search-dialog.component.html',
   styleUrl: './search-dialog.component.css',
 })

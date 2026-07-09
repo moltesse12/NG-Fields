@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal , ChangeDetectionStrategy } from '@angular/core';
 import { IconComponent } from '../../../../shared/ui/icon/icon.component';
 
 interface Role {
@@ -12,6 +12,7 @@ interface Role {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-roles',
   standalone: true,
   imports: [IconComponent],

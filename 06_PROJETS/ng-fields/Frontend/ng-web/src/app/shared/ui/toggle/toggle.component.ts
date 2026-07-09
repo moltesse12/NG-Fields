@@ -1,4 +1,4 @@
-import { Component, Directive, input, HostBinding } from '@angular/core';
+import { Component, Directive, input, HostBinding , ChangeDetectionStrategy } from '@angular/core';
 
 export type ToggleVariant = 'default' | 'outline';
 export type ToggleSize = 'default' | 'sm';
@@ -14,6 +14,7 @@ const sizeClasses: Record<ToggleSize, string> = {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'button[appToggle]',
   standalone: true,
   template: '<ng-content />',

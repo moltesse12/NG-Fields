@@ -1,13 +1,29 @@
-import { Component, Directive, input } from '@angular/core';
+import { Component, Directive, HostListener, Input, input, output, signal , ChangeDetectionStrategy } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
 
 @Directive({
   selector: '[appTooltipTrigger]',
   standalone: true,
 })
-export class TooltipTriggerDirective {}
+export class TooltipTriggerDirective {
+  readonly panelOpen = signal(false);
+
+  @HostListener('mouseenter') onMouseEnter(): void {
+    this.panelOpen.set(true);
+  }
+  @HostListener('mouseleave') onMouseLeave(): void {
+    this.panelOpen.set(false);
+  }
+  @HostListener('focus') onFocus(): void {
+    this.panelOpen.set(true);
+  }
+  @HostListener('blur') onBlur(): void {
+    this.panelOpen.set(false);
+  }
+}
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: '[appTooltipContent]',
   standalone: true,
   imports: [OverlayModule],
@@ -29,12 +45,15 @@ export class TooltipTriggerDirective {}
 })
 export class TooltipContentComponent {
   readonly isOpen = input(false);
+  readonly closed = output<void>();
 
-  origin: any;
+  @Input() origin: any;
   positions = [
     { originX: 'center' as const, originY: 'top' as const, overlayX: 'center' as const, overlayY: 'bottom' as const },
     { originX: 'center' as const, originY: 'bottom' as const, overlayX: 'center' as const, overlayY: 'top' as const },
   ];
 
-  close(): void {}
+  close(): void {
+    this.closed.emit();
+  }
 }

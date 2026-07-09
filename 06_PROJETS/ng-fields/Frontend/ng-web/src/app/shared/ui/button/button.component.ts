@@ -1,4 +1,4 @@
-import { Component, input, HostBinding } from '@angular/core';
+import { Component, input, HostBinding , ChangeDetectionStrategy } from '@angular/core';
 
 export type ButtonVariant = 'default' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
 export type ButtonSize = 'default' | 'sm' | 'lg' | 'icon' | 'icon-sm';
@@ -21,6 +21,7 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'button[appButton]',
   standalone: true,
   template: '<ng-content />',

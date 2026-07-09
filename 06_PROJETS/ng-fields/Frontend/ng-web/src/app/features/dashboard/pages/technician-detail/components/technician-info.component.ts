@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input , ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TechnicianDetailView } from '../../technicians/components/schemas/technician.schema';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-technician-info',
   standalone: true,
   imports: [CommonModule],

@@ -5,7 +5,7 @@
     <a [routerLink]="['/dashboard/clients']" class="hover:text-foreground">Clients</a>
     <span>/</span>
     @if (client(); as c) {
-      <span class="text-foreground">{{ c.name }}</span>
+      <span class="text-foreground">{{ c.companyName }}</span>
     }
   </div>
 
@@ -33,13 +33,13 @@
       <div class="grid gap-6 lg:grid-cols-3">
         <div class="lg:col-span-2 space-y-6">
           <app-client-info [client]="client" />
-          <app-client-interventions-upcoming [interventions]="client.interventionsUpcoming" />
-          <app-client-interventions-history [interventions]="client.interventionsHistory" />
+          <app-client-interventions-upcoming [interventions]="upcomingInterventions()" />
+          <app-client-interventions-history [interventions]="historyInterventions()" />
         </div>
 
         <div class="space-y-6">
-          <app-client-contacts [contacts]="client.allContacts" />
-          <app-client-notes [notes]="client.notes" (onNotesUpdate)="onNotesUpdate($event)" />
+          <app-client-contacts [contactName]="client.contactName" />
+          <app-client-notes [notes]="notes()" (onNotesUpdate)="onNotesUpdate($event)" />
           <app-client-actions [client]="client" (onStatusChange)="onStatusChange($event)" />
         </div>
       </div>

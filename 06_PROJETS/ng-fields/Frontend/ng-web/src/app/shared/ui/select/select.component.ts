@@ -1,6 +1,7 @@
-import { Component, Directive, input } from '@angular/core';
+import { Component, Directive, input , ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'select[appSelectTrigger]',
   standalone: true,
   template: '',
