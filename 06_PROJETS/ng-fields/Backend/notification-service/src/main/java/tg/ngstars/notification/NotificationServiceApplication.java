@@ -1,4 +1,4 @@
-package tg.ngstars.notification_service;
+package tg.ngstars.notification;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
