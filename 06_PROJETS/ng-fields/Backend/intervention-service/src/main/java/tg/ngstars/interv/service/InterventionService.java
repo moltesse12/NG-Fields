@@ -21,6 +21,7 @@ import tg.ngstars.interv.dto.SyncResponse;
 import tg.ngstars.interv.dto.UpdateBillingRequest;
 import tg.ngstars.interv.dto.UpdateDiagnosisRequest;
 import tg.ngstars.interv.dto.UpdateEquipmentRequest;
+import tg.ngstars.interv.dto.UpdateInterventionRequest;
 import tg.ngstars.interv.dto.UpdateRecommendationsRequest;
 import tg.ngstars.interv.dto.UpdateResultRequest;
 import tg.ngstars.interv.dto.UpdateScheduleRequest;
@@ -260,6 +261,21 @@ public class InterventionService {
     }
 
     @Transactional
+    public InterventionResponse updateInterventionGps(UUID id, UpdateInterventionRequest request, UUID userId, boolean isAdminOrManager) {
+        var intervention = findOrThrow(id);
+        checkOwnership(intervention, userId, isAdminOrManager);
+
+        if (request.gpsLatitude() != null) {
+            intervention.setGpsLatitude(request.gpsLatitude());
+        }
+        if (request.gpsLongitude() != null) {
+            intervention.setGpsLongitude(request.gpsLongitude());
+        }
+
+        return toResponse(interventionRepository.save(intervention));
+    }
+
+    @Transactional
     public InterventionResponse updateRecommendations(UUID id, UpdateRecommendationsRequest request, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
         checkOwnership(intervention, userId, isAdminOrManager);
@@ -434,7 +450,7 @@ public class InterventionService {
                 i.getOpenprojectTicketId(), i.getOpenprojectTicketUrl(),
                 i.getDiagnosis(), i.getWorkDone(), i.getStatus(), i.getInterventionDate(),
                 i.getCreatedBy(), i.getAssignedTo(), i.getSiteAddress(),
-                i.getSiteCity(), i.getEstimatedCost(), i.getTotalCost(),
+                i.getSiteCity(), i.getEstimatedCost(), i.getGpsLatitude(), i.getGpsLongitude(), i.getTotalCost(),
                 i.getClientSignature(), i.getTechnicianSignature(), i.getManagerSignature(), i.getSignedAt(),
                 i.getDepartureTime(), i.getArrivalTime(), i.getStartTime(), i.getEndTime(), i.getDurationMinutes(),
                 i.getResult(), i.getRecommendations(), i.getBillable(), i.getBillingAmount(), i.getBillingNotes(),

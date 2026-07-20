@@ -30,6 +30,7 @@ import tg.ngstars.interv.dto.ItemRequest;
 import tg.ngstars.interv.dto.UpdateBillingRequest;
 import tg.ngstars.interv.dto.UpdateDiagnosisRequest;
 import tg.ngstars.interv.dto.UpdateEquipmentRequest;
+import tg.ngstars.interv.dto.UpdateInterventionRequest;
 import tg.ngstars.interv.dto.UpdateRecommendationsRequest;
 import tg.ngstars.interv.dto.UpdateResultRequest;
 import tg.ngstars.interv.dto.UpdateScheduleRequest;
@@ -102,6 +103,14 @@ public class InterventionController {
             @PathVariable UUID clientId, Pageable pageable) {
         var userId = securityUtils.getCurrentUserId();
         return ResponseEntity.ok(interventionService.getClientInterventions(clientId, userId, securityUtils.isAdminOrManager(), pageable));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<InterventionResponse> updateInterventionGps(@PathVariable UUID id,
+            @Valid @RequestBody UpdateInterventionRequest request) {
+        var userId = securityUtils.getCurrentUserId();
+        return ResponseEntity.ok(interventionService.updateInterventionGps(
+                id, request, userId, securityUtils.isAdminOrManager()));
     }
 
     @PatchMapping("/{id}/schedule")

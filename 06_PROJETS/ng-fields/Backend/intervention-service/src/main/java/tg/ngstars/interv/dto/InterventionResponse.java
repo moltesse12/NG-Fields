@@ -30,6 +30,8 @@ public record InterventionResponse(
     String siteAddress,
     String siteCity,
     BigDecimal estimatedCost,
+    Double gpsLatitude,
+    Double gpsLongitude,
     BigDecimal totalCost,
     String clientSignature,
     String technicianSignature,

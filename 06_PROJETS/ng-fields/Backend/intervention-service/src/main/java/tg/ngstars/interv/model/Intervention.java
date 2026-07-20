@@ -16,6 +16,8 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -105,6 +107,16 @@ public class Intervention {
 
     @Column(name = "estimated_cost")
     private BigDecimal estimatedCost;
+
+    @Column(name = "gps_latitude")
+    @DecimalMin(value = "-90.0", message = "La latitude doit être comprise entre -90.0 et 90.0")
+    @DecimalMax(value = "90.0", message = "La latitude doit être comprise entre -90.0 et 90.0")
+    private Double gpsLatitude;
+
+    @Column(name = "gps_longitude")
+    @DecimalMin(value = "-180.0", message = "La longitude doit être comprise entre -180.0 et 180.0")
+    @DecimalMax(value = "180.0", message = "La longitude doit être comprise entre -180.0 et 180.0")
+    private Double gpsLongitude;
 
     @Column(name = "total_cost")
     private BigDecimal totalCost;

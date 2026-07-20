@@ -220,6 +220,19 @@ class InterventionServiceTest {
     }
 
     @Test
+    void updateInterventionGps_shouldSetCoordinates() {
+        when(repo.findById(interventionId)).thenReturn(Optional.of(intervention));
+        when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var req = new UpdateInterventionRequest(6.1319, 1.2228);
+
+        var result = service.updateInterventionGps(interventionId, req, userId, false);
+
+        assertEquals(6.1319, result.gpsLatitude());
+        assertEquals(1.2228, result.gpsLongitude());
+    }
+
+    @Test
     void addItem_shouldAddToIntervention() {
         when(repo.findById(interventionId)).thenReturn(Optional.of(intervention));
         when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
