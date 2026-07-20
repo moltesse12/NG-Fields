@@ -16,11 +16,11 @@ public class SecurityUtils {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof Jwt jwt)
                 || jwt.getSubject() == null)
-            return null;
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("No authenticated user");
         try {
             return UUID.fromString(jwt.getSubject());
         } catch (IllegalArgumentException e) {
-            return null;
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("Invalid user ID in token");
         }
     }
 

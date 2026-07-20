@@ -19,16 +19,17 @@ public class KeycloakJwtAuthenticationConverter
     @Override
     public Mono<AbstractAuthenticationToken> convert(Jwt jwt) {
         var authorities = extractRoles(jwt);
-        return Mono.just(new JwtAuthenticationToken(jwt, authorities));
+        return Mono.just(new JwtAuthenticationToken(jwt, authorities, jwt.getSubject()));
     }
 
-    @SuppressWarnings("unchecked")
     private Collection<GrantedAuthority> extractRoles(Jwt jwt) {
-        Map<String, Object> realmAccess = jwt.getClaim("realm_access");
-        if (realmAccess == null) return List.of();
-        List<String> roles = (List<String>) realmAccess.getOrDefault("roles", List.of());
+        Object raw = jwt.getClaim("realm_access");
+        if (!(raw instanceof Map<?, ?> realmAccess)) return List.of();
+        Object rolesObj = realmAccess.get("roles");
+        if (!(rolesObj instanceof List<?> roles)) return List.of();
         return roles.stream()
-            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-            .collect(Collectors.toList());
+            .filter(r -> r instanceof String)
+            .map(r -> new SimpleGrantedAuthority("ROLE_" + ((String) r).toUpperCase()))
+            .collect(Collectors.toUnmodifiableList());
     }
 }

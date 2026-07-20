@@ -770,7 +770,7 @@
         "oidc.ciba.grant.enabled": "false",
         "backchannel.logout.session.required": "true",
         "display.on.consent.screen": "false",
-        "client.secret": "52ea9581183043ce8060d6a1df4402da",
+        "client.secret": "${KEYCLOAK_CLIENT_SECRET}",
         "dpop.bound.access.tokens": "false"
       },
       "authenticationFlowBindingOverrides": {},

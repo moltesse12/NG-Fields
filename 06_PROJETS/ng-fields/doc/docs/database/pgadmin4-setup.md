@@ -45,7 +45,7 @@ Copier-coller le bloc, puis **F5** :
 -- Rôle Keycloak
 CREATE ROLE keycloak_user
     WITH LOGIN
-         PASSWORD 'Keycloak_Pg_2026!'
+         PASSWORD '${KC_DB_PASSWORD}'
          NOSUPERUSER NOCREATEDB NOCREATEROLE
          CONNECTION LIMIT 20;
 
@@ -54,7 +54,7 @@ COMMENT ON ROLE keycloak_user IS 'Keycloak IAM — accès exclusif à la base ke
 -- Rôle API Spring Boot
 CREATE ROLE ng_fields_user
     WITH LOGIN
-         PASSWORD 'Pg_ng-fields1234'
+         PASSWORD '${DB_PASSWORD}'
          NOSUPERUSER NOCREATEDB NOCREATEROLE
          CONNECTION LIMIT 50;
 
@@ -63,7 +63,7 @@ COMMENT ON ROLE ng_fields_user IS 'API Spring Boot — accès exclusif à ng_fie
 -- Rôle tests
 CREATE ROLE ng_fields_test_user
     WITH LOGIN
-         PASSWORD 'NgFieldsTest_Pg_2026!'
+         PASSWORD '${DB_TEST_PASSWORD}'
          NOSUPERUSER NOCREATEDB NOCREATEROLE
          CONNECTION LIMIT 10;
 
@@ -265,9 +265,9 @@ ORDER BY schema_name;
 
 | Composant | Base | Hôte | Port | Utilisateur | Mot de passe |
 |---|---|---|---|---|---|
-| API Spring Boot | `ng_fields` | `localhost` | `5432` | `ng_fields_user` | `Pg_ng-fields1234` |
-| Keycloak | `keycloak` | `localhost` | `5432` | `keycloak_user` | `Keycloak_Pg_2026!` |
-| Tests Spring Boot | `ng_fields_test` | `localhost` | `5432` | `ng_fields_test_user` | `NgFieldsTest_Pg_2026!` |
+| API Spring Boot | `ng_fields` | `localhost` | `5432` | `ng_fields_user` | `${DB_PASSWORD}` |
+| Keycloak | `keycloak` | `localhost` | `5432` | `keycloak_user` | `${KC_DB_PASSWORD}` |
+| Tests Spring Boot | `ng_fields_test` | `localhost` | `5432` | `ng_fields_test_user` | `${DB_TEST_PASSWORD}` |
 
 ---
 
@@ -288,6 +288,6 @@ ORDER BY schema_name;
 
 La base est prête. Voir :
 
-- [database-model.md](database-model.md) — Architecture globale
+- [database-model.md](06_PROJETS/ng-fields/Doc/docs/database/database-model.md) — Architecture globale
 - [ng-fields-application.md](ng-fields-application.md) — DDL et tables détaillées
 - [keycloak.md](keycloak.md) — Connexion Keycloak → PostgreSQL

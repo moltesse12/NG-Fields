@@ -29,6 +29,9 @@ Desktop.ini
 *.war
 *.ear
 
+# Environment variables (secrets)
+.env
+
 # Build artifacts & dependencies
 99_ARCHIVES/monolithique/*/wrapper/dists/
 99_ARCHIVES/monolithique/*/build/

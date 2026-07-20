@@ -1,5 +1,6 @@
 package tg.ngstars.client.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
@@ -21,7 +22,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import tg.ngstars.client.dto.ClientResponse;
+import tg.ngstars.client.dto.ContactDto;
 import tg.ngstars.client.dto.CreateClientRequest;
+import tg.ngstars.client.dto.CreateContactRequest;
 import tg.ngstars.client.dto.UpdateClientRequest;
 import tg.ngstars.client.service.ClientService;
 
@@ -79,6 +82,30 @@ public class ClientController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deactivateClient(@PathVariable UUID id) {
         clientService.deactivateClient(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{clientId}/contacts")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ContactDto> addContact(
+            @PathVariable UUID clientId,
+            @Valid @RequestBody CreateContactRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(clientService.addContact(clientId, request));
+    }
+
+    @GetMapping("/{clientId}/contacts")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIAN')")
+    public ResponseEntity<List<ContactDto>> getContacts(@PathVariable UUID clientId) {
+        return ResponseEntity.ok(clientService.getContacts(clientId));
+    }
+
+    @DeleteMapping("/{clientId}/contacts/{contactId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> removeContact(
+            @PathVariable UUID clientId,
+            @PathVariable UUID contactId) {
+        clientService.removeContact(clientId, contactId);
         return ResponseEntity.noContent().build();
     }
 }

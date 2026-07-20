@@ -1,6 +1,5 @@
 package tg.ngstars.interv.controller;
 
-import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
@@ -22,7 +21,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import tg.ngstars.interv.dto.ClientDataSyncRequest;
 import tg.ngstars.interv.dto.CreateInterventionRequest;
 import tg.ngstars.interv.dto.InterventionResponse;
 import tg.ngstars.interv.dto.ItemRequest;
@@ -68,34 +69,39 @@ public class InterventionController {
 
     @GetMapping("/{id}")
     public ResponseEntity<InterventionResponse> getIntervention(@PathVariable UUID id) {
-        return ResponseEntity.ok(interventionService.getIntervention(id));
+        var userId = securityUtils.getCurrentUserId();
+        return ResponseEntity.ok(interventionService.getIntervention(id, userId, securityUtils.isAdminOrManager()));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<InterventionResponse> updateIntervention(@PathVariable UUID id,
             @Valid @RequestBody CreateInterventionRequest request) {
-        return ResponseEntity.ok(interventionService.updateIntervention(id, request));
+        var userId = securityUtils.getCurrentUserId();
+        return ResponseEntity.ok(interventionService.updateIntervention(id, request, userId, securityUtils.isAdminOrManager()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteIntervention(@PathVariable UUID id) {
-        interventionService.deleteIntervention(id);
+        var userId = securityUtils.getCurrentUserId();
+        interventionService.deleteIntervention(id, userId, securityUtils.isAdminOrManager());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> generatePdf(@PathVariable UUID id) {
-        var pdf = interventionService.generatePdf(id);
+    public ResponseEntity<StreamingResponseBody> generatePdf(@PathVariable UUID id) {
+        var userId = securityUtils.getCurrentUserId();
+        StreamingResponseBody stream = out -> interventionService.generatePdfToStream(id, userId, securityUtils.isAdminOrManager(), out);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=intervention.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
+                .body(stream);
     }
 
     @GetMapping("/by-client/{clientId}")
-    public ResponseEntity<List<InterventionResponse>> getClientInterventions(
-            @PathVariable UUID clientId) {
-        return ResponseEntity.ok(interventionService.getClientInterventions(clientId));
+    public ResponseEntity<Page<InterventionResponse>> getClientInterventions(
+            @PathVariable UUID clientId, Pageable pageable) {
+        var userId = securityUtils.getCurrentUserId();
+        return ResponseEntity.ok(interventionService.getClientInterventions(clientId, userId, securityUtils.isAdminOrManager(), pageable));
     }
 
     @PatchMapping("/{id}/schedule")
@@ -165,5 +171,38 @@ public class InterventionController {
     public ResponseEntity<InterventionResponse> closeIntervention(@PathVariable UUID id) {
         var userId = securityUtils.getCurrentUserId();
         return ResponseEntity.ok(interventionService.closeIntervention(id, userId, securityUtils.isAdminOrManager()));
+    }
+
+    @PostMapping("/{id}/assign")
+    public ResponseEntity<InterventionResponse> assignIntervention(@PathVariable UUID id,
+            @RequestBody java.util.Map<String, java.util.UUID> body) {
+        var userId = securityUtils.getCurrentUserId();
+        var assignedTo = body.get("assignedTo");
+        if (assignedTo == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(interventionService.assignIntervention(id, assignedTo, userId, securityUtils.isAdminOrManager()));
+    }
+
+    @PostMapping("/{id}/start")
+    public ResponseEntity<InterventionResponse> startIntervention(@PathVariable UUID id) {
+        var userId = securityUtils.getCurrentUserId();
+        return ResponseEntity.ok(interventionService.startIntervention(id, userId, securityUtils.isAdminOrManager()));
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<InterventionResponse> cancelIntervention(@PathVariable UUID id) {
+        var userId = securityUtils.getCurrentUserId();
+        return ResponseEntity.ok(interventionService.cancelIntervention(id, userId, securityUtils.isAdminOrManager()));
+    }
+
+    @PostMapping("/sync/client-data")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<java.util.Map<String, Object>> syncClientData(
+            @Valid @RequestBody ClientDataSyncRequest request) {
+        int updated = interventionService.syncClientData(
+                request.clientId(), request.clientName(),
+                request.clientEmail(), request.clientPhone(), request.clientAddress());
+        return ResponseEntity.ok(java.util.Map.of("updated", updated));
     }
 }

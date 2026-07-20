@@ -1,9 +1,9 @@
 package tg.ngstars.auth.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -12,15 +12,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class SecurityUtils {
 
-    public UUID getCurrentUserId() {
+    public Optional<UUID> getCurrentUserId() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof Jwt jwt)
                 || jwt.getSubject() == null)
-            return null;
+            return Optional.empty();
         try {
-            return UUID.fromString(jwt.getSubject());
+            return Optional.of(UUID.fromString(jwt.getSubject()));
         } catch (IllegalArgumentException e) {
-            return null;
+            return Optional.empty();
         }
     }
 

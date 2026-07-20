@@ -15,7 +15,9 @@ public record CreateUserRequest(
     @NotBlank @Size(max = 100)
     String lastName,
 
-    @Size(min = 6)
+    @NotBlank @Size(min = 8)
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
+             message = "Le mot de passe doit contenir au moins 8 caracteres, une majuscule, un chiffre et un caractere special")
     String password,
 
     @NotBlank

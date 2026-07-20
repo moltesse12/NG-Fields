@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import tg.ngstars.interv.dto.InterventionResponse;
 import tg.ngstars.interv.dto.SyncRequest;
+import tg.ngstars.interv.dto.SyncResponse;
 import tg.ngstars.interv.service.InterventionService;
 import tg.ngstars.interv.service.SecurityUtils;
 
@@ -28,7 +28,8 @@ public class SyncController {
     }
 
     @PostMapping("/interventions")
-    public ResponseEntity<InterventionResponse> syncIntervention(@Valid @RequestBody SyncRequest request) {
-        return ResponseEntity.ok(interventionService.syncFromMobile(request, securityUtils.getCurrentUserId()));
+    public ResponseEntity<SyncResponse> syncIntervention(@Valid @RequestBody SyncRequest request) {
+        var userId = securityUtils.getCurrentUserId();
+        return ResponseEntity.ok(interventionService.syncFromMobile(request, userId, securityUtils.isAdminOrManager()));
     }
 }

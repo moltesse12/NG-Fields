@@ -2,18 +2,50 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ngfields
-      POSTGRES_USER: ngfields
+      POSTGRES_DB: ng_fields
+      POSTGRES_USER: ng_fields_user
       POSTGRES_PASSWORD: ${DB_PASSWORD:-ngfields-dev}
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - pg_stat_statements.max=10000
+      - -c
+      - log_min_duration_statement=1000
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./backups:/backups
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ngfields"]
+      test: ["CMD-SHELL", "pg_isready -U ng_fields_user"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  db-backup:
+    image: postgres:16-alpine
+    environment:
+      PGPASSWORD: ${DB_PASSWORD:-ngfields-dev}
+    volumes:
+      - ./backups:/backups
+    entrypoint: >
+      sh -c '
+        echo "Sauvegarde automatique demarree..."
+        while true; do
+          pg_dump -h postgres -p 5432 -U ng_fields_user -d ng_fields -F c -f /backups/ng_fields_$$(date +\%Y\%m\%d_\%H\%M\%S).dump
+          echo "Backup termine: $$(date)"
+          sleep 86400
+        done
+      '
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - backup
 
   redis:
     image: redis:7-alpine
@@ -26,12 +58,12 @@ services:
       retries: 5
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.1
+    image: quay.io/keycloak/keycloak:26.0.9
     command: start-dev --import-realm
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/ngfields
-      KC_DB_USERNAME: ngfields
+      KC_DB_URL: jdbc:postgresql://postgres:5432/ng_fields
+      KC_DB_USERNAME: ng_fields_user
       KC_DB_PASSWORD: ${DB_PASSWORD:-ngfields-dev}
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:-admin123}
@@ -43,11 +75,12 @@ services:
       postgres:
         condition: service_healthy
 
+  # ponytail: single placeholder api, add all 7 microservices when ready
   api:
-    build: ../apps/ng-fields-api
+    image: ng-fields-api:latest
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ngfields
-      SPRING_DATASOURCE_USERNAME: ngfields
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ng_fields
+      SPRING_DATASOURCE_USERNAME: ng_fields_user
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-ngfields-dev}
       SPRING_REDIS_HOST: redis
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ng-fields

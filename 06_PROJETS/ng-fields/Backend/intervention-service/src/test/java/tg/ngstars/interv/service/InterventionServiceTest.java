@@ -15,8 +15,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import tg.ngstars.interv.dto.*;
-import tg.ngstars.interv.exception.ForbiddenException;
-import tg.ngstars.interv.exception.NotFoundException;
+import tg.ngstars.common.exception.ForbiddenException;
+import tg.ngstars.common.exception.NotFoundException;
 import tg.ngstars.interv.model.Intervention;
 import tg.ngstars.interv.model.InterventionItem;
 import tg.ngstars.interv.repository.InterventionRepository;
@@ -25,6 +25,7 @@ import tg.ngstars.interv.repository.InterventionRepository;
 class InterventionServiceTest {
 
     @Mock InterventionRepository repo;
+    @Mock InterventionStatusService statusService;
     InterventionService service;
 
     UUID userId = UUID.randomUUID();
@@ -34,7 +35,7 @@ class InterventionServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new InterventionService(repo);
+        service = new InterventionService(repo, statusService);
         intervention = Intervention.builder()
                 .id(interventionId)
                 .reference("INT-001")
@@ -84,7 +85,7 @@ class InterventionServiceTest {
     @Test
     void getIntervention_notFound_throwsNotFound() {
         when(repo.findById(interventionId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.getIntervention(interventionId));
+        assertThrows(NotFoundException.class, () -> service.getIntervention(interventionId, userId, false));
     }
 
     @Test
@@ -94,6 +95,12 @@ class InterventionServiceTest {
         intervention.setManagerSignature("sig-mgr");
         when(repo.findById(interventionId)).thenReturn(Optional.of(intervention));
         when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
+        doAnswer(inv -> {
+            Intervention i = inv.getArgument(0);
+            i.setStatus("COMPLETED");
+            i.setSignedAt(OffsetDateTime.now());
+            return null;
+        }).when(statusService).closeIntervention(eq(intervention), eq(userId), eq(false));
 
         var result = service.closeIntervention(interventionId, userId, false);
 
@@ -120,12 +127,14 @@ class InterventionServiceTest {
 
         var req = new SyncRequest("ref-123", clientId, "Client", null, null, null,
                 null, null, null, null, null, "PENDING", OffsetDateTime.now(),
-                null, null, localId);
+                null, null, localId, null);
 
-        var result = service.syncFromMobile(req, userId);
+        var result = service.syncFromMobile(req, userId, false);
 
-        assertEquals(localId, result.localId());
-        assertEquals(clientId, result.clientId());
+        assertEquals(localId, result.intervention().localId());
+        assertEquals(clientId, result.intervention().clientId());
+        assertEquals(SyncResponse.SyncAction.CREATED, result.action());
+        assertFalse(result.conflict());
     }
 
     @Test
@@ -136,14 +145,36 @@ class InterventionServiceTest {
         when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
 
         var req = new SyncRequest("ref-123", UUID.randomUUID(), null, "e@mail.com", "123-456", "Addr 1",
-                null, null, null, null, null, "COMPLETED", null, null, null, localId);
+                null, null, null, null, null, "COMPLETED", null, null, null, localId, null);
 
-        var result = service.syncFromMobile(req, userId);
+        var result = service.syncFromMobile(req, userId, false);
 
-        assertEquals("COMPLETED", result.status());
-        assertEquals("e@mail.com", result.clientEmail());
-        assertEquals("123-456", result.clientPhone());
-        assertEquals("Addr 1", result.clientAddress());
+        assertEquals("COMPLETED", result.intervention().status());
+        assertEquals("e@mail.com", result.intervention().clientEmail());
+        assertEquals("123-456", result.intervention().clientPhone());
+        assertEquals("Addr 1", result.intervention().clientAddress());
+        assertEquals(SyncResponse.SyncAction.UPDATED, result.action());
+        assertFalse(result.conflict());
+    }
+
+    @Test
+    void syncFromMobile_conflictDetection_returnsConflict() {
+        var localId = "local-123";
+        intervention.setLocalId(localId);
+        intervention.setUpdatedAt(OffsetDateTime.parse("2025-07-15T12:00:00Z"));
+        when(repo.findByLocalId(localId)).thenReturn(Optional.of(intervention));
+
+        var clientTime = OffsetDateTime.parse("2025-07-15T10:00:00Z");
+        var req = new SyncRequest("ref-123", UUID.randomUUID(), null, null, null, null,
+                null, null, null, null, null, "IN_PROGRESS", null, null, null, localId, clientTime);
+
+        var result = service.syncFromMobile(req, userId, false);
+
+        assertTrue(result.conflict());
+        assertEquals(SyncResponse.SyncAction.CONFLICT, result.action());
+        assertNotNull(result.conflictMessage());
+        assertNotNull(result.intervention());
+        verify(repo, never()).save(any());
     }
 
     @Test
@@ -199,5 +230,49 @@ class InterventionServiceTest {
 
         assertEquals(1, result.items().size());
         assertEquals("New capacitor", result.items().getFirst().description());
+    }
+
+    @Test
+    void assignIntervention_shouldSetAssignedTo() {
+        when(repo.findById(interventionId)).thenReturn(Optional.of(intervention));
+        when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var newTech = UUID.randomUUID();
+        var result = service.assignIntervention(interventionId, newTech, userId, true);
+
+        assertEquals(newTech, result.assignedTo());
+        verify(statusService).assignIntervention(intervention, userId);
+    }
+
+    @Test
+    void startIntervention_shouldSetInProgress() {
+        when(repo.findById(interventionId)).thenReturn(Optional.of(intervention));
+        when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var result = service.startIntervention(interventionId, userId, false);
+
+        verify(statusService).startIntervention(intervention, userId);
+        assertNotNull(result);
+    }
+
+    @Test
+    void cancelIntervention_shouldDelegateToStatusService() {
+        when(repo.findById(interventionId)).thenReturn(Optional.of(intervention));
+        when(repo.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        var result = service.cancelIntervention(interventionId, userId, true);
+
+        verify(statusService).cancelIntervention(intervention, userId, true);
+        assertNotNull(result);
+    }
+
+    @Test
+    void cancelIntervention_notAdmin_throwsForbidden() {
+        when(repo.findById(interventionId)).thenReturn(Optional.of(intervention));
+        doThrow(new ForbiddenException("Only admin or manager can cancel an intervention"))
+                .when(statusService).cancelIntervention(intervention, userId, false);
+
+        assertThrows(ForbiddenException.class,
+                () -> service.cancelIntervention(interventionId, userId, false));
     }
 }

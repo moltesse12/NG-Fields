@@ -2,6 +2,8 @@ package tg.ngstars.auth.service;
 
 import java.util.UUID;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +22,19 @@ public class AuditService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(UUID userId, String action, String resource, String resourceId, String details, String ipAddress) {
-        var log = new AuditLog();
-        log.setUserId(userId);
-        log.setAction(action);
-        log.setResource(resource);
-        log.setResourceId(resourceId);
-        log.setDetails(details);
-        log.setIpAddress(ipAddress);
-        auditLogRepository.save(log);
+        if (userId == null) {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+                try { userId = UUID.fromString(jwt.getSubject()); } catch (IllegalArgumentException ignored) {}
+            }
+        }
+        var auditLog = new AuditLog();
+        auditLog.setUserId(userId);
+        auditLog.setAction(action);
+        auditLog.setResource(resource);
+        auditLog.setResourceId(resourceId);
+        auditLog.setDetails(details);
+        auditLog.setIpAddress(ipAddress);
+        auditLogRepository.save(auditLog);
     }
 }

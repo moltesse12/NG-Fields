@@ -23,5 +23,6 @@ public record SyncRequest(
     OffsetDateTime interventionDate,
     String siteAddress,
     String siteCity,
-    @NotBlank String localId
+    @NotBlank String localId,
+    OffsetDateTime clientUpdatedAt
 ) {}

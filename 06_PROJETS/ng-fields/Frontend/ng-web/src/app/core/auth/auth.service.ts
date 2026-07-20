@@ -32,7 +32,9 @@ export class AuthService {
   }
 
   logout(): void {
-    this.oidc.logoff().subscribe();
+    this.oidc.logoff().subscribe({
+      error: (err) => console.warn('Logout error:', err),
+    });
   }
 
   checkAuth(url?: string): Observable<any> {

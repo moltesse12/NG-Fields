@@ -1,6 +1,7 @@
 package tg.ngstars.client.dto;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record ClientResponse(
@@ -14,5 +15,6 @@ public record ClientResponse(
     Double latitude,
     Double longitude,
     boolean active,
-    OffsetDateTime createdAt
+    OffsetDateTime createdAt,
+    List<ContactDto> contacts
 ) {}

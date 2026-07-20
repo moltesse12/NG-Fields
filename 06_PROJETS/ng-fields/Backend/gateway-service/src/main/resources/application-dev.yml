@@ -2,3 +2,10 @@ logging:
   level:
     tg.ngstars: DEBUG
     org.springframework.cloud.gateway: DEBUG
+
+# ponytail: swagger-ui only in dev, removed from SecurityConfig prod path
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true

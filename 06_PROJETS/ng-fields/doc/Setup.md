@@ -30,7 +30,7 @@ cd ng-fields
 Créer la base `ng_fields` et l'utilisateur :
 
 ```sql
-CREATE USER ng_fields_user WITH PASSWORD 'Pg_ng-fields1234';
+CREATE USER ng_fields_user WITH PASSWORD '${DB_PASSWORD}';
 CREATE DATABASE ng_fields OWNER ng_fields_user;
 ```
 

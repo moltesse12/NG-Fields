@@ -1,9 +1,18 @@
 spring:
   jpa:
     show-sql: true
+    properties:
+      hibernate:
+        generate_statistics: true
+  flyway:
+    repair-on-migrate: true
   devtools:
     restart:
       enabled: true
+
+springdoc:
+  swagger-ui:
+    enabled: true
 
 keycloak:
   auth-server-url: http://localhost:8088

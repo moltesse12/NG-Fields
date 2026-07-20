@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,14 +17,15 @@ import tg.ngstars.interv.dto.InterventionResponse;
 import tg.ngstars.interv.dto.InterventionResponse.ItemResponse;
 import tg.ngstars.interv.dto.ItemRequest;
 import tg.ngstars.interv.dto.SyncRequest;
+import tg.ngstars.interv.dto.SyncResponse;
 import tg.ngstars.interv.dto.UpdateBillingRequest;
 import tg.ngstars.interv.dto.UpdateDiagnosisRequest;
 import tg.ngstars.interv.dto.UpdateEquipmentRequest;
 import tg.ngstars.interv.dto.UpdateRecommendationsRequest;
 import tg.ngstars.interv.dto.UpdateResultRequest;
 import tg.ngstars.interv.dto.UpdateScheduleRequest;
-import tg.ngstars.interv.exception.ForbiddenException;
-import tg.ngstars.interv.exception.NotFoundException;
+import tg.ngstars.common.exception.ForbiddenException;
+import tg.ngstars.common.exception.NotFoundException;
 import tg.ngstars.interv.model.Intervention;
 import tg.ngstars.interv.model.InterventionItem;
 import tg.ngstars.interv.repository.InterventionRepository;
@@ -31,10 +34,23 @@ import tg.ngstars.interv.repository.InterventionRepository;
 @Transactional(readOnly = true)
 public class InterventionService {
 
-    private final InterventionRepository interventionRepository;
+    private static final Logger log = LoggerFactory.getLogger(InterventionService.class);
 
-    public InterventionService(InterventionRepository interventionRepository) {
+    private final InterventionRepository interventionRepository;
+    private final InterventionStatusService statusService;
+
+    public InterventionService(InterventionRepository interventionRepository, InterventionStatusService statusService) {
         this.interventionRepository = interventionRepository;
+        this.statusService = statusService;
+    }
+
+    @Transactional
+    public int syncClientData(UUID clientId, String name, String email, String phone, String address) {
+        int updated = interventionRepository.syncClientData(clientId, name, email, phone, address);
+        if (updated > 0) {
+            log.info("Données client synchronisées pour {} interventions (client={})", updated, clientId);
+        }
+        return updated;
     }
 
     private Intervention findOrThrow(UUID id) {
@@ -42,8 +58,9 @@ public class InterventionService {
                 .orElseThrow(() -> new NotFoundException("Intervention not found: " + id));
     }
 
-    void checkOwnership(Intervention intervention, UUID userId, boolean isAdminOrManager) {
-        if (!isAdminOrManager && !intervention.getAssignedTo().equals(userId))
+    private void checkOwnership(Intervention intervention, UUID userId, boolean isAdminOrManager) {
+        if (isAdminOrManager) return;
+        if (intervention.getAssignedTo() == null || !intervention.getAssignedTo().equals(userId))
             throw new ForbiddenException("Not assigned to this intervention");
     }
 
@@ -114,13 +131,16 @@ public class InterventionService {
                 .map(this::toResponse);
     }
 
-    public InterventionResponse getIntervention(UUID id) {
-        return toResponse(findOrThrow(id));
+    public InterventionResponse getIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
+        var intervention = findOrThrow(id);
+        checkOwnership(intervention, userId, isAdminOrManager);
+        return toResponse(intervention);
     }
 
     @Transactional
-    public InterventionResponse updateIntervention(UUID id, CreateInterventionRequest request) {
+    public InterventionResponse updateIntervention(UUID id, CreateInterventionRequest request, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
+        checkOwnership(intervention, userId, isAdminOrManager);
 
         intervention.setReference(request.reference());
         intervention.setClientId(request.clientId());
@@ -169,20 +189,28 @@ public class InterventionService {
     }
 
     @Transactional
-    public void deleteIntervention(UUID id) {
+    public void deleteIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
+        checkOwnership(intervention, userId, isAdminOrManager);
         intervention.setActive(false);
         interventionRepository.save(intervention);
     }
 
-    public List<InterventionResponse> getClientInterventions(UUID clientId) {
-        return interventionRepository.findByClientIdOrderByCreatedAtDesc(clientId).stream()
-                .map(this::toResponse).toList();
+    public Page<InterventionResponse> getClientInterventions(UUID clientId, UUID userId, boolean isAdminOrManager, Pageable pageable) {
+        return interventionRepository.findByClientIdOrderByCreatedAtDesc(clientId, pageable)
+                .map(this::toResponse);
     }
 
-    public byte[] generatePdf(UUID id) {
+    public byte[] generatePdf(UUID id, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
+        checkOwnership(intervention, userId, isAdminOrManager);
         return PdfService.generate(intervention);
+    }
+
+    public void generatePdfToStream(UUID id, UUID userId, boolean isAdminOrManager, java.io.OutputStream out) {
+        var intervention = findOrThrow(id);
+        checkOwnership(intervention, userId, isAdminOrManager);
+        PdfService.write(intervention, out);
     }
 
     @Transactional
@@ -299,35 +327,74 @@ public class InterventionService {
     }
 
     @Transactional
-    public InterventionResponse closeIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
+    public InterventionResponse assignIntervention(UUID id, UUID assignedTo, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
         checkOwnership(intervention, userId, isAdminOrManager);
-        if (intervention.getClientSignature() != null
-                && intervention.getTechnicianSignature() != null
-                && intervention.getManagerSignature() != null) {
-            intervention.setStatus("COMPLETED");
-            intervention.setSignedAt(java.time.OffsetDateTime.now());
-        }
+        intervention.setAssignedTo(assignedTo);
+        statusService.assignIntervention(intervention, userId);
         return toResponse(interventionRepository.save(intervention));
     }
 
     @Transactional
-    public InterventionResponse syncFromMobile(SyncRequest request, UUID userId) {
+    public InterventionResponse startIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
+        var intervention = findOrThrow(id);
+        checkOwnership(intervention, userId, isAdminOrManager);
+        statusService.startIntervention(intervention, userId);
+        return toResponse(interventionRepository.save(intervention));
+    }
+
+    @Transactional
+    public InterventionResponse closeIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
+        var intervention = findOrThrow(id);
+        statusService.closeIntervention(intervention, userId, isAdminOrManager);
+        return toResponse(interventionRepository.save(intervention));
+    }
+
+    @Transactional
+    public InterventionResponse cancelIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
+        var intervention = findOrThrow(id);
+        statusService.cancelIntervention(intervention, userId, isAdminOrManager);
+        return toResponse(interventionRepository.save(intervention));
+    }
+
+    @Transactional
+    public SyncResponse syncFromMobile(SyncRequest request, UUID userId, boolean isAdminOrManager) {
         var existing = interventionRepository.findByLocalId(request.localId());
         if (existing.isPresent()) {
             var intervention = existing.get();
-            intervention.setStatus(request.status() != null ? request.status() : intervention.getStatus());
-            intervention.setInterventionDate(request.interventionDate() != null ? request.interventionDate() : intervention.getInterventionDate());
-            intervention.setClientEmail(request.clientEmail() != null ? request.clientEmail() : intervention.getClientEmail());
-            intervention.setClientPhone(request.clientPhone() != null ? request.clientPhone() : intervention.getClientPhone());
+            checkOwnership(intervention, userId, isAdminOrManager);
+
+            if (request.clientUpdatedAt() != null && intervention.getUpdatedAt() != null
+                    && request.clientUpdatedAt().isBefore(intervention.getUpdatedAt())) {
+                log.warn("Sync conflict on intervention localId={}: client={}, server={}",
+                        request.localId(), request.clientUpdatedAt(), intervention.getUpdatedAt());
+                return SyncResponse.conflict(toResponse(intervention),
+                        "Server has newer changes. Server updatedAt=" + intervention.getUpdatedAt()
+                                + ", client updatedAt=" + request.clientUpdatedAt());
+            }
+
+            if (request.status() != null) {
+                var currentStatus = intervention.getStatus();
+                if (!currentStatus.equals(request.status())) {
+                    statusService.validateTransition(intervention, request.status());
+                    intervention.setStatus(request.status());
+                }
+            }
+            if (request.interventionDate() != null) intervention.setInterventionDate(request.interventionDate());
             if (request.clientName() != null) intervention.setClientName(request.clientName());
-            intervention.setClientEmail(request.clientEmail() != null ? request.clientEmail() : intervention.getClientEmail());
-            intervention.setClientPhone(request.clientPhone() != null ? request.clientPhone() : intervention.getClientPhone());
-            intervention.setClientAddress(request.clientAddress() != null ? request.clientAddress() : intervention.getClientAddress());
-            return toResponse(interventionRepository.save(intervention));
+            if (request.clientEmail() != null) intervention.setClientEmail(request.clientEmail());
+            if (request.clientPhone() != null) intervention.setClientPhone(request.clientPhone());
+            if (request.clientAddress() != null) intervention.setClientAddress(request.clientAddress());
+            if (request.equipmentBrand() != null) intervention.setEquipmentBrand(request.equipmentBrand());
+            if (request.equipmentModel() != null) intervention.setEquipmentModel(request.equipmentModel());
+            if (request.equipmentSerial() != null) intervention.setEquipmentSerial(request.equipmentSerial());
+            if (request.reportedIssue() != null) intervention.setReportedIssue(request.reportedIssue());
+            if (request.siteAddress() != null) intervention.setSiteAddress(request.siteAddress());
+            if (request.siteCity() != null) intervention.setSiteCity(request.siteCity());
+            return SyncResponse.updated(toResponse(interventionRepository.save(intervention)));
         }
         var intervention = Intervention.builder()
-                .reference(request.localId())
+                .reference(request.reference())
                 .clientId(request.clientId())
                 .clientName(request.clientName())
                 .clientEmail(request.clientEmail())
@@ -347,7 +414,7 @@ public class InterventionService {
                 .localId(request.localId())
                 .active(true)
                 .build();
-        return toResponse(interventionRepository.save(intervention));
+        return SyncResponse.created(toResponse(interventionRepository.save(intervention)));
     }
 
     private InterventionResponse toResponse(Intervention i) {

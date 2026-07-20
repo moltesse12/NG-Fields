@@ -11,7 +11,7 @@
 
 CREATE ROLE keycloak_user
     WITH LOGIN
-         PASSWORD 'Keycloak_Pg_2026!'
+         PASSWORD '${KC_DB_PASSWORD}'
          NOSUPERUSER NOCREATEDB NOCREATEROLE
          CONNECTION LIMIT 20;
 
@@ -19,7 +19,7 @@ COMMENT ON ROLE keycloak_user IS 'Keycloak IAM';
 
 CREATE ROLE ng_fields_user
     WITH LOGIN
-         PASSWORD 'Pg_ng-fields1234'
+         PASSWORD '${DB_PASSWORD}'
          NOSUPERUSER NOCREATEDB NOCREATEROLE
          CONNECTION LIMIT 50;
 
@@ -27,7 +27,7 @@ COMMENT ON ROLE ng_fields_user IS 'API Spring Boot';
 
 CREATE ROLE ng_fields_test_user
     WITH LOGIN
-         PASSWORD 'NgFieldsTest_Pg_2026!'
+         PASSWORD '${DB_TEST_PASSWORD}'
          NOSUPERUSER NOCREATEDB NOCREATEROLE
          CONNECTION LIMIT 10;
 

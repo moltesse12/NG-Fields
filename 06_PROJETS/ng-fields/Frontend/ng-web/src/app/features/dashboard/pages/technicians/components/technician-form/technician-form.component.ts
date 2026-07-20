@@ -20,6 +20,11 @@ import { TechnicianService } from '../../../../../../core/services/technician.se
       </div>
 
       <form [formGroup]="form" class="space-y-4">
+        @if (error(); as err) {
+          <div class="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            {{ err }}
+          </div>
+        }
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1">Prénom *</label>
@@ -77,6 +82,7 @@ export class TechnicianFormComponent {
   private technicianService = inject(TechnicianService);
 
   isSubmitting = signal(false);
+  error = signal<string | null>(null);
 
   form: FormGroup = this.fb.group({
     firstName: ['', Validators.required],
@@ -89,6 +95,7 @@ export class TechnicianFormComponent {
   onSubmit(): void {
     if (this.form.invalid) return;
     this.isSubmitting.set(true);
+    this.error.set(null);
     const val = this.form.value;
     this.technicianService.createTechnician({
       firstName: val.firstName,
@@ -98,7 +105,10 @@ export class TechnicianFormComponent {
       status: val.status,
     }).subscribe({
       next: () => this.router.navigate(['/dashboard/technicians']),
-      error: () => this.isSubmitting.set(false),
+      error: (err) => {
+        this.error.set(err?.detail || 'Erreur lors de la création du technicien');
+        this.isSubmitting.set(false);
+      },
     });
   }
 

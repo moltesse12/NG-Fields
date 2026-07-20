@@ -1,12 +1,13 @@
 package tg.ngstars.auth.controller;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,11 +20,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import tg.ngstars.auth.dto.ChangePasswordRequest;
 import tg.ngstars.auth.dto.CreateUserRequest;
 import tg.ngstars.auth.dto.RoleAssignRequest;
 import tg.ngstars.auth.dto.UpdateProfileRequest;
+import tg.ngstars.auth.dto.UpdateUserRequest;
 import tg.ngstars.auth.dto.UserResponse;
 import tg.ngstars.auth.dto.UserStatusRequest;
 import tg.ngstars.auth.service.UserService;
@@ -43,13 +47,15 @@ public class UserController {
             @Valid @RequestBody CreateUserRequest request,
             @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(userService.createUser(request, jwt.getSubject()));
+                .body(userService.createUser(request, jwt.getSubject(), null));
     }
 
     @GetMapping("/api/admin/users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<Page<UserResponse>> getUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(userService.getAllUsers(PageRequest.of(page, size)));
     }
 
     @GetMapping("/api/admin/users/{id}")
@@ -62,7 +68,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable UUID id,
-            @Valid @RequestBody CreateUserRequest request,
+            @Valid @RequestBody UpdateUserRequest request,
             @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(userService.updateUser(id, request, jwt.getSubject()));
     }
@@ -116,6 +122,14 @@ public class UserController {
             @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(
                 userService.updateProfile(UUID.fromString(jwt.getSubject()), request));
+    }
+
+    @PostMapping("/api/users/me/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+        userService.changePassword(UUID.fromString(jwt.getSubject()), request);
+        return ResponseEntity.ok(Map.of("message", "Mot de passe modifie avec succes"));
     }
 
     @PostMapping("/api/public/register")

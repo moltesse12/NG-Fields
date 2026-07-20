@@ -2,7 +2,7 @@ import { Component, OnInit, signal , ChangeDetectionStrategy } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TechnicianDetailView } from '../technicians/components/schemas/technician.schema';
-import mockDetailData from './components/mocks/technician-detail-mock.json';
+import { TechnicianService } from '../../../../core/services/technician.service';
 import { TechnicianHeaderComponent } from './components/technician-header.component';
 import { TechnicianInfoComponent } from './components/technician-info.component';
 import { TechnicianSkillsComponent } from './components/technician-skills.component';
@@ -38,7 +38,7 @@ export class TechnicianDetailComponent implements OnInit {
   isLoading = signal(true);
   error = signal<string | null>(null);
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(private route: ActivatedRoute, private technicianService: TechnicianService) {}
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -54,15 +54,48 @@ export class TechnicianDetailComponent implements OnInit {
       return;
     }
 
-    setTimeout(() => {
-      try {
-        this.technician.set(mockDetailData as unknown as TechnicianDetailView);
+    this.technicianService.getTechnician(id).subscribe({
+      next: (res) => {
+        const detail: TechnicianDetailView = {
+          id: 0,
+          firstName: res.firstName,
+          lastName: res.lastName,
+          email: res.email,
+          phone: res.phone || '',
+          status: res.status,
+          avatar: '',
+          hireDate: res.createdAt,
+          skills: res.skills || [],
+          interventions: { thisMonth: 0, total: 0, avgDuration: 0 },
+          rating: { average: 0, count: 0 },
+          address: '',
+          city: '',
+          postalCode: '',
+          country: '',
+          department: '',
+          manager: '',
+          managerEmail: '',
+          certifications: [],
+          availability: {
+            status: res.status as any,
+            workingHours: {
+              monday: '08:00-17:00', tuesday: '08:00-17:00', wednesday: '08:00-17:00',
+              thursday: '08:00-17:00', friday: '08:00-17:00', saturday: '', sunday: '',
+            },
+          },
+          interventionsThisMonth: [],
+          interventionsHistory: [],
+          ratings: [],
+          notes: '',
+        };
+        this.technician.set(detail);
         this.isLoading.set(false);
-      } catch {
-        this.error.set('Erreur lors du chargement du technicien');
+      },
+      error: (err) => {
+        this.error.set(err?.detail || 'Erreur lors du chargement du technicien');
         this.isLoading.set(false);
-      }
-    }, 300);
+      },
+    });
   }
 
   onStatusChange(newStatus: string): void {

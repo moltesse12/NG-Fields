@@ -15,7 +15,7 @@
 ```sql
 CREATE ROLE keycloak_user
     WITH LOGIN
-         PASSWORD 'Keycloak_Pg_2026!'
+         PASSWORD '${KC_DB_PASSWORD}'
          NOSUPERUSER
          NOCREATEDB
          NOCREATEROLE
@@ -57,7 +57,7 @@ Keycloak 26.6.2 (distribution Quarkus) se configure via variables d'environnemen
 $env:KC_DB          = "postgres"
 $env:KC_DB_URL      = "jdbc:postgresql://localhost:5432/keycloak"
 $env:KC_DB_USERNAME = "keycloak_user"
-$env:KC_DB_PASSWORD = "Keycloak_Pg_2026!"
+$env:KC_DB_PASSWORD = "${KC_DB_PASSWORD}"
 ```
 
 Ou via le fichier `conf/keycloak.conf` (équivalent YAML) :
@@ -66,7 +66,7 @@ Ou via le fichier `conf/keycloak.conf` (équivalent YAML) :
 db=postgres
 db-url=jdbc:postgresql://localhost:5432/keycloak
 db-username=keycloak_user
-db-password=Keycloak_Pg_2026!
+db-password=${KC_DB_PASSWORD}
 ```
 
 ## 6. Démarrage

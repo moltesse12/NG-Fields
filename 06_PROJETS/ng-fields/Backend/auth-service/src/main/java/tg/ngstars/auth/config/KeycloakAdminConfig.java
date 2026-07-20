@@ -11,6 +11,7 @@ public class KeycloakAdminConfig {
 
     @Bean
     public Keycloak keycloak(KeycloakProperties props) {
+        // ponytail: timeouts configured via KeycloakProperties/HTTP client config
         return KeycloakBuilder.builder()
                 .serverUrl(props.authServerUrl())
                 .realm(props.realm())

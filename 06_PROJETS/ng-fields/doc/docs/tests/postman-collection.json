@@ -1004,6 +1004,667 @@
         "url": "{{base_url}}/api/clients"
       }
     }
+    ,
+    {
+      "name": "33. Créer une intervention (TECHNICIEN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Intervention créée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.id).to.not.be.empty;",
+              "    pm.expect(json.reference).to.include(\"INT-\");",
+              "    pm.expect(json.status).to.eql(\"CREATED\");",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"testInterventionId\", json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-POSTMAN-001\",\n  \"clientId\": \"{{testClientId}}\",\n  \"clientName\": \"NG-STARs SARL\",\n  \"equipmentType\": \"Serveur Dell PowerEdge\",\n  \"equipmentBrand\": \"Dell\",\n  \"equipmentModel\": \"R750\",\n  \"equipmentSerial\": \"SN-DELL-001\",\n  \"reportedIssue\": \"Serveur en surchauffe\",\n  \"siteAddress\": \"Lomé, Togo\",\n  \"siteCity\": \"Lomé\",\n  \"notes\": \"Intervention de test Postman\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions"
+      }
+    },
+    {
+      "name": "34. Lister les interventions (ADMIN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Page reçue\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"content\");",
+              "    pm.expect(json.content.length).to.be.at.least(1);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions?page=0&size=20"
+      }
+    },
+    {
+      "name": "35. Détail d'une intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention récupérée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.id).to.eql(pm.collectionVariables.get(\"testInterventionId\"));",
+              "    pm.expect(json.equipmentBrand).to.eql(\"Dell\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}"
+      }
+    },
+    {
+      "name": "36. Modifier une intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention modifiée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.reportedIssue).to.eql(\"Serveur en surchauffe critique\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-POSTMAN-001\",\n  \"clientId\": \"{{testClientId}}\",\n  \"clientName\": \"NG-STARs SARL\",\n  \"equipmentType\": \"Serveur Dell PowerEdge\",\n  \"equipmentBrand\": \"Dell\",\n  \"equipmentModel\": \"R750\",\n  \"equipmentSerial\": \"SN-DELL-001\",\n  \"reportedIssue\": \"Serveur en surchauffe critique\",\n  \"siteAddress\": \"Lomé, Togo\",\n  \"siteCity\": \"Lomé\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}"
+      }
+    },
+    {
+      "name": "37. Planifier l'intervention (schedule)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Schedule mis à jour\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.departureTime).to.not.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"departureTime\": \"2026-07-20T08:00:00+00:00\",\n  \"arrivalTime\": \"2026-07-20T09:00:00+00:00\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/schedule"
+      }
+    },
+    {
+      "name": "38. Ajouter équipement",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Équipement mis à jour\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.equipmentLocation).to.eql(\"Salle serveur B2\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"location\": \"Salle serveur B2\",\n  \"problemDescription\": \"Température CPU > 90°C\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/equipment"
+      }
+    },
+    {
+      "name": "39. Ajouter diagnostic",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Diagnostic ajouté\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.diagnosis).to.include(\"ventilateur\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"diagnosis\": \"Ventilateur défaillant sur le slot 3\",\n  \"workDone\": \"Remplacement du ventilateur\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/diagnosis"
+      }
+    },
+    {
+      "name": "40. Ajouter résultat",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Résultat ajouté\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.result).to.eql(\"Résolu\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"result\": \"Résolu\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/result"
+      }
+    },
+    {
+      "name": "41. Ajouter recommandations",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Recommandations ajoutées\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.recommendations).to.include(\"maintenance\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"recommendations\": \"Prévoir une maintenance préventive trimestrielle\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/recommendations"
+      }
+    },
+    {
+      "name": "42. Ajouter un item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Item ajouté\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.items).to.have.length.above(0);",
+              "    var lastItem = json.items[json.items.length - 1];",
+              "    pm.expect(lastItem.type).to.eql(\"PART\");",
+              "    pm.expect(lastItem.description).to.eql(\"Ventilateur Dell 80mm\");",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "var lastItem = json.items[json.items.length - 1];",
+              "pm.collectionVariables.set(\"testInterventionItemId\", lastItem.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"PART\",\n  \"description\": \"Ventilateur Dell 80mm\",\n  \"quantity\": 1,\n  \"unitPrice\": 25.00\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/items"
+      }
+    },
+    {
+      "name": "43. Modifier un item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Item modifié\", function () {",
+              "    var json = pm.response.json();",
+              "    var item = json.items.find(i => i.id === pm.collectionVariables.get(\"testInterventionItemId\"));",
+              "    pm.expect(item.quantity).to.eql(2);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"PART\",\n  \"description\": \"Ventilateur Dell 80mm\",\n  \"quantity\": 2,\n  \"unitPrice\": 25.00\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/items/{{testInterventionItemId}}"
+      }
+    },
+    {
+      "name": "44. Démarrer l'intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention démarrée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.status).to.eql(\"IN_PROGRESS\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/start"
+      }
+    },
+    {
+      "name": "45. Fermer l'intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention fermée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.status).to.eql(\"COMPLETED\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/close"
+      }
+    },
+    {
+      "name": "46. Télécharger PDF",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Content-Type PDF\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/pdf\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/pdf"
+      }
+    },
+    {
+      "name": "47. Créer intervention (CLIENT_PORTAL — 403 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 403\", function () {",
+              "    pm.response.to.have.status(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{userToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-FAIL-001\",\n  \"clientId\": \"{{testClientId}}\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions"
+      }
+    },
+    {
+      "name": "48. Interventions par client",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Interventions du client\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"content\");",
+              "    pm.expect(json.content.length).to.be.at.least(1);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/by-client/{{testClientId}}?page=0&size=20"
+      }
+    },
+    {
+      "name": "49. Sync client data (ADMIN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Sync effectué\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"updated\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": \"{{testClientId}}\",\n  \"clientName\": \"NG-STARs SARL Updated\",\n  \"clientEmail\": \"updated@ngstars.tg\",\n  \"clientPhone\": \"+22890111111\",\n  \"clientAddress\": \"Lomé, Togo - nouveau\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/sync/client-data"
+      }
+    },
+    {
+      "name": "50. Sync interventions (TECHNICIEN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-SYNC-001\",\n  \"clientId\": \"{{testClientId}}\",\n  \"localId\": \"local-uuid-001\",\n  \"status\": \"CREATED\",\n  \"interventionDate\": \"2026-07-20T10:00:00+00:00\",\n  \"clientUpdatedAt\": \"2026-07-20T10:00:00+00:00\"\n}"
+        },
+        "url": "{{base_url}}/api/sync/interventions"
+      }
+    },
+    {
+      "name": "51. Annuler une intervention (nouvelle)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Création OK\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"cancelInterventionId\", json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-CANCEL-001\",\n  \"clientId\": \"{{testClientId}}\",\n  \"siteAddress\": \"Lomé, Togo\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions"
+      }
+    },
+    {
+      "name": "52. Annuler l'intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention annulée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.status).to.eql(\"CANCELLED\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{cancelInterventionId}}/cancel"
+      }
+    },
+    {
+      "name": "53. Assigner une intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention assignée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.assignedTo).to.not.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"assignedTo\": \"00000000-0000-0000-0000-000000000001\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/assign"
+      }
+    }
   ],
   "variable": [
     { "key": "base_url", "value": "http://localhost:8080" },
@@ -1019,6 +1680,8 @@
     { "key": "testUserId", "value": "" },
     { "key": "testUserKeycloakId", "value": "" },
     { "key": "testFilename", "value": "" },
-    { "key": "testFilenameBase64", "value": "" }
+    { "key": "testFilenameBase64", "value": "" },
+    { "key": "testInterventionId", "value": "" },
+    { "key": "testInterventionItemId", "value": "" }
   ]
 }

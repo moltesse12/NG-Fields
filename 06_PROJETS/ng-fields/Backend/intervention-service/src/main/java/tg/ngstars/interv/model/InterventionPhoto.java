@@ -1,15 +1,30 @@
 package tg.ngstars.interv.model;
 
-import jakarta.persistence.*;
-import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "intervention_photos")
+@Getter
+@Setter
 public class InterventionPhoto {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -27,32 +42,35 @@ public class InterventionPhoto {
     private Double longitude;
 
     @Column(name = "taken_at")
-    private Instant takenAt;
+    private OffsetDateTime takenAt;
 
     @Column(name = "original_filename", length = 200)
     private String originalFilename;
 
-    @Column(name = "created_at", updatable = false)
-    private Instant createdAt;
+    @Version
+    private Long version;
+
+    @Column(name = "created_by")
+    private UUID createdBy;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_by")
+    private UUID updatedBy;
+
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
 
     @PrePersist
-    public void prePersist() { createdAt = Instant.now(); }
+    public void prePersist() {
+        if (id == null) id = UUID.randomUUID();
+        if (createdAt == null) createdAt = OffsetDateTime.now();
+        updatedAt = createdAt;
+    }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public Intervention getIntervention() { return intervention; }
-    public void setIntervention(Intervention i) { this.intervention = i; }
-    public String getUrl() { return url; }
-    public void setUrl(String url) { this.url = url; }
-    public PhotoType getType() { return type; }
-    public void setType(PhotoType type) { this.type = type; }
-    public Double getLatitude() { return latitude; }
-    public void setLatitude(Double lat) { this.latitude = lat; }
-    public Double getLongitude() { return longitude; }
-    public void setLongitude(Double lon) { this.longitude = lon; }
-    public Instant getTakenAt() { return takenAt; }
-    public void setTakenAt(Instant t) { this.takenAt = t; }
-    public String getOriginalFilename() { return originalFilename; }
-    public void setOriginalFilename(String f) { this.originalFilename = f; }
-    public Instant getCreatedAt() { return createdAt; }
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
 }

@@ -20,6 +20,11 @@ import { UserService } from '../../../../core/services/user.service';
       </div>
 
       <form [formGroup]="form" class="space-y-4">
+        @if (error(); as err) {
+          <div class="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            {{ err }}
+          </div>
+        }
         <div>
           <label class="block text-sm font-medium mb-1">Nom complet *</label>
           <input formControlName="name" class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Jean Dupont" />
@@ -73,6 +78,8 @@ export class UserFormComponent {
   private userService = inject(UserService);
 
   isSubmitting = signal(false);
+  error = signal<string | null>(null);
+  error = signal<string | null>(null);
 
   form: FormGroup = this.fb.group({
     name: ['', Validators.required],
@@ -84,6 +91,7 @@ export class UserFormComponent {
   onSubmit(): void {
     if (this.form.invalid) return;
     this.isSubmitting.set(true);
+    this.error.set(null);
     const val = this.form.value;
     this.userService.createUser({
       username: val.email,
@@ -93,7 +101,10 @@ export class UserFormComponent {
       role: val.role,
     }).subscribe({
       next: () => this.router.navigate(['/dashboard/users']),
-      error: () => this.isSubmitting.set(false),
+      error: (err) => {
+        this.error.set(err?.detail || 'Erreur lors de la création de l\'utilisateur');
+        this.isSubmitting.set(false);
+      },
     });
   }
 

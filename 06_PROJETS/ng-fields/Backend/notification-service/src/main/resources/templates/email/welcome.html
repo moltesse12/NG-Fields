@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/></head>
+<body style="font-family: Arial, sans-serif; color: #333;">
+    <h2>Bienvenue sur NG-STARs</h2>
+    <p>Bonjour <strong th:text="${clientName ?: 'Utilisateur'}"></strong>,</p>
+    <p>Votre compte a &eacute;t&eacute; cr&eacute;&eacute; avec succ&egrave;s.</p>
+    <p>R&eacute;f&eacute;rence de votre compte : <strong th:text="${interventionRef ?: ''}"></strong></p>
+    <hr/>
+    <p style="color: #888; font-size: 0.9em;">Email automatique - NG-STARs Field Service</p>
+</body>
+</html>

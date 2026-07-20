@@ -1,14 +1,11 @@
 package tg.ngstars.interv.service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 
 import com.lowagie.text.Document;
-import com.lowagie.text.Element;
-import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
 import com.lowagie.text.Paragraph;
-import com.lowagie.text.Phrase;
-import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
@@ -19,11 +16,10 @@ public final class PdfService {
 
     private PdfService() {}
 
-    public static byte[] generate(Intervention intervention) {
-        var baos = new ByteArrayOutputStream();
+    public static void write(Intervention intervention, OutputStream out) {
         var document = new Document();
         try {
-            PdfWriter.getInstance(document, baos);
+            PdfWriter.getInstance(document, out);
             document.open();
 
             var titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
@@ -74,6 +70,11 @@ public final class PdfService {
         } finally {
             document.close();
         }
+    }
+
+    public static byte[] generate(Intervention intervention) {
+        var baos = new ByteArrayOutputStream();
+        write(intervention, baos);
         return baos.toByteArray();
     }
 }

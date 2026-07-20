@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"/></head>
+<body style="font-family: Arial, sans-serif; color: #333;">
+    <h2>Intervention termin&eacute;e</h2>
+    <p>L'intervention suivante a &eacute;t&eacute; cl&ocirc;tur&eacute;e :</p>
+    <p th:if="${interventionRef}">R&eacute;f&eacute;rence : <strong th:text="${interventionRef}"></strong></p>
+    <p th:if="${clientName}">Client : <strong th:text="${clientName}"></strong></p>
+    <p th:if="${status}">Statut final : <strong th:text="${status}"></strong></p>
+    <p th:if="${assignedTo}">Technicien : <strong th:text="${assignedTo}"></strong></p>
+    <hr/>
+    <p style="color: #888; font-size: 0.9em;">Email automatique - NG-STARs Field Service</p>
+</body>
+</html>

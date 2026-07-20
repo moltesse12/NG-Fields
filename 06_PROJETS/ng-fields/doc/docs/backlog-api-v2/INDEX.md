@@ -10,18 +10,18 @@
 
 | # | Livrable | Référence |
 |---|----------|-----------|
-| — | Architecture globale (bases, rôles, connexion) | [docs/database/database-model.md](../database/database-model.md) |
-| — | Base `ng_fields` (schémas, tables, DDL) | [docs/database/ng-fields-application.md](../database/ng-fields-application.md) |
-| — | Base `keycloak` (driver, vars d'env, démarrage) | [docs/database/keycloak.md](../database/keycloak.md) |
+| — | Architecture globale (bases, rôles, connexion) | [docs/database/database-model.md](06_PROJETS/ng-fields/Doc/docs/database/database-model.md) |
+| — | Base `ng_fields` (schémas, tables, DDL) | [docs/database/ng-fields-application.md](ng-fields-application.md) |
+| — | Base `keycloak` (driver, vars d'env, démarrage) | [docs/database/keycloak.md](keycloak.md) |
 
 ## Sprint 0 — Setup environnement
 
 | # | Livrable | Guide |
 |---|----------|-------|
-| 0.1 | PostgreSQL 18 + base `ng_fields` créée | [doc/Setup.md](../../Setup.md) |
+| 0.1 | PostgreSQL 18 + base `ng_fields` créée | [doc/Setup.md](Setup.md) |
 | 0.2 | Keycloak 26.0.9 tourne sur `localhost:8088` | [01-setup-keycloak.md](01-setup-keycloak.md) |
 | 0.3 | Realm `ng-fields` + clients OIDC + rôles importés | [02-configure-realm.md](02-configure-realm.md) |
-| 0.4 | 5 microservices compilent et démarrent | [doc/Setup.md](../../Setup.md) |
+| 0.4 | 5 microservices compilent et démarrent | [doc/Setup.md](Setup.md) |
 
 ## Sprint 1 — Auth (auth-service)
 

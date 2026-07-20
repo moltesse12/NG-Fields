@@ -61,7 +61,7 @@ export class InterventionFormComponent {
     const val = this.form.value;
     this.interventionService.createIntervention({
       reference: `INT-${Date.now()}`,
-      clientId: '',
+      clientId: undefined,
       clientName: val.siteName,
       equipmentType: val.equipment || undefined,
       reportedIssue: val.description || undefined,

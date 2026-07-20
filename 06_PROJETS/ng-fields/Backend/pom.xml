@@ -11,12 +11,50 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>shared-lib</module>
         <module>auth-service</module>
         <module>client-service</module>
         <module>gateway-service</module>
         <module>intervention-service</module>
         <module>media-service</module>
-<!--        <module>notification-service</module>-->
-<!--        <module>report-service</module>-->
+        <module>notification-service</module>
+        <module>report-service</module>
     </modules>
+
+    <properties>
+        <java.version>25</java.version>
+        <springdoc.version>3.0.3</springdoc.version>
+        <spring-cloud.version>2025.1.2</spring-cloud.version>
+        <keycloak.version>26.0.9</keycloak.version>
+        <sentry.version>8.14.0</sentry.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.keycloak</groupId>
+                <artifactId>keycloak-admin-client</artifactId>
+                <version>${keycloak.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.sentry</groupId>
+                <artifactId>sentry-bom</artifactId>
+                <version>${sentry.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

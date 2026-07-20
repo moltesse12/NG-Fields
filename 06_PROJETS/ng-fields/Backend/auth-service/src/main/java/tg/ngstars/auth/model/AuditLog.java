@@ -9,8 +9,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
 @Table(name = "audit_logs")
+@Getter @Setter
 public class AuditLog {
 
     @Id
@@ -42,20 +46,4 @@ public class AuditLog {
     }
 
     public AuditLog() {}
-
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public UUID getUserId() { return userId; }
-    public void setUserId(UUID userId) { this.userId = userId; }
-    public String getAction() { return action; }
-    public void setAction(String action) { this.action = action; }
-    public String getResource() { return resource; }
-    public void setResource(String resource) { this.resource = resource; }
-    public String getResourceId() { return resourceId; }
-    public void setResourceId(String resourceId) { this.resourceId = resourceId; }
-    public String getDetails() { return details; }
-    public void setDetails(String details) { this.details = details; }
-    public String getIpAddress() { return ipAddress; }
-    public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }
-    public OffsetDateTime getCreatedAt() { return createdAt; }
 }

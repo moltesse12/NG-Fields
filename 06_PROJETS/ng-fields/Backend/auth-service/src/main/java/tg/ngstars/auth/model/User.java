@@ -10,6 +10,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "users",
@@ -23,7 +24,7 @@ public class User {
     @Id
     private UUID id;
 
-    @Column(name = "keycloak_id", nullable = false, unique = true)
+    @Column(name = "keycloak_id", nullable = false)
     private UUID keycloakId;
 
     @Column(nullable = false, unique = true, length = 50)
@@ -51,6 +52,12 @@ public class User {
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    @Column(name = "updated_by")
+    private UUID updatedBy;
+
+    @Version
+    private Long version;
 
     @PrePersist
     public void prePersist() {
@@ -85,4 +92,7 @@ public class User {
     public void setActive(Boolean active) { this.active = active; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
+    public UUID getUpdatedBy() { return updatedBy; }
+    public void setUpdatedBy(UUID updatedBy) { this.updatedBy = updatedBy; }
+    public Long getVersion() { return version; }
 }

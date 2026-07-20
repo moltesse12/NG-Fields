@@ -50,6 +50,11 @@ import { UserResponse } from '../../../../shared/models/user.dto';
       </div>
 
       <div class="rounded-lg border bg-card shadow-sm">
+        @if (isLoading()) {
+          <div class="p-8 text-center text-muted-foreground">Chargement...</div>
+        } @else if (error(); as err) {
+          <div class="p-8 text-center text-red-500">{{ err }}</div>
+        } @else {
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
@@ -107,6 +112,7 @@ import { UserResponse } from '../../../../shared/models/user.dto';
             </tbody>
           </table>
         </div>
+        }
       </div>
     </div>
   `,
@@ -120,9 +126,14 @@ export class UsersComponent implements OnInit {
   roleFilter = signal('all');
   statusFilter = signal('all');
   users = signal<UserResponse[]>([]);
+  isLoading = signal(true);
+  error = signal<string | null>(null);
 
   ngOnInit() {
-    this.userService.getUsers().subscribe(res => this.users.set(res.content));
+    this.userService.getUsers().subscribe({
+      next: (res) => { this.users.set(res.content); this.isLoading.set(false); },
+      error: (err) => { this.error.set(err?.detail || 'Erreur lors du chargement des utilisateurs'); this.isLoading.set(false); },
+    });
   }
 
   filteredUsers = computed(() => {

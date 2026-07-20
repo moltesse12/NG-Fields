@@ -6,32 +6,16 @@ Ce référentiel centralise toute la connaissance liée à l'audit, la stratégi
 
 ## 📁 Structure du Coffre
 
-| Dossier | Contenu |
-|---------|---------|
-| `00_HOME/` | Vision globale, roadmap transformation, dashboard |
-| `01_INBOX/` | Notes brutes, idées, brouillons |
-| `02_ENTREPRISE/` | Organigramme, processus globaux, présentation |
-| `03_DEPARTEMENTS/` | Par département : ASI, COMPTA, DEV, RH — audits, processus, solutions |
-| `04_AUDIT/` | Questionnaires complets, audits IT/financier/processus/RH/stratégique |
-| `05_SYSTEME_IT/` | Architecture actuelle et cible, stack technique, infrastructure, sécurité |
-| `06_PROJETS/` | Projets : App Unique, Automatisation, Data, ERP, IA |
-| `07_DATA_IA/` | Stratégie data, modèles IA, cas d'usage |
-| `08_PROCESSUS/` | Processus IT, RH, Support, Vente |
-| `09_STRATEGIE/` | Vision, benchmark, concurrence, transformation digitale |
-| `10_MEETINGS/` | Comptes-rendus d'interviews (DSI, Direction, RH) |
+| Dossier         | Contenu                                                               |
+| --------------- | --------------------------------------------------------------------- |
+| `04_AUDIT/`     | Questionnaires complets, audits IT/financier/processus/RH/stratégique |
+| `06_PROJETS/`   | Projets : App Unique, Automatisation, Data, ERP, IA                   |
 | `11_TEMPLATES/` | Templates Obsidian pour architecture, audit, cahier des charges, etc. |
-| `100_Formation/` | Documents de formation (PDFs) |
-| `99_ARCHIVES/` | Archives et versions antérieures des documents |
+| `99_ARCHIVES/`  | Archives et versions antérieures des documents                        |
 
 ## 🚀 Projets Clés
 
 - **Projet NG-Fields** — Application terrain pour les interventions
-- **Projet App Unique** — Application unique transversale
-- **Projet ERP** — Implantation / optimisation ERP
-- **Projet Data** — Stratégie et gouvernance des données
-- **Projet IA** — Déploiement de l'intelligence artificielle
-- **Projet Automatisation** — Automatisation des processus métier
-
 ## 🛠️ Technologies
 
 - **Stack actuelle** : Java/Spring Boot, Maven/Gradle, PostgreSQL, Keycloak

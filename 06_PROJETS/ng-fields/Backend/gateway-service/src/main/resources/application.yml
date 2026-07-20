@@ -1,38 +1,65 @@
 server:
   port: 8080
+  shutdown: graceful
+  forward-headers-strategy: FRAMEWORK
 
 spring:
   application:
     name: gateway-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   config:
-    import: optional:file:.env[.properties]
-
+    import: optional:file:${ENV_FILE:./.env}[.properties]
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_URL:http://localhost:8088}/realms/ng-fields
-
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8088/realms/ng-fields}
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 5s
+
       globalcors:
         cors-configurations:
           '[/**]':
             allowed-origins:
-              - "http://localhost:4200"
               - "${FRONTEND_URL:http://localhost:4200}"
             allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
-            allowed-headers: ["*"]
+            allowed-headers: [Authorization, Content-Type, X-Requested-With, Accept]
             allow-credentials: true
             max-age: 3600
 
       routes:
+        - id: auth-register
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/public/register
+          filters:
+            - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 3
+                redis-rate-limiter.burstCapacity: 6
+                key-resolver: "#{@remoteAddrKeyResolver}"
+
         - id: auth-public
           uri: ${AUTH_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/public/**
           filters:
             - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
 
         - id: auth-admin
           uri: ${AUTH_SERVICE_URL:http://localhost:8081}
@@ -40,6 +67,10 @@ spring:
             - Path=/api/admin/users/**
           filters:
             - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
@@ -52,6 +83,10 @@ spring:
             - Path=/api/users/me
           filters:
             - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
 
         - id: client-service
           uri: ${CLIENT_SERVICE_URL:http://localhost:8082}
@@ -59,6 +94,10 @@ spring:
             - Path=/api/clients/**
           filters:
             - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 20
@@ -71,11 +110,27 @@ spring:
             - Path=/api/interventions/**
           filters:
             - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 30
                 redis-rate-limiter.burstCapacity: 60
                 key-resolver: "#{@userKeyResolver}"
+
+        - id: intervention-sync
+          uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/interventions/sync/**
+            - Method=POST
+          filters:
+            - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
 
         - id: sync-service
           uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
@@ -83,6 +138,15 @@ spring:
             - Path=/api/sync/**
           filters:
             - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
 
         - id: media-service
           uri: ${MEDIA_SERVICE_URL:http://localhost:8084}
@@ -90,30 +154,110 @@ spring:
             - Path=/api/media/**
           filters:
             - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: report-service
+          uri: ${REPORT_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Path=/api/reports/**
+          filters:
+            - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@userKeyResolver}"
 
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL:false}
+
+app:
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200,http://localhost:8100}
 
 springdoc:
   swagger-ui:
+    enabled: false
     path: /swagger-ui.html
+  api-docs:
+    enabled: false
     urls:
       - name: auth-service
-        url: /api/admin/users/v3/api-docs
+        url: /v3/api-docs
       - name: client-service
-        url: /api/clients/v3/api-docs
+        url: /v3/api-docs
       - name: intervention-service
-        url: /api/interventions/v3/api-docs
+        url: /v3/api-docs
       - name: media-service
-        url: /api/media/v3/api-docs
+        url: /v3/api-docs
+      - name: notification-service
+        url: /v3/api-docs
+      - name: report-service
+        url: /v3/api-docs
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000ms
+        permitted-number-of-calls-in-half-open-state: 3
+    instances:
+      myCircuitBreaker:
+        base-config: default
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
+
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SPRING_PROFILES_ACTIVE:dev}
+  traces-sample-rate: 0.2
+  enable-tracing: true
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: when-authorized
+    env:
+      keys-to-sanitize: password,secret,token,credential,admin-client-secret,smtp

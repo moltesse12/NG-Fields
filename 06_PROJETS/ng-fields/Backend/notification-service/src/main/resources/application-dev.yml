@@ -1,0 +1,8 @@
+springdoc:
+  swagger-ui:
+    enabled: true
+
+logging:
+  level:
+    tg.ngstars: DEBUG
+    org.springframework.security: DEBUG

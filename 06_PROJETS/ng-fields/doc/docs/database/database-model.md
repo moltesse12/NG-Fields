@@ -36,8 +36,8 @@ Chaque microservice utilise son propre schéma :
 
 | Rôle | Base | Connection Limit | Mot de passe | Usage |
 |------|------|-----------------|-------------|-------|
-| `ng_fields_user` | `ng_fields` | 50 | `Pg_ng-fields1234` | API Spring Boot (tous services) |
-| `keycloak_user` | `keycloak` | 20 | `Keycloak_Pg_2026!` | Keycloak IAM |
+| `ng_fields_user` | `ng_fields` | 50 | `${DB_PASSWORD}` | API Spring Boot (tous services) |
+| `keycloak_user` | `keycloak` | 20 | `${KC_DB_PASSWORD}` | Keycloak IAM |
 
 > **Règle :** Jamais le superuser `postgres` dans les applications.
 

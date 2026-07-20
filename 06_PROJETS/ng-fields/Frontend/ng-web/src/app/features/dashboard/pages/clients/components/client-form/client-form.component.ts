@@ -17,6 +17,7 @@ export class ClientFormComponent {
   private clientService = inject(ClientService);
 
   isSubmitting = signal(false);
+  error = signal<string | null>(null);
 
   form: FormGroup = this.fb.group({
     companyName: ['', Validators.required],
@@ -32,6 +33,7 @@ export class ClientFormComponent {
   onSubmit(): void {
     if (this.form.invalid) return;
     this.isSubmitting.set(true);
+    this.error.set(null);
     const val = this.form.value;
     const fullAddress = [val.address, val.city, val.country].filter(Boolean).join(', ');
     this.clientService.createClient({
@@ -42,7 +44,10 @@ export class ClientFormComponent {
       address: fullAddress || undefined,
     }).subscribe({
       next: () => this.router.navigate(['/dashboard/clients']),
-      error: () => this.isSubmitting.set(false),
+      error: (err) => {
+        this.error.set(err?.detail || 'Erreur lors de la création du client');
+        this.isSubmitting.set(false);
+      },
     });
   }
 

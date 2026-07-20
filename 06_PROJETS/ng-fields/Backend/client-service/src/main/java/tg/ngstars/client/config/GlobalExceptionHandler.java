@@ -1,18 +1,21 @@
 package tg.ngstars.client.config;
 
-import java.net.URI;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import tg.ngstars.client.exception.ConflictException;
-import tg.ngstars.client.exception.NotFoundException;
+import tg.ngstars.common.exception.ConflictException;
+import tg.ngstars.common.exception.NotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,50 +24,61 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        problem.setTitle("Bad Request");
-        problem.setDetail(ex.getBindingResult().getFieldErrors().stream()
-                .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                .reduce((a, b) -> a + "; " + b)
-                .orElse("Validation failed"));
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
+            .collect(Collectors.toMap(
+                fe -> fe.getField(),
+                fe -> fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "invalide",
+                (a, b) -> a + "; " + b));
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        detail.setTitle("Erreur de validation");
+        detail.setProperty("errors", errors);
+        return detail;
     }
 
     @ExceptionHandler(ConflictException.class)
     public ProblemDetail handleConflict(ConflictException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        problem.setTitle("Conflict");
-        problem.setDetail(ex.getMessage());
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        detail.setDetail(ex.getMessage());
+        return detail;
     }
 
     @ExceptionHandler(NotFoundException.class)
     public ProblemDetail handleNotFound(NotFoundException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
-        problem.setTitle("Not Found");
-        problem.setDetail(ex.getMessage());
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        detail.setDetail(ex.getMessage());
+        return detail;
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
-        problem.setTitle("Forbidden");
-        problem.setDetail("Access denied");
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        detail.setDetail("Acces refuse : droits insuffisants");
+        return detail;
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ProblemDetail handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        detail.setTitle("Conflict");
+        detail.setDetail("Ce document a été modifié par un autre utilisateur. Veuillez recharger la page.");
+        return detail;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrity(DataIntegrityViolationException ex) {
+        log.error("Data integrity violation", ex);
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        detail.setTitle("Conflict");
+        detail.setDetail("Violation de contrainte de données. L'opération ne peut pas être effectuée.");
+        return detail;
     }
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleException(Exception ex) {
-        log.error("Unhandled exception", ex);
-        var problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
-        problem.setTitle("Internal Server Error");
-        problem.setDetail("An unexpected error occurred");
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        log.error("Unexpected error", ex);
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        detail.setTitle("Erreur interne");
+        detail.setDetail("Une erreur inattendue s'est produite");
+        return detail;
     }
 }
