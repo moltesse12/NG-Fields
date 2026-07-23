@@ -6,6 +6,7 @@ import java.util.UUID;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -18,6 +19,9 @@ import jakarta.persistence.Version;
            @UniqueConstraint(columnNames = "keycloak_id"),
             @UniqueConstraint(columnNames = "username"),
             @UniqueConstraint(columnNames = "email")
+       },
+       indexes = {
+           @Index(name = "idx_users_company_id", columnList = "company_id")
        })
 public class User {
 
@@ -52,6 +56,9 @@ public class User {
 
     @Column(name = "must_change_password", nullable = false)
     private Boolean mustChangePassword = false;
+
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -100,6 +107,8 @@ public class User {
     public void setCompanyId(UUID companyId) { this.companyId = companyId; }
     public Boolean getMustChangePassword() { return mustChangePassword; }
     public void setMustChangePassword(Boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
+    public Boolean getEmailVerified() { return emailVerified; }
+    public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public UUID getUpdatedBy() { return updatedBy; }

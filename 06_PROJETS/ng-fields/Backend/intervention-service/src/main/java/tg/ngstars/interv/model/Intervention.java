@@ -11,6 +11,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -27,7 +28,13 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "interventions")
+@Table(name = "interventions",
+       indexes = {
+           @Index(name = "idx_interventions_client_id", columnList = "client_id"),
+           @Index(name = "idx_interventions_status", columnList = "status"),
+           @Index(name = "idx_interventions_assigned_to", columnList = "assigned_to"),
+           @Index(name = "idx_interventions_created_at", columnList = "created_at")
+       })
 @Getter @Setter @ToString(exclude = "items")
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor

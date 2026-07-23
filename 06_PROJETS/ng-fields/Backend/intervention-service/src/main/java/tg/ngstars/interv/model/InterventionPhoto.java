@@ -9,6 +9,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
@@ -19,7 +20,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "intervention_photos")
+@Table(name = "intervention_photos",
+       indexes = {
+           @Index(name = "idx_intervention_photos_intervention_id", columnList = "intervention_id")
+       })
 @Getter
 @Setter
 public class InterventionPhoto {

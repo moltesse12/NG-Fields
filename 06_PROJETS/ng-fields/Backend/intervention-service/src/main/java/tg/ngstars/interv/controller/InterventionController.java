@@ -256,13 +256,13 @@ public class InterventionController {
     }
 
     @PostMapping("/{id}/send-email")
-    @Operation(summary = "Envoyer le rapport par email", description = "Genere le PDF et l'envoie via Resend a l'adresse specifiee.")
-    @ApiResponse(responseCode = "200", description = "Email envoye")
+    @Operation(summary = "Envoyer le rapport par email", description = "Genere le PDF et l'envoie via Resend a l'adresse specifiee. Traitement asynchrone.")
+    @ApiResponse(responseCode = "202", description = "Email en cours d'envoi")
     public ResponseEntity<java.util.Map<String, String>> sendEmail(@PathVariable UUID id,
             @Valid @RequestBody SendEmailRequest request) {
         var userId = securityUtils.getCurrentUserId();
         interventionService.sendEmailReport(id, request.email(), userId, securityUtils.isAdminOrManager());
-        return ResponseEntity.ok(java.util.Map.of("message", "Email sent to " + request.email()));
+        return ResponseEntity.accepted().body(java.util.Map.of("message", "Email en cours d'envoi a " + request.email()));
     }
 
     @PostMapping("/sync/client-data")

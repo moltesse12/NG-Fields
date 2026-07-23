@@ -8,6 +8,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
@@ -23,7 +24,10 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "intervention_items")
+@Table(name = "intervention_items",
+       indexes = {
+           @Index(name = "idx_intervention_items_intervention_id", columnList = "intervention_id")
+       })
 @Getter @Setter @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor

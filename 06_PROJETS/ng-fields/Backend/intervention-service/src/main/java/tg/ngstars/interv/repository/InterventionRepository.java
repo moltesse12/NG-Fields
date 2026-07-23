@@ -122,4 +122,15 @@ public interface InterventionRepository extends JpaRepository<Intervention, UUID
 
     @Query("SELECT COUNT(DISTINCT i.assignedTo) FROM Intervention i WHERE i.active = true AND i.clientId = :clientId AND i.assignedTo IS NOT NULL")
     long countDistinctTechniciansByClientId(@Param("clientId") UUID clientId);
+
+    @Query("SELECT COUNT(i) FROM Intervention i WHERE i.active = true AND i.assignedTo = :technicianId AND i.id <> :excludeId AND i.startTime IS NOT NULL AND i.endTime IS NOT NULL AND i.startTime < :endTime AND i.endTime > :startTime")
+    long countOverlappingInterventions(@Param("technicianId") UUID technicianId,
+                                       @Param("excludeId") UUID excludeId,
+                                       @Param("startTime") java.time.OffsetDateTime startTime,
+                                       @Param("endTime") java.time.OffsetDateTime endTime);
+
+    @Query("SELECT COUNT(i) FROM Intervention i WHERE i.active = true AND i.assignedTo = :technicianId AND i.startTime IS NOT NULL AND i.endTime IS NOT NULL AND i.startTime < :endTime AND i.endTime > :startTime")
+    long countOverlappingInterventionsNoExclude(@Param("technicianId") UUID technicianId,
+                                                @Param("startTime") java.time.OffsetDateTime startTime,
+                                                @Param("endTime") java.time.OffsetDateTime endTime);
 }

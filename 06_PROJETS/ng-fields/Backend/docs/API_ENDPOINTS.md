@@ -1,7 +1,7 @@
 # API Endpoints — NG-Fields Backend
 
 **Mis à jour :** 23/07/2026 (Backend Complet)
-**Total :** 90 endpoints
+**Total :** 91 endpoints
 
 ---
 
@@ -54,6 +54,7 @@ All external requests go through the gateway.
 | GET | /api/clients/{id} | ADMIN/MANAGER/TECHNICIAN | Get client |
 | PUT | /api/clients/{id} | ADMIN | Update client |
 | DELETE | /api/clients/{id} | ADMIN | Soft delete client |
+| POST | /api/clients/{id}/reactivate | ADMIN | Reactivate soft-deleted client |
 
 ---
 
@@ -100,10 +101,12 @@ All external requests go through the gateway.
 
 | Method | Endpoint | Role | Description |
 |--------|----------|------|-------------|
-| POST | /api/media/upload | ANY | Upload file (multipart) |
-| POST | /api/media/upload-base64 | ANY | Upload base64 |
-| GET | /api/media/{filename} | ANY | Download file |
-| DELETE | /api/media/{filename} | ANY | Delete file |
+| POST | /api/media/upload | ANY | Upload file (multipart) — AV scanning + compression + quota |
+| POST | /api/media/upload-base64 | ANY | Upload base64 — AV scanning + compression + quota |
+| GET | /api/media/{filename} | ANY* | Download file (auth required) |
+| DELETE | /api/media/{filename} | ANY | Delete file (ownership check) |
+
+*\* Download requires valid JWT.*
 
 ---
 
@@ -111,7 +114,7 @@ All external requests go through the gateway.
 
 | Method | Endpoint | Role | Description |
 |--------|----------|------|-------------|
-| POST | /api/notifications/email | ANY | Send email |
+| POST | /api/notifications/email | ANY | Send email (rate limited: 50/hour/recipient) |
 | POST | /api/push/register-token | ANY | Register FCM push token |
 | POST | /api/push/send | ANY | Send push notification |
 | GET | /api/push/health | PUBLIC | Push service health |
@@ -124,7 +127,7 @@ All external requests go through the gateway.
 |--------|----------|------|-------------|
 | GET | /api/reports/interventions/csv | MANAGER | Export CSV |
 | GET | /api/reports/interventions/pdf | MANAGER | Export PDF |
-| GET | /api/reports/analytics | MANAGER | Analytics |
+| GET | /api/reports/analytics | MANAGER | Analytics (cached 60s) |
 | GET | /api/report/pdf-templates | ADMIN | List PDF templates |
 | POST | /api/report/pdf-templates | ADMIN | Create PDF template |
 | PUT | /api/report/pdf-templates/{id} | ADMIN | Update PDF template |

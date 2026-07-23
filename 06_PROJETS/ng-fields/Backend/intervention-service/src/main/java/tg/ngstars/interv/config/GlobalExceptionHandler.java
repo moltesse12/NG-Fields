@@ -1,140 +1,90 @@
 package tg.ngstars.interv.config;
 
 import java.io.IOException;
-import java.net.URI;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import tg.ngstars.common.exception.BaseExceptionHandler;
 import tg.ngstars.common.exception.ConflictException;
 import tg.ngstars.common.exception.ForbiddenException;
 import tg.ngstars.common.exception.MediaServiceException;
 import tg.ngstars.common.exception.NotFoundException;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends BaseExceptionHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        problem.setTitle("Bad Request");
-        problem.setDetail(ex.getBindingResult().getFieldErrors().stream()
-                .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                .reduce((a, b) -> a + "; " + b)
-                .orElse("Validation failed"));
-        problem.setType(URI.create("about:blank"));
-        return problem;
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
-        problem.setTitle("Forbidden");
-        problem.setDetail("Access denied");
-        problem.setType(URI.create("about:blank"));
-        return problem;
+    @ExceptionHandler(NotFoundException.class)
+    public ProblemDetail handleNotFound(NotFoundException ex) {
+        return super.handleNotFound(ex);
     }
 
     @ExceptionHandler(ConflictException.class)
     public ProblemDetail handleConflict(ConflictException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        problem.setTitle("Conflict");
-        problem.setDetail(ex.getMessage());
-        problem.setType(URI.create("about:blank"));
-        return problem;
-    }
-
-    @ExceptionHandler(NotFoundException.class)
-    public ProblemDetail handleNotFound(NotFoundException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
-        problem.setTitle("Not Found");
-        problem.setDetail(ex.getMessage());
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        return super.handleConflict(ex);
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ProblemDetail handleForbidden(ForbiddenException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
-        problem.setTitle("Forbidden");
-        problem.setDetail(ex.getMessage());
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        return super.handleForbidden(ex);
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ProblemDetail handleValidation(
+            org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        return super.handleValidation(ex);
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(
+            org.springframework.security.access.AccessDeniedException ex) {
+        return super.handleForbidden(ex);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        problem.setTitle("Bad Request");
-        problem.setDetail(ex.getMessage());
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        return super.handleIllegalArgument(ex);
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ProblemDetail handleIllegalState(IllegalStateException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        problem.setTitle("Conflict");
-        problem.setDetail(ex.getMessage());
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        return super.handleIllegalState(ex);
     }
 
     @ExceptionHandler(MediaServiceException.class)
     public ProblemDetail handleMediaService(MediaServiceException ex) {
         log.error("Media service error", ex);
-        var problem = ProblemDetail.forStatus(HttpStatus.BAD_GATEWAY);
+        var problem = ProblemDetail.forStatus(org.springframework.http.HttpStatus.BAD_GATEWAY);
         problem.setTitle("Bad Gateway");
         problem.setDetail("Media service unavailable");
-        problem.setType(URI.create("about:blank"));
+        problem.setType(java.net.URI.create("about:blank"));
         return problem;
     }
 
     @ExceptionHandler(IOException.class)
     public ProblemDetail handleIOException(IOException ex) {
         log.error("IO error", ex);
-        var problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        var problem = ProblemDetail.forStatus(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR);
         problem.setTitle("Internal Server Error");
-        problem.setDetail("Erreur d'entrée/sortie: " + ex.getMessage());
-        problem.setType(URI.create("about:blank"));
+        problem.setDetail("Erreur d'entree/sortie: " + ex.getMessage());
+        problem.setType(java.net.URI.create("about:blank"));
         return problem;
     }
 
-    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ProblemDetail handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        problem.setTitle("Conflict");
-        problem.setDetail("Ce document a été modifié par un autre utilisateur. Veuillez recharger la page.");
-        problem.setType(URI.create("about:blank"));
-        return problem;
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ProblemDetail handleOptimisticLock(
+            org.springframework.orm.ObjectOptimisticLockingFailureException ex) {
+        return super.handleOptimisticLock(ex);
     }
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ProblemDetail handleDataIntegrity(DataIntegrityViolationException ex) {
-        log.error("Data integrity violation", ex);
-        var problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        problem.setTitle("Conflict");
-        problem.setDetail("Violation de contrainte de données. L'opération ne peut pas être effectuée.");
-        problem.setType(URI.create("about:blank"));
-        return problem;
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrity(
+            org.springframework.dao.DataIntegrityViolationException ex) {
+        return super.handleDataIntegrity(ex);
     }
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleException(Exception ex) {
-        log.error("Unhandled exception", ex);
-        var problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
-        problem.setTitle("Internal Server Error");
-        problem.setDetail("An unexpected error occurred");
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        return super.handleException(ex);
     }
 }

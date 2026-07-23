@@ -95,6 +95,15 @@ public class ClientController {
         return ResponseEntity.ok(clientService.updateClient(id, request));
     }
 
+    @PostMapping("/{id}/reactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reactiver un client", description = "Repasse active=true sur un client desactive.")
+    @ApiResponse(responseCode = "200", description = "Client reactive")
+    @ApiResponse(responseCode = "404", description = "Client introuvable")
+    public ResponseEntity<ClientResponse> reactivateClient(@PathVariable UUID id) {
+        return ResponseEntity.ok(clientService.reactivateClient(id));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Desactiver un client", description = "Soft delete : passe active=false.")

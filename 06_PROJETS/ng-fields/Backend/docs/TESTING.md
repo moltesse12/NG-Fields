@@ -2,7 +2,7 @@
 
 **Mis à jour :** 23/07/2026 (Backend Complet)
 
-## Tests unitaires — 65 tests (tous passent)
+## Tests unitaires — 72 tests (tous passent)
 
 ### intervention-service (49 tests)
 
@@ -24,6 +24,12 @@
 | Fichier | Tests | Couverture |
 |---------|-------|-----------|
 | `PushServiceNoopTest` | 3 | sendPush (noop), registerToken (noop), fallback Firebase |
+
+### report-service (7 tests)
+
+| Fichier | Tests | Couverture |
+|---------|-------|-----------|
+| `TemplateRenderingTest` | 7 | Email templates rendering (5 templates), PDF template config validation (2 tests) |
 
 ## Commandes
 
@@ -55,14 +61,14 @@ cd Backend && mvn clean install -pl intervention-service -am
 
 La collection de test fonctionnel se trouve dans `Backend/postman/` :
 
-- `NG-Fields API.postman_collection.json` — **90 requêtes** couvrant tous les US
+- `NG-Fields API.postman_collection.json` — **91 requêtes** couvrant tous les US
 - `NG-Fields Dev.postman_environment.json` — Variables d'environnement
 
 Les tokens sont récupérés automatiquement par les requêtes Login.
 
 ## Vérification fonctionnelle
 
-- **Collection Postman** — 90 endpoints testés
+- **Collection Postman** — 91 endpoints testés
 - **Swagger UI** — `http://localhost:8080/swagger-ui.html`
 - **Tests manuels** via Swagger
 

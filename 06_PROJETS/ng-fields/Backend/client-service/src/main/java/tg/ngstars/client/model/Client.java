@@ -8,6 +8,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -27,7 +28,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "clients",
-       uniqueConstraints = @UniqueConstraint(columnNames = "email"))
+       uniqueConstraints = @UniqueConstraint(columnNames = "email"),
+       indexes = {
+           @Index(name = "idx_clients_company_name", columnList = "company_name")
+       })
 @Getter @Setter @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor

@@ -23,10 +23,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.github.bucket4j.ConsumptionProbe;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import tg.ngstars.auth.config.RateLimitConfig;
 import tg.ngstars.auth.dto.ChangePasswordRequest;
 import tg.ngstars.auth.dto.CreateUserRequest;
 import tg.ngstars.auth.dto.RoleAssignRequest;
@@ -34,6 +36,9 @@ import tg.ngstars.auth.dto.UpdateProfileRequest;
 import tg.ngstars.auth.dto.UpdateUserRequest;
 import tg.ngstars.auth.dto.UserResponse;
 import tg.ngstars.auth.dto.UserStatusRequest;
+import tg.ngstars.auth.service.BruteForceProtectionService;
+import tg.ngstars.auth.service.EmailService;
+import tg.ngstars.auth.service.EmailVerificationService;
 import tg.ngstars.auth.service.UserService;
 
 @RestController
@@ -41,9 +46,21 @@ import tg.ngstars.auth.service.UserService;
 public class UserController {
 
     private final UserService userService;
+    private final BruteForceProtectionService bruteForceProtection;
+    private final EmailVerificationService emailVerificationService;
+    private final RateLimitConfig rateLimitConfig;
+    private final EmailService emailService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService,
+            BruteForceProtectionService bruteForceProtection,
+            EmailVerificationService emailVerificationService,
+            RateLimitConfig rateLimitConfig,
+            EmailService emailService) {
         this.userService = userService;
+        this.bruteForceProtection = bruteForceProtection;
+        this.emailVerificationService = emailVerificationService;
+        this.rateLimitConfig = rateLimitConfig;
+        this.emailService = emailService;
     }
 
     @PostMapping("/api/admin/users")
@@ -157,7 +174,20 @@ public class UserController {
     @ApiResponse(responseCode = "400", description = "Ancien mot de passe incorrect")
     public ResponseEntity<Map<String, String>> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest httpRequest) {
+        String username = jwt.getClaimAsString("preferred_username");
+        if (bruteForceProtection.isLockedOut(username)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Compte temporairement bloque. Reessayez plus tard."));
+        }
+
+        ConsumptionProbe probe = rateLimitConfig.tryConsume("change-password:" + jwt.getSubject(), 5);
+        if (!probe.isConsumed()) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Trop de tentatives. Reessayez dans " + probe.getNanosToWaitForRefill() / 1_000_000_000 + " secondes."));
+        }
+
         userService.changePassword(UUID.fromString(jwt.getSubject()), request);
         return ResponseEntity.ok(Map.of("message", "Mot de passe modifie avec succes"));
     }
@@ -169,10 +199,46 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> register(
             @Valid @RequestBody CreateUserRequest request,
             HttpServletRequest httpRequest) {
+        ConsumptionProbe probe = rateLimitConfig.tryConsume("register:" + clientIp(httpRequest), 5);
+        if (!probe.isConsumed()) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Trop de tentatives. Reessayez plus tard."));
+        }
+
         var created = userService.registerClient(request, clientIp(httpRequest));
+
+        try {
+            String verificationLink = emailVerificationService.generateVerificationLink(created.id(), created.email());
+            emailService.sendVerificationEmail(created.email(), created.firstName(), verificationLink);
+        } catch (Exception e) {
+            // Email verification is best-effort
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "message", "Compte cree. Vous pouvez vous connecter sur le portail client.",
+                "message", "Compte cree. Verifiez votre email pour activer votre compte.",
                 "user", created));
+    }
+
+    @GetMapping("/api/public/verify-email")
+    @Operation(summary = "Verifier l'adresse email", description = "Valide le token de verification envoye par email.")
+    @ApiResponse(responseCode = "200", description = "Email verifie")
+    @ApiResponse(responseCode = "400", description = "Token invalide ou expire")
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestParam String token) {
+        var result = emailVerificationService.verifyToken(token);
+
+        if (result.expired()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", result.errorMessage(), "error", "expired"));
+        }
+
+        if (!result.valid()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", result.errorMessage(), "error", "invalid"));
+        }
+
+        userService.markEmailVerified(result.userId());
+
+        return ResponseEntity.ok(Map.of("message", "Adresse email verifiee avec succes"));
     }
 
     private static String clientIp(HttpServletRequest request) {

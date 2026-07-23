@@ -9,7 +9,7 @@
 - Maven 3.9+
 - PostgreSQL 18+
 - Redis 7+
-- Keycloak 26.6.4
+- Keycloak 26.0.9
 
 ### Quick Start
 
@@ -21,7 +21,7 @@ CREATE DATABASE ng_fields OWNER ng_fields_user;
 
 2. Start Keycloak:
 ```bash
-cd keycloak-26.6.4/bin
+cd keycloak-26.0.9/bin
 ./kc.bat start-dev --http-port=8088
 ```
 
@@ -60,7 +60,7 @@ cd notification-service && mvn spring-boot:run
 cd report-service && mvn spring-boot:run
 ```
 
-**Note:** Schema is managed by Hibernate `ddl-auto: update` — no migration scripts needed.
+**Note:** Schema is managed by **Flyway** (auth, client, intervention, report). Migrations run automatically at startup. Hibernate validates schema but does not create/alter tables.
 
 ### Service Ports
 
@@ -94,21 +94,25 @@ Copy `.env.example` to `.env` and fill in production values. Key variables:
 | `REDIS_PASSWORD` | Redis password |
 | `SENTRY_DSN` | Sentry error tracking DSN |
 | `SPRING_PROFILES_ACTIVE` | Set to `prod` |
+| `LOG_REQUEST_RESPONSE` | Enable request/response body logging (`true`/`false`, default `false`) |
+| `FIREBASE_ENABLED` | Enable Firebase push notifications (`true`/`false`, default `false`) |
+| `FIREBASE_SERVICE_ACCOUNT_PATH` | Path to Firebase service account JSON |
 
 ### Production Profile
 
 When `spring.profiles.active=prod`:
 - Swagger UI disabled
 - Logging level: WARN
-- Actuator endpoints limited to health, info
+- Actuator endpoints limited to health, info, loggers
 - JSON console log format for log aggregation
 
 ### Health Checks
 
 All services expose Actuator endpoints:
-- `GET /actuator/health` -- Liveness + Readiness
-- `GET /actuator/info` -- Application info
-- `GET /actuator/metrics` -- Metrics (when enabled)
+- `GET /actuator/health` — Liveness + Readiness
+- `GET /actuator/info` — Application info
+- `GET /actuator/metrics` — Metrics (Prometheus)
+- `GET /actuator/loggers` — Log level management
 
 ### Graceful Shutdown
 
@@ -127,15 +131,26 @@ GitHub Actions workflow (`.github/workflows/backend.yml`):
 
 ---
 
-### Schema Management
+## Schema Management
 
-Schema is managed by **Hibernate `ddl-auto: update`**. Tables are created automatically at the first startup. No migration scripts needed.
+Schema is managed by **Flyway** with migration scripts in `db/migration/V1__init.sql` for auth, client, intervention, and report services. Hibernate runs in `ddl-auto: validate` mode.
+
+| Service | Strategy | Tables |
+|---------|----------|--------|
+| auth-service | Flyway + validate | users, audit_logs, companies, company_users, company_access_log, failed_login_attempts |
+| client-service | Flyway + validate | clients, contacts |
+| intervention-service | Flyway + validate | interventions, intervention_items, intervention_photos |
+| report-service | Flyway + validate | pdf_templates, email_templates |
+| media-service | Hibernate validate | None (disk storage) |
+| notification-service | Hibernate validate | email_logs |
 
 ---
 
 ## Monitoring
 
 - **Sentry**: Error tracking with 20% trace sample rate
-- **Prometheus metrics**: Available at `/actuator/prometheus`
+- **Prometheus metrics**: Available at `/actuator/prometheus` (all services)
+- **Loggers management**: `/actuator/loggers` (all services)
 - **Correlation IDs**: Propagated via `X-Correlation-ID` header
 - **Structured logging**: JSON format in production for log aggregation
+- **Request/response logging**: Toggle via `LOG_REQUEST_RESPONSE=true` env var (shared-lib filter)

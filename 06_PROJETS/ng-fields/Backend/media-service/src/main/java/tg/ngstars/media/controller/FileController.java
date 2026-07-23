@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import tg.ngstars.media.service.FileAccessAuditLogger;
 import tg.ngstars.media.service.FileService;
 
 @RestController
@@ -33,9 +34,11 @@ import tg.ngstars.media.service.FileService;
 public class FileController {
 
     private final FileService fileService;
+    private final FileAccessAuditLogger auditLogger;
 
-    public FileController(FileService fileService) {
+    public FileController(FileService fileService, FileAccessAuditLogger auditLogger) {
         this.fileService = fileService;
+        this.auditLogger = auditLogger;
     }
 
     private String currentUserId() {
@@ -45,26 +48,59 @@ public class FileController {
         throw new IllegalStateException("Authenticated user not found");
     }
 
+    private String currentUserRole() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            return auth.getAuthorities().stream()
+                    .findFirst()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .orElse("UNKNOWN");
+        }
+        return "UNKNOWN";
+    }
+
+    private String currentCompanyId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+            var claim = jwt.getClaimAsString("company_id");
+            return claim != null ? claim : null;
+        }
+        return null;
+    }
+
     public record UploadBase64Request(@NotBlank @Size(max = 10_000_000) String data) {}
 
     @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> upload(@RequestParam("file") MultipartFile file) {
-        var filename = fileService.store(file, currentUserId());
+        var filename = fileService.store(file, currentUserId(), currentCompanyId());
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("filename", filename));
     }
 
     @PostMapping("/upload-base64")
     public ResponseEntity<Map<String, String>> uploadBase64(@Valid @RequestBody UploadBase64Request body) {
         var data = java.util.Base64.getDecoder().decode(body.data());
-        var filename = fileService.storeBytes(data, "png", currentUserId());
+        var filename = fileService.storeBytes(data, "png", currentUserId(), currentCompanyId());
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("filename", filename));
     }
 
     @GetMapping("/{filename}")
     public ResponseEntity<Resource> download(@PathVariable String filename) {
+        String userId = currentUserId();
+        String role = currentUserRole();
+
+        if (!"ADMIN".equals(role) && !"MANAGER".equals(role)) {
+            String owner = fileService.getOwner(filename);
+            if (owner != null && !owner.equals(userId)) {
+                auditLogger.logAccessDenied(filename, userId, "Not owner and not admin/manager");
+                throw new org.springframework.security.access.AccessDeniedException("Access denied to file: " + filename);
+            }
+        }
+
         var path = fileService.load(filename);
         var resource = new FileSystemResource(path);
         var contentType = determineContentType(filename);
+
+        auditLogger.logDownload(filename, userId);
 
         var builder = ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType));

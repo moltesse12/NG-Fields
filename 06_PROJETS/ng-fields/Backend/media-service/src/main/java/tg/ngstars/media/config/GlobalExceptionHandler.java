@@ -70,6 +70,15 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(SecurityException.class)
+    public ProblemDetail handleSecurity(SecurityException ex) {
+        var problem = ProblemDetail.forStatus(HttpStatus.UNPROCESSABLE_ENTITY);
+        problem.setTitle("Security Threat Detected");
+        problem.setDetail(ex.getMessage());
+        problem.setType(URI.create("about:blank"));
+        return problem;
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleException(Exception ex) {
         log.error("Unhandled exception", ex);

@@ -43,11 +43,11 @@ public class EmailTemplateService {
     @Transactional
     public EmailTemplateResponse create(CreateEmailTemplateRequest request, String userKeycloakId) {
         var tpl = new EmailTemplate();
-        tpl.setName(request.name());
-        tpl.setDescription(request.description());
+        tpl.setName(HtmlSanitizer.sanitizePlainText(request.name()));
+        tpl.setDescription(HtmlSanitizer.sanitizePlainText(request.description()));
         tpl.setTemplateKey(request.templateKey());
-        tpl.setSubject(request.subject());
-        tpl.setBodyHtml(request.bodyHtml());
+        tpl.setSubject(HtmlSanitizer.sanitizePlainText(request.subject()));
+        tpl.setBodyHtml(HtmlSanitizer.sanitize(request.bodyHtml()));
         tpl.setCreatedBy(userKeycloakId);
         var saved = repository.save(tpl);
         log.info("Email template cree: {} (key={})", saved.getName(), saved.getTemplateKey());
@@ -58,10 +58,10 @@ public class EmailTemplateService {
     public EmailTemplateResponse update(UUID id, UpdateEmailTemplateRequest request) {
         var tpl = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Template email non trouve: " + id));
-        if (request.name() != null) tpl.setName(request.name());
-        if (request.description() != null) tpl.setDescription(request.description());
-        if (request.subject() != null) tpl.setSubject(request.subject());
-        if (request.bodyHtml() != null) tpl.setBodyHtml(request.bodyHtml());
+        if (request.name() != null) tpl.setName(HtmlSanitizer.sanitizePlainText(request.name()));
+        if (request.description() != null) tpl.setDescription(HtmlSanitizer.sanitizePlainText(request.description()));
+        if (request.subject() != null) tpl.setSubject(HtmlSanitizer.sanitizePlainText(request.subject()));
+        if (request.bodyHtml() != null) tpl.setBodyHtml(HtmlSanitizer.sanitize(request.bodyHtml()));
         if (request.isActive() != null) tpl.setIsActive(request.isActive());
         var saved = repository.save(tpl);
         log.info("Email template mis a jour: {} (key={})", saved.getName(), saved.getTemplateKey());

@@ -3,11 +3,11 @@ package tg.ngstars.interv.service;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
+import org.openpdf.text.Document;
+import org.openpdf.text.FontFactory;
+import org.openpdf.text.Paragraph;
+import org.openpdf.text.pdf.PdfPTable;
+import org.openpdf.text.pdf.PdfWriter;
 
 import tg.ngstars.interv.model.Intervention;
 import tg.ngstars.interv.model.InterventionItem;

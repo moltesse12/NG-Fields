@@ -10,6 +10,7 @@ import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import tg.ngstars.auth.config.ResendProperties;
 
 @Service
@@ -26,8 +27,55 @@ public class EmailService {
         this.resend = new Resend(properties.apiKey());
     }
 
+    @Retry(name = "emailService", fallbackMethod = "sendCredentialsFallback")
     public void sendCredentialsEmail(String toEmail, String firstName, String tempPassword) {
-        var html = """
+        var html = buildCredentialsHtml(firstName, toEmail, tempPassword);
+        send(toEmail, "Bienvenue sur NG-STARs - Vos identifiants de connexion", html);
+    }
+
+    @Retry(name = "emailService", fallbackMethod = "sendPasswordResetFallback")
+    public void sendPasswordResetEmail(String toEmail, String firstName, String resetLink) {
+        var html = buildPasswordResetHtml(firstName, resetLink);
+        send(toEmail, "NG-STARs - Reinitialisation du mot de passe", html);
+    }
+
+    @Retry(name = "emailService", fallbackMethod = "sendVerificationFallback")
+    public void sendVerificationEmail(String toEmail, String firstName, String verificationLink) {
+        var html = buildVerificationHtml(firstName, verificationLink);
+        send(toEmail, "NG-STARs - Verification de votre adresse email", html);
+    }
+
+    private void sendCredentialsFallback(String toEmail, String firstName, String tempPassword, Throwable t) {
+        log.error("Failed to send credentials email to {} after retries: {}", toEmail, t.getMessage());
+    }
+
+    private void sendPasswordResetFallback(String toEmail, String firstName, String resetLink, Throwable t) {
+        log.error("Failed to send password reset email to {} after retries: {}", toEmail, t.getMessage());
+    }
+
+    private void sendVerificationFallback(String toEmail, String firstName, String verificationLink, Throwable t) {
+        log.error("Failed to send verification email to {} after retries: {}", toEmail, t.getMessage());
+    }
+
+    private void send(String to, String subject, String html) {
+        try {
+            var params = CreateEmailOptions.builder()
+                    .from(properties.fromName() + " <" + properties.fromEmail() + ">")
+                    .to(to)
+                    .subject(subject)
+                    .html(html)
+                    .build();
+
+            CreateEmailResponse response = resend.emails().send(params);
+            log.info("Email sent to {} (resendId={})", to, response.getId());
+        } catch (ResendException e) {
+            log.error("Failed to send email to {}: {}", to, e.getMessage(), e);
+            throw new RuntimeException("Email sending failed", e);
+        }
+    }
+
+    private String buildCredentialsHtml(String firstName, String toEmail, String tempPassword) {
+        return """
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                   <h2 style="color: #40946e;">Bienvenue sur NG-STARs</h2>
                   <p>Bonjour %s,</p>
@@ -50,12 +98,10 @@ public class EmailService {
                   </p>
                 </div>
                 """.formatted(firstName, toEmail, tempPassword, getLoginUrl());
-
-        send(toEmail, "Bienvenue sur NG-STARs - Vos identifiants de connexion", html);
     }
 
-    public void sendPasswordResetEmail(String toEmail, String firstName, String resetLink) {
-        var html = """
+    private String buildPasswordResetHtml(String firstName, String resetLink) {
+        return """
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                   <h2 style="color: #40946e;">Reinitialisation du mot de passe</h2>
                   <p>Bonjour %s,</p>
@@ -70,24 +116,25 @@ public class EmailService {
                   </p>
                 </div>
                 """.formatted(firstName, resetLink);
-
-        send(toEmail, "NG-STARs - Reinitialisation du mot de passe", html);
     }
 
-    private void send(String to, String subject, String html) {
-        try {
-            var params = CreateEmailOptions.builder()
-                    .from(properties.fromName() + " <" + properties.fromEmail() + ">")
-                    .to(to)
-                    .subject(subject)
-                    .html(html)
-                    .build();
-
-            CreateEmailResponse response = resend.emails().send(params);
-            log.info("Email sent to {} (resendId={})", to, response.getId());
-        } catch (ResendException e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage(), e);
-        }
+    private String buildVerificationHtml(String firstName, String verificationLink) {
+        return """
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #40946e;">Verification de votre adresse email</h2>
+                  <p>Bonjour %s,</p>
+                  <p>Merci pour votre inscription sur NG-STARs.</p>
+                  <p>Veuillez cliquer sur le lien ci-dessous pour verifier votre adresse email :</p>
+                  <p>
+                    <a href="%s" style="display: inline-block; background: #40946e; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">
+                      Verifier mon email
+                    </a>
+                  </p>
+                  <p style="font-size: 12px; color: #888;">
+                    Ce lien expire dans 15 minutes. Si vous n'avez pas cree de compte, ignorez cet email.
+                  </p>
+                </div>
+                """.formatted(firstName, verificationLink);
     }
 
     private String getLoginUrl() {

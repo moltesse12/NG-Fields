@@ -3,6 +3,7 @@ package tg.ngstars.notification.service;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -28,6 +29,12 @@ import tg.ngstars.notification.dto.PushTokenRequest;
 public class PushService implements PushServiceInterface {
 
     private static final Logger log = LoggerFactory.getLogger(PushService.class);
+
+    private static final Set<String> INVALID_TOKEN_ERRORS = Set.of(
+            "UNREGISTERED", "INVALID_ARGUMENT", "SENDER_ID_MISMATCH", "THIRD_PARTY_AUTH_ERROR");
+
+    private static final Set<String> RETRYABLE_ERRORS = Set.of(
+            "UNAVAILABLE", "INTERNAL", "QUOTA_EXCEEDED", "SERVER_UNAVAILABLE");
 
     private final Map<String, String> tokenStore = new ConcurrentHashMap<>();
 
@@ -87,8 +94,19 @@ public class PushService implements PushServiceInterface {
             var response = FirebaseMessaging.getInstance().send(message);
             log.info("Push envoye a userId={} messageId={}", request.userId(), response);
         } catch (FirebaseMessagingException e) {
-            log.error("Erreur envoi push a userId={}: {}", request.userId(), e.getMessage());
-            tokenStore.remove(request.userId());
+            var errorCode = e.getMessagingErrorCode() != null
+                    ? e.getMessagingErrorCode().name()
+                    : "UNKNOWN";
+
+            if (INVALID_TOKEN_ERRORS.contains(errorCode)) {
+                log.warn("Token invalide pour userId={} (error={}), suppression du token", request.userId(), errorCode);
+                tokenStore.remove(request.userId());
+            } else if (RETRYABLE_ERRORS.contains(errorCode)) {
+                log.error("Erreur temporaire Firebase pour userId={} (error={}): {}", request.userId(), errorCode, e.getMessage());
+                throw new RuntimeException("Firebase temporairement indisponible: " + errorCode, e);
+            } else {
+                log.error("Erreur inattendue Firebase pour userId={} (error={}): {}", request.userId(), errorCode, e.getMessage());
+            }
         }
     }
 }

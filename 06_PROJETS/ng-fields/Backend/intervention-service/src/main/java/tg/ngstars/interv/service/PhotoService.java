@@ -42,7 +42,6 @@ public class PhotoService {
         this.securityUtils    = securityUtils;
     }
 
-    // ponytail: JVM-wide lock, per-intervention lock if throughput matters
     @Transactional
     public synchronized PhotoResponse addPhoto(
             UUID interventionId,
@@ -65,7 +64,8 @@ public class PhotoService {
                 + " photos par catégorie (" + type + ")");
         }
 
-        String url = mediaClient.uploadFile(file);
+        MultipartFile stripped = ImageMetadataStripper.stripMetadata(file);
+        String url = mediaClient.uploadFile(stripped);
         String filename = extractFilename(url);
 
         InterventionPhoto photo = new InterventionPhoto();
@@ -105,8 +105,39 @@ public class PhotoService {
             .filter(p -> p.getIntervention().getId().equals(interventionId))
             .orElseThrow(() -> new IllegalArgumentException("Photo introuvable : " + photoId));
         checkOwnership(photo.getIntervention());
+
+        String filename = extractFilename(photo.getUrl());
         photoRepo.delete(photo);
-        log.info("Photo {} supprimée de l'intervention {}", photoId, interventionId);
+        log.info("Photo {} supprimée de l'intervention {} (filename={}, type={}, deletedBy={})",
+            photoId, interventionId, filename, photo.getType(), securityUtils.getCurrentUserId());
+
+        try {
+            mediaClient.deleteFile(filename);
+            log.info("Fichier media {} supprimé du media-service", filename);
+        } catch (Exception e) {
+            log.error("Échec suppression fichier media {} (orphan possible): {}", filename, e.getMessage());
+        }
+    }
+
+    @Transactional
+    public void deleteAllPhotos(UUID interventionId) {
+        var photos = photoRepo.findByInterventionId(interventionId);
+        if (photos.isEmpty()) return;
+
+        log.info("Suppression de {} photos pour l'intervention {} (orphan cleanup)",
+            photos.size(), interventionId);
+
+        for (var photo : photos) {
+            String filename = extractFilename(photo.getUrl());
+            try {
+                mediaClient.deleteFile(filename);
+            } catch (Exception e) {
+                log.error("Échec suppression fichier media {} pour photo {}: {}",
+                    filename, photo.getId(), e.getMessage());
+            }
+        }
+        photoRepo.deleteAll(photos);
+        log.info("Toutes les photos de l'intervention {} supprimées (DB + media)", interventionId);
     }
 
     private void registerCleanupOnRollback(String filename) {

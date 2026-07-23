@@ -2,7 +2,22 @@
 
 **Mis à jour :** 23/07/2026
 
-NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its schema. Schema management is via **Hibernate `ddl-auto: update`** (no Flyway).
+NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its schema. Schema management is via **Flyway** (auth, client, intervention, report) with Hibernate in `ddl-auto: validate` mode.
+
+## Schema Management
+
+| Service | Strategy | Migration |
+|---------|----------|-----------|
+| auth-service | Flyway | `V1__init.sql` |
+| client-service | Flyway | `V1__init.sql` |
+| intervention-service | Flyway | `V1__init.sql` |
+| report-service | Flyway | `V1__init.sql` |
+| media-service | Hibernate validate | No tables (disk storage) |
+| notification-service | Hibernate validate | `email_logs` |
+
+Flyway runs automatically at startup (`spring.flyway.baseline-on-migrate: true`). Hibernate validates schema consistency but does not create/alter tables.
+
+---
 
 ## Schema: `auth`
 
@@ -12,49 +27,53 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 | id | UUID | PRIMARY KEY |
 | keycloak_id | UUID | NOT NULL UNIQUE |
 | username | VARCHAR(50) | NOT NULL UNIQUE |
-| email | VARCHAR(150) | NOT NULL UNIQUE |
-| first_name | VARCHAR(100) | |
-| last_name | VARCHAR(100) | |
-| role | VARCHAR(50) | NOT NULL |
-| phone | VARCHAR(30) | |
+| email | VARCHAR(255) | NOT NULL UNIQUE |
+| first_name | VARCHAR(255) | NOT NULL |
+| last_name | VARCHAR(255) | NOT NULL |
+| role | VARCHAR(255) | NOT NULL |
+| phone | VARCHAR(255) | |
 | company_id | UUID | FK -> companies(id) (NULL pour ADMIN/MANAGER/TECHNICIAN) |
 | active | BOOLEAN | NOT NULL DEFAULT TRUE |
-| version | BIGINT | NOT NULL DEFAULT 0 |
-| created_at | TIMESTAMPTZ | NOT NULL |
-| updated_at | TIMESTAMPTZ | NOT NULL |
+| must_change_password | BOOLEAN | NOT NULL DEFAULT FALSE |
+| email_verified | BOOLEAN | NOT NULL DEFAULT FALSE |
+| updated_by | UUID | |
+| version | BIGINT | DEFAULT 0 |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+
+**Indexes:** `idx_users_company_id`
 
 ### `audit_logs`
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
 | user_id | UUID | |
-| action | VARCHAR(50) | NOT NULL |
-| resource | VARCHAR(50) | |
-| resource_id | VARCHAR(100) | |
+| action | VARCHAR(255) | NOT NULL |
+| resource | VARCHAR(255) | |
+| resource_id | VARCHAR(255) | |
 | details | TEXT | |
-| ip_address | VARCHAR(45) | |
-| created_at | TIMESTAMPTZ | NOT NULL |
+| ip_address | VARCHAR(255) | |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
 
-**Indexes:** `idx_audit_user_id`, `idx_audit_created_at`
+**Indexes:** `idx_audit_logs_user_id`
 
-### `companies` (NOUVEAU — Post-Cadrage 21/07/2026)
+### `companies`
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
 | name | VARCHAR(200) | NOT NULL |
 | email | VARCHAR(150) | |
 | phone | VARCHAR(30) | |
-| address | TEXT | |
+| address | VARCHAR(255) | |
 | contact_name | VARCHAR(150) | |
 | contact_phone | VARCHAR(30) | |
 | keycloak_organization_id | UUID | |
 | active | BOOLEAN | NOT NULL DEFAULT TRUE |
-| created_at | TIMESTAMPTZ | NOT NULL |
-| updated_at | TIMESTAMPTZ | NOT NULL |
+| version | BIGINT | DEFAULT 0 |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
 
-**Indexes:** `idx_companies_name`, `idx_companies_active`
-
-### `company_users` (NOUVEAU — Post-Cadrage 21/07/2026)
+### `company_users`
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
@@ -65,12 +84,13 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 | last_name | VARCHAR(100) | |
 | role | VARCHAR(50) | NOT NULL (CLIENT_ADMIN, CLIENT_USER, CLIENT_VIEWER) |
 | active | BOOLEAN | NOT NULL DEFAULT TRUE |
-| created_at | TIMESTAMPTZ | NOT NULL |
-| updated_at | TIMESTAMPTZ | NOT NULL |
+| version | BIGINT | DEFAULT 0 |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
 
-**Indexes:** `idx_company_users_company_id`, `idx_company_users_keycloak_id`
+**Indexes:** `idx_company_users_company_id`
 
-### `company_access_log` (NOUVEAU — Post-Cadrage 21/07/2026)
+### `company_access_log`
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
@@ -80,9 +100,19 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 | resource | VARCHAR(100) | |
 | resource_id | UUID | |
 | ip_address | INET | |
-| created_at | TIMESTAMPTZ | NOT NULL |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
 
-**Indexes:** `idx_company_access_company_id`, `idx_company_access_created_at`
+### `failed_login_attempts`
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| username | VARCHAR(255) | NOT NULL |
+| ip_address | VARCHAR(255) | NOT NULL |
+| successful | BOOLEAN | NOT NULL |
+| attempted_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| locked_until | TIMESTAMPTZ | |
+
+**Indexes:** `idx_failed_login_username`
 
 ---
 
@@ -101,12 +131,13 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 | latitude | DOUBLE PRECISION | |
 | longitude | DOUBLE PRECISION | |
 | active | BOOLEAN | NOT NULL DEFAULT TRUE |
-| version | BIGINT | NOT NULL DEFAULT 0 |
+| version | BIGINT | DEFAULT 0 |
 | created_by | VARCHAR(100) | |
-| created_at | TIMESTAMPTZ | NOT NULL |
-| updated_at | TIMESTAMPTZ | NOT NULL |
+| updated_by | UUID | |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
 
-**Indexes:** `idx_clients_email`, `idx_clients_active`, `idx_clients_company`, `idx_clients_search_trgm` (trigram GIN)
+**Indexes:** `idx_clients_company_name`
 
 ### `contacts`
 | Column | Type | Constraints |
@@ -118,9 +149,12 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 | phone | VARCHAR(30) | |
 | role | VARCHAR(50) | |
 | active | BOOLEAN | NOT NULL DEFAULT TRUE |
-| created_at | TIMESTAMPTZ | NOT NULL |
+| created_by | UUID | |
+| updated_by | UUID | |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
 
-**Indexes:** `idx_contacts_client_id`, `idx_contacts_active`
+**Indexes:** `idx_contacts_client_id`
 
 ---
 
@@ -130,66 +164,121 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
-| reference | VARCHAR(20) | NOT NULL UNIQUE |
-| client_id | UUID | |
-| client_name | VARCHAR(200) | |
-| client_email | VARCHAR(150) | |
-| client_phone | VARCHAR(30) | |
-| client_address | TEXT | |
-| latitude | DOUBLE PRECISION | |
-| longitude | DOUBLE PRECISION | |
-| technician_id | UUID | |
-| technician_name | VARCHAR(150) | |
-| status | VARCHAR(20) | NOT NULL DEFAULT 'PENDING' |
-| priority | VARCHAR(20) | NOT NULL DEFAULT 'MEDIUM' |
-| title | VARCHAR(200) | |
-| description | TEXT | |
-| intervention_type | VARCHAR(50) | |
-| scheduled_date | TIMESTAMPTZ | |
-| started_at | TIMESTAMPTZ | |
-| completed_at | TIMESTAMPTZ | |
-| cancelled_at | TIMESTAMPTZ | |
-| equipment_serial | VARCHAR(100) | |
-| equipment_model | VARCHAR(100) | |
-| equipment_brand | VARCHAR(100) | |
-| diagnosis | TEXT | |
-| resolution | TEXT | |
-| ~~billable~~ | ~~BOOLEAN~~ | ❌ SUPPRIMÉ (Post-Cadrage 21/07/2026) |
-| ~~billing_amount~~ | ~~NUMERIC~~ | ❌ SUPPRIMÉ (Post-Cadrage 21/07/2026) |
-| ~~billing_notes~~ | ~~TEXT~~ | ❌ SUPPRIMÉ (Post-Cadrage 21/07/2026) |
-| ~~openproject_ticket_id~~ | ~~VARCHAR~~ | ❌ SUPPRIMÉ (Post-Cadrage 21/07/2026) |
-| ~~openproject_ticket_url~~ | ~~VARCHAR~~ | ❌ SUPPRIMÉ (Post-Cadrage 21/07/2026) |
-| version | BIGINT | NOT NULL DEFAULT 0 |
-| created_by | VARCHAR(100) | |
-| created_at | TIMESTAMPTZ | NOT NULL |
-| updated_at | TIMESTAMPTZ | NOT NULL |
+| reference | VARCHAR(255) | NOT NULL UNIQUE |
+| client_id | UUID | NOT NULL |
+| client_name | VARCHAR(255) | |
+| client_email | VARCHAR(255) | |
+| client_phone | VARCHAR(255) | |
+| client_address | VARCHAR(255) | |
+| equipment_type | VARCHAR(255) | |
+| equipment_brand | VARCHAR(255) | |
+| equipment_model | VARCHAR(255) | |
+| equipment_serial | VARCHAR(255) | |
+| equipment_location | VARCHAR(255) | |
+| reported_issue | VARCHAR(255) | |
+| diagnosis | VARCHAR(255) | |
+| work_done | VARCHAR(255) | |
+| status | VARCHAR(255) | NOT NULL DEFAULT 'PENDING' |
+| intervention_date | TIMESTAMPTZ | |
+| created_by | UUID | |
+| assigned_to | UUID | |
+| site_address | VARCHAR(255) | |
+| site_city | VARCHAR(255) | |
+| estimated_cost | NUMERIC(19, 2) | |
+| gps_latitude | DOUBLE PRECISION | |
+| gps_longitude | DOUBLE PRECISION | |
+| total_cost | NUMERIC(19, 2) | |
+| client_signature | VARCHAR(255) | |
+| technician_signature | VARCHAR(255) | |
+| manager_signature | VARCHAR(255) | |
+| signed_at | TIMESTAMPTZ | |
+| departure_time | TIMESTAMPTZ | |
+| arrival_time | TIMESTAMPTZ | |
+| start_time | TIMESTAMPTZ | |
+| end_time | TIMESTAMPTZ | |
+| duration_minutes | INTEGER | |
+| result | VARCHAR(20) | |
+| follow_up_recommended | BOOLEAN | DEFAULT FALSE |
+| recommendations | TEXT | |
+| local_id | VARCHAR(255) | UNIQUE |
+| notes | VARCHAR(255) | |
+| active | BOOLEAN | NOT NULL DEFAULT TRUE |
+| version | BIGINT | DEFAULT 0 |
+| updated_by | UUID | |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+
+**Indexes:** `idx_interventions_client_id`, `idx_interventions_status`, `idx_interventions_assigned_to`, `idx_interventions_created_at`
 
 ### `intervention_items`
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
-| intervention_id | UUID | NOT NULL FK -> interventions(id) |
-| description | VARCHAR(500) | NOT NULL |
+| intervention_id | UUID | NOT NULL FK -> interventions(id) ON DELETE CASCADE |
+| type | VARCHAR(255) | NOT NULL |
+| description | VARCHAR(255) | NOT NULL |
 | quantity | INTEGER | NOT NULL DEFAULT 1 |
-| unit_price | DOUBLE PRECISION | |
-| item_type | VARCHAR(30) | |
-| created_at | TIMESTAMPTZ | NOT NULL |
+| unit_price | NUMERIC(19, 2) | NOT NULL DEFAULT 0 |
+| total | NUMERIC(19, 2) | NOT NULL DEFAULT 0 |
+| version | BIGINT | DEFAULT 0 |
+| created_by | UUID | |
+| updated_by | UUID | |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
 
----
+**Indexes:** `idx_intervention_items_intervention_id`
 
-## Schema: `media`
-
-### `media_files`
+### `intervention_photos`
 | Column | Type | Constraints |
 |--------|------|-------------|
 | id | UUID | PRIMARY KEY |
-| filename | VARCHAR(255) | NOT NULL UNIQUE |
-| original_filename | VARCHAR(255) | NOT NULL |
-| content_type | VARCHAR(100) | |
-| size | BIGINT | NOT NULL |
-| intervention_id | UUID | |
-| uploaded_by | VARCHAR(100) | |
-| created_at | TIMESTAMPTZ | NOT NULL |
+| intervention_id | UUID | NOT NULL FK -> interventions(id) ON DELETE CASCADE |
+| url | TEXT | NOT NULL |
+| type | VARCHAR(10) | NOT NULL |
+| latitude | DOUBLE PRECISION | |
+| longitude | DOUBLE PRECISION | |
+| taken_at | TIMESTAMPTZ | |
+| original_filename | VARCHAR(200) | |
+| version | BIGINT | DEFAULT 0 |
+| created_by | UUID | |
+| updated_by | UUID | |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+
+**Indexes:** `idx_intervention_photos_intervention_id`
+
+---
+
+## Schema: `report`
+
+### `pdf_templates`
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| name | VARCHAR(255) | NOT NULL |
+| description | VARCHAR(255) | |
+| template_type | VARCHAR(255) | NOT NULL DEFAULT 'INTERVENTION_REPORT' |
+| config | JSONB | NOT NULL DEFAULT '{}' |
+| is_default | BOOLEAN | NOT NULL DEFAULT FALSE |
+| created_by | VARCHAR(255) | |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+
+**Indexes:** `idx_pdf_templates_template_type`
+
+### `email_templates`
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| name | VARCHAR(255) | NOT NULL |
+| description | VARCHAR(255) | |
+| template_key | VARCHAR(255) | NOT NULL UNIQUE |
+| subject | VARCHAR(255) | NOT NULL |
+| body_html | TEXT | NOT NULL |
+| is_active | BOOLEAN | NOT NULL DEFAULT TRUE |
+| created_by | VARCHAR(255) | |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
 
 ---
 
@@ -208,34 +297,13 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 
 ---
 
-## Schema: `report`
+## Migration Files
 
-### `report_requests`
-| Column | Type | Constraints |
-|--------|------|-------------|
-| id | UUID | PRIMARY KEY |
-| type | VARCHAR(20) | NOT NULL |
-| format | VARCHAR(10) | NOT NULL |
-| status | VARCHAR(20) | NOT NULL |
-| file_path | VARCHAR(500) | |
-| error_message | TEXT | |
-| created_by | VARCHAR(100) | |
-| created_at | TIMESTAMPTZ | NOT NULL |
-| completed_at | TIMESTAMPTZ | |
+| File | Service | Content |
+|------|---------|---------|
+| `auth-service/.../db/migration/V1__init.sql` | auth | users, audit_logs, companies, company_users, company_access_log, failed_login_attempts |
+| `client-service/.../db/migration/V1__init.sql` | client | clients, contacts |
+| `intervention-service/.../db/migration/V1__init.sql` | intervention | interventions, intervention_items, intervention_photos |
+| `report-service/.../db/migration/V1__init.sql` | report | pdf_templates, email_templates |
 
----
-
-## Schema Management
-
-The schema is managed by **Hibernate `ddl-auto: update`**. Tables are created automatically at the first startup of each service.
-
-| Service | Tables |
-|---------|--------|
-| auth-service | users, audit_logs, companies, company_users, company_access_log |
-| client-service | clients, contacts |
-| intervention-service | interventions, intervention_items, intervention_photos |
-| media-service | media_files |
-| notification-service | email_logs |
-| report-service | report_requests |
-
-Flyway has been removed from the project scope (decision: simplicity with Hibernate).
+All migrations use `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"` for UUID generation.

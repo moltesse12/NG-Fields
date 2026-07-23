@@ -42,12 +42,16 @@ public class InterventionService {
     private final InterventionStatusService statusService;
     private final InterventionEmailService emailService;
     private final SseEmitterManager sseManager;
+    private final PhotoService photoService;
+    private final InterventionLockManager lockManager;
 
-    public InterventionService(InterventionRepository interventionRepository, InterventionStatusService statusService, InterventionEmailService emailService, SseEmitterManager sseManager) {
+    public InterventionService(InterventionRepository interventionRepository, InterventionStatusService statusService, InterventionEmailService emailService, SseEmitterManager sseManager, PhotoService photoService, InterventionLockManager lockManager) {
         this.interventionRepository = interventionRepository;
         this.statusService = statusService;
         this.emailService = emailService;
         this.sseManager = sseManager;
+        this.photoService = photoService;
+        this.lockManager = lockManager;
     }
 
     @Transactional
@@ -223,6 +227,9 @@ public class InterventionService {
     public void deleteIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
         checkOwnership(intervention, userId, isAdminOrManager);
+
+        photoService.deleteAllPhotos(id);
+
         intervention.setActive(false);
         interventionRepository.save(intervention);
         sseManager.sendEvent("INTERVENTION_DELETED",
@@ -235,15 +242,25 @@ public class InterventionService {
     }
 
     public byte[] generatePdf(UUID id, UUID userId, boolean isAdminOrManager) {
-        var intervention = findOrThrow(id);
-        checkOwnership(intervention, userId, isAdminOrManager);
-        return PdfService.generate(intervention);
+        lockManager.lock(id);
+        try {
+            var intervention = findOrThrow(id);
+            checkOwnership(intervention, userId, isAdminOrManager);
+            return PdfService.generate(intervention);
+        } finally {
+            lockManager.unlock(id);
+        }
     }
 
     public void generatePdfToStream(UUID id, UUID userId, boolean isAdminOrManager, java.io.OutputStream out) {
-        var intervention = findOrThrow(id);
-        checkOwnership(intervention, userId, isAdminOrManager);
-        PdfService.write(intervention, out);
+        lockManager.lock(id);
+        try {
+            var intervention = findOrThrow(id);
+            checkOwnership(intervention, userId, isAdminOrManager);
+            PdfService.write(intervention, out);
+        } finally {
+            lockManager.unlock(id);
+        }
     }
 
     @Transactional
@@ -258,6 +275,16 @@ public class InterventionService {
             if (intervention.getStartTime() != null)
                 intervention.setDurationMinutes((int) java.time.Duration.between(intervention.getStartTime(), request.endTime()).toMinutes());
         }
+
+        if (intervention.getAssignedTo() != null && intervention.getStartTime() != null && intervention.getEndTime() != null) {
+            long overlaps = interventionRepository.countOverlappingInterventions(
+                    intervention.getAssignedTo(), id, intervention.getStartTime(), intervention.getEndTime());
+            if (overlaps > 0) {
+                log.warn("Conflit d'agenda detecte pour technicien {} a {}: {} interventions chevauchantes",
+                        intervention.getAssignedTo(), intervention.getStartTime(), overlaps);
+            }
+        }
+
         return toResponse(interventionRepository.save(intervention));
     }
 

@@ -12,10 +12,10 @@ Microservices architecture with 7 services + 1 shared library.
 | auth-service | 8081 | Authentication & User Management (Keycloak) |
 | client-service | 8082 | Client Management |
 | intervention-service | 8083 | Intervention/Work Order Management |
-| media-service | 8084 | File Upload & Storage |
+| media-service | 8084 | File Upload & Storage (AV scanning, compression, quota) |
 | notification-service | 8085 | Email Notifications (Resend) + Push (Firebase) |
 | report-service | 8086 | Analytics & PDF/CSV Reports + Templates |
-| shared-lib | - | Shared DTOs, entities, exceptions, security, logstash-logback-encoder |
+| shared-lib | - | Shared DTOs, entities, exceptions, security, logging, logstash-logback-encoder |
 
 ## Quick Start
 
@@ -26,11 +26,11 @@ Microservices architecture with 7 services + 1 shared library.
 
 ## Documentation Files
 
-- [API Endpoints](API_ENDPOINTS.md) — 90 endpoints
-- [Security](SECURITY.md)
-- [Database](DATABASE.md) — `ddl-auto: update` (Hibernate)
-- [Testing](TESTING.md) — 65 unit tests
-- [Deployment](DEPLOYMENT.md)
+- [API Endpoints](API_ENDPOINTS.md) — 91 endpoints
+- [Security](SECURITY.md) — Brute force, AV scanning, HTML sanitization, rate limiting
+- [Database](DATABASE.md) — Flyway migrations + Hibernate validate
+- [Testing](TESTING.md) — 72 unit tests
+- [Deployment](DEPLOYMENT.md) — Flyway, env vars, monitoring
 - [Architecture](../ARCHITECTURE.md)
 
 ## Testing
@@ -43,8 +43,8 @@ cd Backend && mvn test
 cd Backend/intervention-service && mvn test
 ```
 
-65 unit tests across 3 services (intervention: 49, auth: 21, notification: 3).
+72 unit tests across 4 services (intervention: 49, auth: 21, notification: 3, report: 7).
 
 ## Postman
 
-Collection: `Backend/postman/NG-Fields API.postman_collection.json` (90 endpoints)
+Collection: `Backend/postman/NG-Fields API.postman_collection.json` (91 endpoints)

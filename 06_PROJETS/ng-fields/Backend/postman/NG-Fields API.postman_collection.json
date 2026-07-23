@@ -2757,6 +2757,390 @@
         ],
         "url": "{{base_url}}/api/interventions/{{testInterventionId}}"
       }
+    },
+    {
+      "name": "91. Report Service: Export PDF (OpenPDF 3.0)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Content-Type PDF\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/pdf\");",
+              "});",
+              "",
+              "pm.test(\"PDF non vide\", function () {",
+              "    pm.expect(pm.response.code).to.eql(200);",
+              "    pm.expect(pm.response.headers.get(\"Content-Length\").toNumber()).to.be.above(0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/reports/interventions/pdf"
+      }
+    },
+    {
+      "name": "92. Report Service: Export CSV",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Content-Type CSV\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/csv\");",
+              "});",
+              "",
+              "pm.test(\"CSV contient des données\", function () {",
+              "    pm.expect(pm.response.text()).to.include(\"reference\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/reports/interventions/csv"
+      }
+    },
+    {
+      "name": "93. Report Service: Analytics",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Analytics retournés\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"totalInterventions\");",
+              "    pm.expect(json).to.have.property(\"countByStatus\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/reports/analytics"
+      }
+    },
+    {
+      "name": "94. Report Service: Lister templates PDF",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Liste templates\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/reports/templates"
+      }
+    },
+    {
+      "name": "95. Report Service: Template PDF par défaut",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/reports/templates/default"
+      }
+    },
+    {
+      "name": "96. Report Service: Créer template PDF",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Template créé\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.id).to.not.be.empty;",
+              "    pm.expect(json.name).to.eql(\"Test Template PDF\");",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"testPdfTemplateId\", json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test Template PDF\",\n  \"config\": \"{\\\"orientation\\\":\\\"LANDSCAPE\\\",\\\"title\\\":\\\"Rapport Test\\\",\\\"header\\\":{\\\"backgroundColor\\\":\\\"#2C3E50\\\",\\\"textColor\\\":\\\"#FFFFFF\\\"}}\"\n}"
+        },
+        "url": "{{base_url}}/api/reports/templates"
+      }
+    },
+    {
+      "name": "97. Report Service: Modifier template PDF",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Template modifié\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.name).to.eql(\"Test Template PDF Updated\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test Template PDF Updated\",\n  \"config\": \"{\\\"orientation\\\":\\\"PORTRAIT\\\",\\\"title\\\":\\\"Rapport Mis à Jour\\\"}\"\n}"
+        },
+        "url": "{{base_url}}/api/reports/templates/{{testPdfTemplateId}}"
+      }
+    },
+    {
+      "name": "98. Report Service: Export PDF avec template",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Content-Type PDF\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/pdf\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/reports/interventions/pdf?templateId={{testPdfTemplateId}}"
+      }
+    },
+    {
+      "name": "99. Report Service: Supprimer template PDF",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/reports/templates/{{testPdfTemplateId}}"
+      }
+    },
+    {
+      "name": "100. Report Service: Lister templates email",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Liste email templates\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/reports/email-templates"
+      }
+    },
+    {
+      "name": "101. Report Service: Créer template email",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Email template créé\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.id).to.not.be.empty;",
+              "    pm.expect(json.key).to.eql(\"test-email-template\");",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"testEmailTemplateId\", json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"key\": \"test-email-template\",\n  \"name\": \"Test Email Template\",\n  \"subject\": \"Test intervention\",\n  \"bodyHtml\": \"<h1>Intervention {{ref}}</h1><p>Statut: {{status}}</p>\"\n}"
+        },
+        "url": "{{base_url}}/api/reports/email-templates"
+      }
+    },
+    {
+      "name": "102. Report Service: Modifier template email",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Email template modifié\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.subject).to.eql(\"Test intervention updated\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"key\": \"test-email-template\",\n  \"name\": \"Test Email Template Updated\",\n  \"subject\": \"Test intervention updated\",\n  \"bodyHtml\": \"<h1>Intervention {{ref}} updated</h1><p>Statut: {{status}}</p>\"\n}"
+        },
+        "url": "{{base_url}}/api/reports/email-templates/{{testEmailTemplateId}}"
+      }
+    },
+    {
+      "name": "103. Report Service: Supprimer template email",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/reports/email-templates/{{testEmailTemplateId}}"
+      }
     }
   ],
   "variable": [
@@ -2781,6 +3165,8 @@
     { "key": "testCompanySlug", "value": "" },
     { "key": "testCompanyUserId", "value": "" },
     { "key": "testCompanyUserKeycloakId", "value": "" },
-    { "key": "plannedInterventionId", "value": "" }
+    { "key": "plannedInterventionId", "value": "" },
+    { "key": "testPdfTemplateId", "value": "" },
+    { "key": "testEmailTemplateId", "value": "" }
   ]
 }

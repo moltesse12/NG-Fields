@@ -99,6 +99,7 @@ public class UserService {
             user.setRole(request.role());
             user.setPhone(request.phone());
             user.setActive(true);
+            user.setEmailVerified(false);
             userRepository.save(user);
 
             auditService.log(createdById, "USER_CREATED", "User", user.getId().toString(),
@@ -217,6 +218,11 @@ public class UserService {
     public UserResponse updateUserStatus(UUID keycloakId, boolean enabled, String adminId) {
         var user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + keycloakId));
+
+        if (Boolean.valueOf(user.getActive()).equals(enabled)) {
+            return toResponse(user);
+        }
+
         user.setActive(enabled);
 
         var kcIdStr = keycloakId.toString();
@@ -246,6 +252,15 @@ public class UserService {
     public UserResponse getProfile(UUID keycloakId) {
         return toResponse(userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new NotFoundException("Profil introuvable")));
+    }
+
+    @Transactional
+    public void markEmailVerified(UUID userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + userId));
+        user.setEmailVerified(true);
+        userRepository.save(user);
+        log.info("Email verified for userId={}", userId);
     }
 
     @Transactional
@@ -301,6 +316,13 @@ public class UserService {
 
         var userResource = realm().users().get(keycloakId.toString());
         userResource.resetPassword(passwordCredential(request.newPassword()));
+
+        try {
+            userResource.logout();
+            log.info("All sessions invalidated for keycloakId={}", keycloakId);
+        } catch (Exception e) {
+            log.warn("Failed to invalidate sessions for keycloakId={}: {}", keycloakId, e.getMessage());
+        }
 
         auditService.log(keycloakId, "PASSWORD_CHANGED", "User",
                 user.getId().toString(), "Mot de passe modifie: " + user.getUsername(), null);
@@ -367,6 +389,7 @@ public class UserService {
                 user.getRole(), user.getPhone(),
                 user.getActive(), user.getCompanyId(),
                 Boolean.TRUE.equals(user.getMustChangePassword()),
+                Boolean.TRUE.equals(user.getEmailVerified()),
                 user.getCreatedAt(), user.getUpdatedAt());
     }
 }

@@ -16,6 +16,8 @@ public interface ClientRepository extends JpaRepository<Client, UUID> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByCompanyNameIgnoreCase(String companyName);
+
     Optional<Client> findByReference(String reference);
 
     @EntityGraph(attributePaths = {"contacts"})
@@ -29,6 +31,7 @@ public interface ClientRepository extends JpaRepository<Client, UUID> {
             LOWER(c.companyName) LIKE LOWER(CONCAT('%', :q, '%'))
             OR LOWER(c.contactName) LIKE LOWER(CONCAT('%', :q, '%'))
             OR LOWER(c.email) LIKE LOWER(CONCAT('%', :q, '%'))
+            OR c.phone LIKE CONCAT('%', :q, '%')
         )
         """)
     Page<Client> search(@Param("q") String query, Pageable pageable);

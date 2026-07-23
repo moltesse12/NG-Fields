@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tg.ngstars.client.dto.ClientResponse;
 import tg.ngstars.client.dto.ContactDto;
+import tg.ngstars.client.dto.ContactRole;
 import tg.ngstars.client.dto.CreateClientRequest;
 import tg.ngstars.client.dto.CreateContactRequest;
 import tg.ngstars.client.dto.UpdateClientRequest;
@@ -44,6 +45,10 @@ public class ClientService {
     public ClientResponse createClient(CreateClientRequest request, String createdBy) {
         if (clientRepository.existsByEmail(request.email())) {
             throw new ConflictException("Un client avec l'email '" + request.email() + "' existe deja");
+        }
+
+        if (clientRepository.existsByCompanyNameIgnoreCase(request.companyName())) {
+            throw new ConflictException("Un client avec le nom '" + request.companyName() + "' existe deja");
         }
 
         String reference = referenceGeneratorService.generateNextReference();
@@ -87,6 +92,11 @@ public class ClientService {
             throw new ConflictException("L'email '" + request.email() + "' est deja utilise");
         }
 
+        if (!client.getCompanyName().equalsIgnoreCase(request.companyName())
+                && clientRepository.existsByCompanyNameIgnoreCase(request.companyName())) {
+            throw new ConflictException("Le nom '" + request.companyName() + "' est deja utilise");
+        }
+
         client.setCompanyName(request.companyName());
         client.setContactName(request.contactName());
         client.setEmail(request.email());
@@ -110,6 +120,19 @@ public class ClientService {
         log.info("Client desactive : {}", client.getCompanyName());
     }
 
+    @Transactional
+    public ClientResponse reactivateClient(UUID id) {
+        var client = clientRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Client introuvable : id=" + id));
+        if (Boolean.TRUE.equals(client.getActive())) {
+            return toResponse(client);
+        }
+        client.setActive(true);
+        var saved = clientRepository.save(client);
+        log.info("Client reactive : {}", client.getCompanyName());
+        return toResponse(saved);
+    }
+
     @Transactional(readOnly = true)
     public Page<ClientResponse> searchClients(String query, int page, int size) {
         var pageable = PageRequest.of(page, size, Sort.by("companyName").ascending());
@@ -120,12 +143,15 @@ public class ClientService {
     public ContactDto addContact(UUID clientId, CreateContactRequest request) {
         var client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new NotFoundException("Client introuvable : id=" + clientId));
+
+        var contactRole = ContactRole.fromString(request.role());
+
         var contact = Contact.builder()
                 .client(client)
                 .fullName(request.fullName())
                 .email(request.email())
                 .phone(request.phone())
-                .role(request.role())
+                .role(contactRole != null ? contactRole.name() : null)
                 .build();
         var saved = contactRepository.save(contact);
         log.info("Contact ajoute : {} pour client {}", request.fullName(), client.getReference());

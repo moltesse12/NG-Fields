@@ -27,7 +27,7 @@ spring:
       metrics-enabled: true
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     show-sql: false
     properties:
@@ -40,6 +40,11 @@ spring:
           batch_versioned_data: true
         order_inserts: true
         order_updates: true
+  flyway:
+    enabled: true
+    schemas: auth
+    baseline-on-migrate: true
+    locations: classpath:db/migration
 
   security:
     oauth2:
@@ -50,6 +55,16 @@ spring:
 app:
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:4200,http://localhost:8100}
+  jwt:
+    secret: ${JWT_SECRET:YW5nLXN0YXJzLXNlY3JldC1rZXktZm9yLWVtYWlsLXZlcmlmaWNhdGlvbi0yMDI0}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:4200}
+  security:
+    lockout:
+      max-attempts: 10
+      window-minutes: 15
+      duration-minutes: 30
+      ip-max-attempts: 20
 
 keycloak:
   auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8088}
@@ -61,6 +76,19 @@ resend:
   api-key: ${RESEND_API_KEY:}
   from-email: ${RESEND_FROM_EMAIL:noreply@ng-stars.com}
   from-name: ${RESEND_FROM_NAME:NG-STARs}
+
+resilience4j:
+  retry:
+    instances:
+      emailService:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.lang.RuntimeException
+        ignore-exceptions:
+          - tg.ngstars.auth.exception.NotFoundException
 
 springdoc:
   swagger-ui:
@@ -77,7 +105,15 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,loggers
   endpoint:
     env:
       keys-to-sanitize: password,secret,token,credential,admin-client-secret
+
+logging:
+  level:
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    tg.ngstars.auth: INFO
+  request-response:
+    enabled: ${LOG_REQUEST_RESPONSE:false}

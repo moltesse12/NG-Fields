@@ -28,6 +28,13 @@ spring:
 
 media:
   upload-dir: ${MEDIA_UPLOAD_DIR:./uploads}
+  max-file-size-bytes: ${MEDIA_MAX_FILE_SIZE:10485760}
+  max-storage-bytes: ${MEDIA_MAX_STORAGE:5368709120}
+  max-storage-per-company-bytes: ${MEDIA_MAX_STORAGE_PER_COMPANY:524288000}
+  antivirus-enabled: ${MEDIA_ANTIVIRUS_ENABLED:false}
+  clamav-host: ${CLAMAV_HOST:localhost}
+  clamav-port: ${CLAMAV_PORT:3310}
+  image-compression-quality: ${MEDIA_COMPRESSION_QUALITY:80}
 
 springdoc:
   swagger-ui:
@@ -44,7 +51,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,loggers
   endpoint:
     env:
       keys-to-sanitize: password,secret,token,credential,admin-client-secret,smtp
+
+logging:
+  level:
+    tg.ngstars.media: INFO
+  request-response:
+    enabled: ${LOG_REQUEST_RESPONSE:false}

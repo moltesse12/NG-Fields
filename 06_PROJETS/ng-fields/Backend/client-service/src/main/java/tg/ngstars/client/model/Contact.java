@@ -7,7 +7,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "contacts")
+@Table(name = "contacts",
+       indexes = {
+           @Index(name = "idx_contacts_client_id", columnList = "client_id")
+       })
 @Getter @Setter @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor

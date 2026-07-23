@@ -25,6 +25,7 @@ public class PhotoController {
 
     private static final List<String> ALLOWED_MIME_TYPES = List.of(
             "image/jpeg", "image/png", "image/webp");
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
     private final PhotoService photoService;
 
@@ -43,6 +44,8 @@ public class PhotoController {
 
         if (!ALLOWED_MIME_TYPES.contains(file.getContentType()))
             throw new IllegalArgumentException("Type de fichier non autorise: " + file.getContentType());
+        if (file.getSize() > MAX_FILE_SIZE)
+            throw new IllegalArgumentException("Fichier trop volumineux: " + file.getSize() + " octets (max " + MAX_FILE_SIZE + ")");
 
         try {
             return ResponseEntity

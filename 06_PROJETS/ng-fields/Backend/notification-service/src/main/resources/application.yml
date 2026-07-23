@@ -46,7 +46,33 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,loggers
   endpoint:
     env:
       keys-to-sanitize: password,secret,token,credential,admin-client-secret,smtp
+
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - jakarta.mail.MessagingException
+          - org.springframework.mail.MailException
+          - java.io.IOException
+    instances:
+      emailService:
+        base-config: default
+
+notification:
+  dlq-dir: ${NOTIFICATION_DLQ_DIR:./dlq}
+  audit-dir: ${NOTIFICATION_AUDIT_DIR:./audit}
+
+logging:
+  level:
+    tg.ngstars.notification: INFO
+  request-response:
+    enabled: ${LOG_REQUEST_RESPONSE:false}

@@ -50,10 +50,10 @@ public class PdfTemplateService {
     @Transactional
     public PdfTemplateResponse create(CreatePdfTemplateRequest request, String userKeycloakId) {
         var template = new PdfTemplate();
-        template.setName(request.name());
-        template.setDescription(request.description());
+        template.setName(HtmlSanitizer.sanitizePlainText(request.name()));
+        template.setDescription(HtmlSanitizer.sanitizePlainText(request.description()));
         template.setTemplateType(request.templateType() != null ? request.templateType() : "INTERVENTION_REPORT");
-        template.setConfig(request.config());
+        template.setConfig(validateJson(request.config()));
         template.setCreatedBy(userKeycloakId);
 
         var saved = repository.save(template);
@@ -66,9 +66,9 @@ public class PdfTemplateService {
         var template = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Template non trouve: " + id));
 
-        if (request.name() != null) template.setName(request.name());
-        if (request.description() != null) template.setDescription(request.description());
-        if (request.config() != null) template.setConfig(request.config());
+        if (request.name() != null) template.setName(HtmlSanitizer.sanitizePlainText(request.name()));
+        if (request.description() != null) template.setDescription(HtmlSanitizer.sanitizePlainText(request.description()));
+        if (request.config() != null) template.setConfig(validateJson(request.config()));
         if (request.isDefault() != null && request.isDefault()) {
             clearDefaultForType(template.getTemplateType());
             template.setIsDefault(true);
@@ -94,6 +94,18 @@ public class PdfTemplateService {
                     t.setIsDefault(false);
                     repository.save(t);
                 });
+    }
+
+    private String validateJson(String json) {
+        if (json == null || json.isBlank()) return "{}";
+        try {
+            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.readTree(json);
+            return json;
+        } catch (Exception e) {
+            log.warn("Invalid JSON config rejected: {}", e.getMessage());
+            return "{}";
+        }
     }
 
     private PdfTemplateResponse toResponse(PdfTemplate t) {

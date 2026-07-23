@@ -15,6 +15,7 @@ public record UserResponse(
     boolean active,
     UUID companyId,
     boolean mustChangePassword,
+    boolean emailVerified,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt
 ) {}

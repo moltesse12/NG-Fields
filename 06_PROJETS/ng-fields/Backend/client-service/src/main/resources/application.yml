@@ -27,7 +27,7 @@ spring:
       metrics-enabled: true
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     show-sql: false
     properties:
@@ -40,6 +40,11 @@ spring:
           batch_versioned_data: true
         order_inserts: true
         order_updates: true
+  flyway:
+    enabled: true
+    schemas: client
+    baseline-on-migrate: true
+    locations: classpath:db/migration
 
   security:
     oauth2:
@@ -75,7 +80,32 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,loggers
   endpoint:
     env:
       keys-to-sanitize: password,secret,token,credential,admin-client-secret,smtp
+
+logging:
+  level:
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    tg.ngstars.client: INFO
+  request-response:
+    enabled: ${LOG_REQUEST_RESPONSE:false}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      interventionSync:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+  retry:
+    instances:
+      interventionSync:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2

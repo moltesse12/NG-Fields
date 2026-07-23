@@ -1,8 +1,11 @@
 package tg.ngstars.interv.service;
 
+import java.util.Base64;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.resend.Resend;
@@ -10,6 +13,7 @@ import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import tg.ngstars.interv.config.ResendProperties;
 import tg.ngstars.interv.model.Intervention;
 
@@ -27,6 +31,8 @@ public class InterventionEmailService {
         this.resend = new Resend(properties.apiKey());
     }
 
+    @Async
+    @Retry(name = "emailService", fallbackMethod = "sendFallback")
     public void sendInterventionReport(Intervention intervention, String recipientEmail) {
         var html = buildReportEmailHtml(intervention);
         var subject = "Rapport d'intervention " + intervention.getReference();
@@ -36,8 +42,8 @@ public class InterventionEmailService {
 
     private void sendWithPdfAttachment(Intervention intervention, String to, String subject, String html) {
         try {
-            byte[] pdfBytes = tg.ngstars.interv.service.PdfService.generate(intervention);
-            String base64Pdf = java.util.Base64.getEncoder().encodeToString(pdfBytes);
+            byte[] pdfBytes = PdfService.generate(intervention);
+            String base64Pdf = Base64.getEncoder().encodeToString(pdfBytes);
 
             var attachment = com.resend.services.emails.model.Attachment.builder()
                     .content(base64Pdf)
@@ -61,6 +67,11 @@ public class InterventionEmailService {
                     to, intervention.getReference(), e.getMessage(), e);
             throw new RuntimeException("Échec de l'envoi de l'email: " + e.getMessage(), e);
         }
+    }
+
+    private void sendFallback(Intervention intervention, String recipientEmail, Throwable t) {
+        log.error("All retry attempts exhausted for email to {} for intervention {}: {}",
+                recipientEmail, intervention.getReference(), t.getMessage());
     }
 
     private String buildReportEmailHtml(Intervention intervention) {

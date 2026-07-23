@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import io.github.resilience4j.retry.annotation.Retry;
 import tg.ngstars.notification.dto.EmailRequest;
 
 @Service
@@ -19,20 +20,24 @@ public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
-    // ponytail: add new template names here when creating new .html files in templates/email/
     private static final Set<String> ALLOWED_TEMPLATES = Set.of(
         "intervention-notification", "password-reset", "welcome",
         "intervention-assigned", "intervention-completed");
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
+    private final DeadLetterQueueService dlqService;
+    private final EmailAuditLogger auditLogger;
 
-    public EmailService(JavaMailSender mailSender, SpringTemplateEngine templateEngine) {
+    public EmailService(JavaMailSender mailSender, SpringTemplateEngine templateEngine,
+                        DeadLetterQueueService dlqService, EmailAuditLogger auditLogger) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
+        this.dlqService = dlqService;
+        this.auditLogger = auditLogger;
     }
 
-    // ponytail: simple retry loop, switch to @Retryable + spring-retry if needed
+    @Retry(name = "emailService", fallbackMethod = "sendFallback")
     public void send(EmailRequest request) {
         var template = request.template();
         if (!ALLOWED_TEMPLATES.contains(template))
@@ -48,28 +53,27 @@ public class EmailService {
         ctx.setVariables(vars);
         var html = templateEngine.process("email/" + template, ctx);
 
-        Exception lastException = null;
-        var retries = 3;
-        for (int attempt = 1; attempt <= retries; attempt++) {
-            try {
-                var mime = mailSender.createMimeMessage();
-                var helper = new MimeMessageHelper(mime, true, "UTF-8");
-                helper.setTo(request.to());
-                helper.setSubject(request.subject());
-                helper.setText(html, true);
-                mailSender.send(mime);
-                log.info("Email sent to {} subject='{}'", request.to(), request.subject());
-                return;
-            } catch (Exception e) {
-                lastException = e;
-                if (attempt < retries) {
-                    log.warn("Failed to send email (attempt {}/{}): {}", attempt, retries, e.getMessage());
-                    try { Thread.sleep(1000L * attempt); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
-                }
-            }
-        }
-        log.error("Failed to send email to {} after {} attempts", request.to(), retries);
-        throw new RuntimeException("Failed to send email after " + retries + " attempts", lastException);
+        var mime = mailSender.createMimeMessage();
+        var helper = new MimeMessageHelper(mime, true, "UTF-8");
+        helper.setTo(request.to());
+        helper.setSubject(request.subject());
+        helper.setText(html, true);
+        mailSender.send(mime);
+
+        log.info("Email sent to {} subject='{}'", request.to(), request.subject());
+        auditLogger.logSent(request.to(), request.subject(), template, "SENT");
+    }
+
+    private void sendFallback(EmailRequest request, Throwable t) {
+        log.error("Échec envoi email à {} après retries: {}", request.to(), t.getMessage());
+        auditLogger.logFailed(request.to(), request.subject(), request.template(), t.getMessage());
+        dlqService.enqueue(
+                "EMAIL",
+                request.to(),
+                request.subject(),
+                request.template(),
+                request.toString(),
+                t.getMessage());
     }
 
     private static String safeString(String value) {

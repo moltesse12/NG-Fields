@@ -23,16 +23,6 @@ spring:
         connect-timeout: 3000
         response-timeout: 5s
 
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowed-origins:
-              - "${FRONTEND_URL:http://localhost:4200}"
-            allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
-            allowed-headers: [Authorization, Content-Type, X-Requested-With, Accept]
-            allow-credentials: true
-            max-age: 3600
-
       routes:
         - id: auth-register
           uri: ${AUTH_SERVICE_URL:http://localhost:8081}
@@ -255,9 +245,15 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,loggers
   endpoint:
     health:
       show-details: when-authorized
     env:
       keys-to-sanitize: password,secret,token,credential,admin-client-secret,smtp
+
+logging:
+  level:
+    tg.ngstars.gateway: INFO
+  request-response:
+    enabled: ${LOG_REQUEST_RESPONSE:false}

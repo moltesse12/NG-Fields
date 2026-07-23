@@ -6,6 +6,7 @@ import java.util.UUID;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
@@ -16,7 +17,10 @@ import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "company_users",
-       uniqueConstraints = @UniqueConstraint(columnNames = "keycloak_user_id"))
+       uniqueConstraints = @UniqueConstraint(columnNames = "keycloak_user_id"),
+       indexes = {
+           @Index(name = "idx_company_users_company_id", columnList = "company_id")
+       })
 public class CompanyUser {
 
     @Id

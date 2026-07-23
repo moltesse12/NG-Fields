@@ -47,10 +47,22 @@ public class FileService {
     private final Path ownershipFile;
     private final ObjectMapper objectMapper;
     private final Map<String, String> fileOwners = new ConcurrentHashMap<>();
+    private final Map<String, String> fileCompanyIds = new ConcurrentHashMap<>();
 
-    public FileService(MediaProperties mediaProperties, ObjectMapper objectMapper) {
+    private final AntivirusScanner antivirusScanner;
+    private final ImageCompressor imageCompressor;
+    private final CompanyQuotaTracker quotaTracker;
+    private final FileAccessAuditLogger auditLogger;
+
+    public FileService(MediaProperties mediaProperties, ObjectMapper objectMapper,
+                       AntivirusScanner antivirusScanner, ImageCompressor imageCompressor,
+                       CompanyQuotaTracker quotaTracker, FileAccessAuditLogger auditLogger) {
         this.mediaProperties = mediaProperties;
         this.objectMapper = objectMapper;
+        this.antivirusScanner = antivirusScanner;
+        this.imageCompressor = imageCompressor;
+        this.quotaTracker = quotaTracker;
+        this.auditLogger = auditLogger;
         this.uploadPath = Path.of(mediaProperties.uploadDir()).toAbsolutePath().normalize();
         this.ownershipFile = uploadPath.resolve(".owners.json");
     }
@@ -60,8 +72,13 @@ public class FileService {
         Files.createDirectories(uploadPath);
         if (Files.exists(ownershipFile)) {
             try (var reader = Files.newBufferedReader(ownershipFile)) {
-                Map<String, String> loaded = objectMapper.readValue(reader, new TypeReference<Map<String, String>>() {});
-                if (loaded != null) fileOwners.putAll(loaded);
+                Map<String, FileOwnership> loaded = objectMapper.readValue(reader, new TypeReference<>() {});
+                if (loaded != null) {
+                    loaded.forEach((k, v) -> {
+                        fileOwners.put(k, v.owner());
+                        fileCompanyIds.put(k, v.companyId());
+                    });
+                }
             } catch (IOException e) {
                 log.warn("Failed to load ownership file, starting fresh", e);
             }
@@ -69,6 +86,10 @@ public class FileService {
     }
 
     public String storeBytes(byte[] data, String extension, String userId) {
+        return storeBytes(data, extension, userId, null);
+    }
+
+    public String storeBytes(byte[] data, String extension, String userId, String companyId) {
         validateFileSize(data.length);
         var safeExt = sanitizeExtension(extension);
         var expectedMime = ALLOWED_EXTENSIONS.get(safeExt);
@@ -81,9 +102,10 @@ public class FileService {
             if (!target.startsWith(uploadPath))
                 throw new FileAccessException("Invalid file path");
             ensureStorageAvailable(data.length);
+            if (companyId != null) checkCompanyQuota(companyId, data.length);
             Files.write(target, data);
-            fileOwners.put(filename, userId);
-            persistOwners();
+            trackOwnership(filename, userId, companyId, data.length);
+            auditLogger.logUpload(filename, userId, data.length);
             return filename;
         } catch (IOException e) {
             throw new RuntimeException("Failed to store bytes", e);
@@ -91,6 +113,10 @@ public class FileService {
     }
 
     public String store(MultipartFile file, String userId) {
+        return store(file, userId, null);
+    }
+
+    public String store(MultipartFile file, String userId, String companyId) {
         validateFileSize(file.getSize());
         var originalName = file.getOriginalFilename();
         var ext = "";
@@ -108,15 +134,24 @@ public class FileService {
             throw new RuntimeException("Failed to read file for validation", e);
         }
 
-        var filename = UUID.randomUUID() + ext;
-        try (var is = file.getInputStream()) {
-            var target = uploadPath.resolve(filename).normalize();
+        try {
+            var target = uploadPath.resolve(UUID.randomUUID() + ext).normalize();
             if (!target.startsWith(uploadPath))
                 throw new FileAccessException("Cannot store file outside upload directory");
             ensureStorageAvailable(file.getSize());
-            Files.copy(is, target, StandardCopyOption.REPLACE_EXISTING);
-            fileOwners.put(filename, userId);
-            persistOwners();
+            if (companyId != null) checkCompanyQuota(companyId, file.getSize());
+
+            antivirusScanner.scan(target);
+
+            MultipartFile toStore = imageCompressor.compressIfNeeded(file);
+
+            try (var is = toStore.getInputStream()) {
+                Files.copy(is, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            String filename = target.getFileName().toString();
+            trackOwnership(filename, userId, companyId, toStore.getSize());
+            auditLogger.logUpload(filename, userId, toStore.getSize());
             return filename;
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
@@ -133,6 +168,14 @@ public class FileService {
         return file;
     }
 
+    public String getOwner(String filename) {
+        return fileOwners.get(filename);
+    }
+
+    public String getCompanyId(String filename) {
+        return fileCompanyIds.get(filename);
+    }
+
     public void delete(String filename, String userId) {
         String clean = Path.of(filename).getFileName().toString();
         var owner = fileOwners.get(clean);
@@ -141,9 +184,14 @@ public class FileService {
         if (!owner.equals(userId))
             throw new FileAccessException("Not the owner of this file");
         try {
-            Files.deleteIfExists(uploadPath.resolve(clean));
+            var path = uploadPath.resolve(clean);
+            long size = Files.exists(path) ? Files.size(path) : 0;
+            Files.deleteIfExists(path);
             fileOwners.remove(clean);
+            var companyId = fileCompanyIds.remove(clean);
+            if (companyId != null) quotaTracker.removeUsage(companyId, size);
             persistOwners();
+            auditLogger.logDelete(clean, userId);
         } catch (IOException e) {
             throw new RuntimeException("Failed to delete file", e);
         }
@@ -168,6 +216,15 @@ public class FileService {
         if (size > mediaProperties.maxFileSizeBytes()) {
             throw new IllegalArgumentException(
                     "File size " + size + " bytes exceeds maximum allowed " + mediaProperties.maxFileSizeBytes() + " bytes");
+        }
+    }
+
+    private void checkCompanyQuota(String companyId, long incomingSize) {
+        if (quotaTracker.wouldExceedQuota(companyId, incomingSize)) {
+            throw new StorageLimitReachedException(
+                    "Quota de stockage dépassé pour la company " + companyId
+                    + ". Utilisé: " + quotaTracker.getUsage(companyId)
+                    + ", limite: " + mediaProperties.maxStoragePerCompanyBytes());
         }
     }
 
@@ -203,13 +260,26 @@ public class FileService {
         return lower;
     }
 
+    private void trackOwnership(String filename, String userId, String companyId, long size) {
+        fileOwners.put(filename, userId);
+        fileCompanyIds.put(filename, companyId);
+        if (companyId != null) {
+            quotaTracker.addUsage(companyId, size);
+        }
+        persistOwners();
+    }
+
     private void persistOwners() {
         var tmp = ownershipFile.resolveSibling(ownershipFile.getFileName() + ".tmp");
         try (var writer = Files.newBufferedWriter(tmp)) {
-            objectMapper.writeValue(writer, fileOwners);
+            var data = new java.util.HashMap<String, FileOwnership>();
+            fileOwners.forEach((k, v) -> data.put(k, new FileOwnership(v, fileCompanyIds.get(k))));
+            objectMapper.writeValue(writer, data);
             Files.move(tmp, ownershipFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
-            log.error("Failed to persist file ownership — in-memory state may diverge from disk", e);
+            log.error("Failed to persist file ownership", e);
         }
     }
+
+    public record FileOwnership(String owner, String companyId) {}
 }
