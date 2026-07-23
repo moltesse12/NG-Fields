@@ -150,7 +150,7 @@ public class AuditLog {
 
 ## Test avec Postman
 
-1. Importer `doc/docs/tests/postman-collection.json` + `postman-environment.json`
+1. Importer `Backend/postman/NG-Fields API.postman_collection.json` + `NG-Fields Dev.postman_environment.json`
 2. Exécuter "1. Health check" → vérifier `200 {"status": "UP"}`
 3. Exécuter "5. Login ADMIN" → token stocké automatiquement
 4. Exécuter "12. ADMIN: Create user" → 201

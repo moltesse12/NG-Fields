@@ -31,10 +31,10 @@ docs/
 | Document | Emplacement |
 |----------|-------------|
 | Stack technique | `Technologies.md` (racine) |
-| Schéma BDD | `infra/supabase/schema.sql` |
+| Schéma BDD | Hibernate `ddl-auto: update` (pas de Flyway) |
 | Données de test | `infra/supabase/seed.sql` |
 | Config Keycloak | `infra/keycloak/realm-export.json` |
-| Docker Compose | `infra/docker-compose.yml` |
+| Docker Compose | ~~`infra/docker-compose.yml`~~ ❌ Pas utilisé (exécution native) |
 
 ## Intégrations
 

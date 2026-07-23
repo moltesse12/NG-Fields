@@ -85,9 +85,9 @@ NG-STARs utilise actuellement une fiche d'intervention papier (FI-01-2025) de 3 
 |---------|--------|
 | Coût initial | **0 €** |
 | Coûts récurrents | **0 €** |
-| Hébergement | Supabase (free tier) |
-| Base de données | PostgreSQL via Supabase (500MB free) |
-| Storage photos | Supabase Storage (1GB free) |
+| Hébergement | Local (VPS ou développement natif) |
+| Base de données | PostgreSQL 18 en local |
+| Storage photos | Filesystem local (`./uploads/`) |
 | Méthodologie | Scrum (sprints 1 semaine) |
 | Nombre de sprints | **7 sprints (V0-S1 à V1-S2)** |
 | Date début | **1 juin 2026** |

@@ -7,7 +7,7 @@
 **Version :** 2.0  
 **Date :** 01/06/2026  
 
-> **⚠️ Note Post-Cadrage (21/07/2026) :** Ce document contient des references obsolètes aux fonctionnalites supprimees du perimetre : WhatsApp, OpenProject, facturation. Les sections concernees necessitent une revision. Se referer au Backlog V5.0 pour la version actualisee.
+> **⚠️ Note Post-Cadrage (21/07/2026) :** Ce document contient des references obsolètes aux fonctionnalites supprimees du perimetre : WhatsApp, OpenProject, facturation. Les sections concernees necessitent une revision. Se referer au Backlog V6.0 pour la version actualisee.
 
 ---
 

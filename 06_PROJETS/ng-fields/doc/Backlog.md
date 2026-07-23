@@ -126,8 +126,8 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 **Afin de** démarrer le développement dans des conditions reproductibles.
 
 **Critères d'acceptation :**
-- Docker Compose ou alternatives locales démarrent Redis et Keycloak
-- PostgreSQL via Supabase Cloud
+- PostgreSQL 18 en local (user `ng_fields_user`, password `Pg_ng-fields1234`)
+- Hibernate `ddl-auto: update` crée les schémas automatiquement
 - `.env` externalisé, `.gitignore` configuré
 - Spring Boot répond sur `localhost:8081` (health OK)
 
@@ -586,9 +586,9 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 - ❌ Envoi WhatsApp SUPPRIMÉ du périmètre
 
 **Tâches :**
-- [API] Créer `EmailService` (JavaMailSender)
-- [API] Créer `EmailQueueConsumer`
-- [API] Tester avec GreenMail
+- [API] `InterventionEmailService` (Resend API)
+- [API] Intégration dans `InterventionService` (appel post-clôture)
+- [API] Templates Thymeleaf pour email
 
 **Git :** `git add . && git commit -m "feat(US-022): envoi rapport par email" && git push origin feature/V0-S3`
 

@@ -3,7 +3,7 @@
 **Rédigé par :** FOLLY Nelson Emmanuel (Stagiaire) 
 **Validateur :** David KATOH (Responsable IT)
 
-> **⚠️ Note Post-Cadrage (21/07/2026) :** Ce document contient des references obsolètes aux fonctionnalites supprimees du perimetre : WhatsApp, OpenProject, facturation. Les diagrammes UML et cas d'utilisation concernes necessitent une revision complete. Se referer au Backlog V5.0 pour la version actualisee.
+> **⚠️ Note Post-Cadrage (21/07/2026) :** Ce document contient des references obsolètes aux fonctionnalites supprimees du perimetre : WhatsApp, OpenProject, facturation. Les diagrammes UML et cas d'utilisation concernes necessitent une revision complete. Se referer au Backlog V6.0 pour la version actualisee.
 
 ---
 
@@ -44,7 +44,7 @@ Nous pouvons identifier les acteurs suivants :
 | Manager                                    | Supervise les activités terrain via le tableau de bord web. Consulte les statistiques, reçoit les notifications en temps réel et appose la signature hiérarchique. | Primaire      |
 | Directeur                                  | Configure et administre le système : gestion des comptes utilisateurs, des droits d'accès, des référentiels clients et des paramètres de notification.             | Primaire      |
 | Client                                     | Saisit directement sa demande d'intervention depuis le portail client de l'application NG-Fields.                                                                 | Primaire      |
-| Service Email (SMTP / SendGrid)            | Reçoit les requêtes d'envoi et achemine les rapports PDF par email aux destinataires désignés.                                                                     | Secondaire    |
+| Service Email (Resend API)            | Reçoit les requêtes d'envoi et achemine les rapports PDF par email aux destinataires désignés.                                                                     | Secondaire    |
 | Service de notifications Push (FCM / APNs) | Reçoit les déclencheurs d'événements et achemine les alertes push en temps réel vers les appareils mobiles des techniciens et managers.                            | Secondaire    |
 
 ---

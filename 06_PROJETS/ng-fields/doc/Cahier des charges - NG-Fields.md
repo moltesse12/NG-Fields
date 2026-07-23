@@ -1,5 +1,7 @@
 # Cahier des charges
 
+> **⚠️ Note :** Ce document est le cahier des charges original (référence historique). Les choix techniques ont évolué depuis : Flyway remplacé par `ddl-auto: update`, Supabase remplacé par PostgreSQL local, Docker Compose non utilisé, Resend remplace JavaMailSender. Se referer au Backlog V6.0 et à Technologies.md pour la version actualisee.
+
 **Proposé par :** FOLLY Nelson Emmanuel
 
 Sis au 373 Rue 53. Quartier Hédzranawoé
