@@ -168,6 +168,24 @@ export const routes: Routes = [
         data: { roles: ['ADMIN', 'MANAGER'] },
       },
       {
+        path: 'pdf-templates',
+        loadComponent: () =>
+          import('./features/dashboard/pages/pdf-templates/pdf-templates.component').then(
+            (m) => m.PdfTemplatesComponent,
+          ),
+        canActivate: [authRoleGuard],
+        data: { roles: ['ADMIN', 'MANAGER'] },
+      },
+      {
+        path: 'email-templates',
+        loadComponent: () =>
+          import('./features/dashboard/pages/email-templates/email-templates.component').then(
+            (m) => m.EmailTemplatesComponent,
+          ),
+        canActivate: [authRoleGuard],
+        data: { roles: ['ADMIN', 'MANAGER'] },
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/dashboard/pages/settings/settings.component').then(

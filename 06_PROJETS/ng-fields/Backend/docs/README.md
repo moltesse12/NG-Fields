@@ -11,7 +11,7 @@ Microservices architecture with 7 services + 1 shared library.
 | client-service | 8082 | Client Management |
 | intervention-service | 8083 | Intervention/Work Order Management |
 | media-service | 8084 | File Upload & Storage |
-| notification-service | 8085 | Email Notifications |
+| notification-service | 8085 | Email Notifications (Resend) |
 | report-service | 8086 | Analytics & PDF/CSV Reports |
 | shared-lib | - | Shared DTOs, entities, exceptions, security |
 

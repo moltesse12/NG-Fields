@@ -21,7 +21,7 @@ public class ReportService {
     public StreamingResponseBody exportInterventionsCsvStream() {
         return outputStream -> {
             try (var writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
-                writer.write("Reference,Client,Email,Telephone,Equipement,Marque,Modele,Probleme,Diagnostic,Travail,Statut,Assignee,Resultat,Facturable,Montant,Cree le,Mis a jour\r\n");
+                writer.write("Reference,Client,Email,Telephone,Equipement,Marque,Modele,Probleme,Diagnostic,Travail,Statut,Assignee,Resultat,Cree le,Mis a jour\r\n");
 
                 var interventions = interventionClient.fetchAllForReport(10_000);
                 for (var i : interventions) {
@@ -46,8 +46,6 @@ public class ReportService {
              + escape(i.status()) + ","
              + escape(i.assignedTo() != null ? i.assignedTo().toString() : "") + ","
              + escape(i.result()) + ","
-             + escape(i.billable() != null ? i.billable().toString() : "") + ","
-             + escape(i.billingAmount() != null ? i.billingAmount().toString() : "") + ","
              + escape(i.createdAt() != null ? i.createdAt().toString() : "") + ","
              + escape(i.updatedAt() != null ? i.updatedAt().toString() : "") + "\r\n";
     }

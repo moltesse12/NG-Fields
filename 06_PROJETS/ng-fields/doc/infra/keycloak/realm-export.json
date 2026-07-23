@@ -27,14 +27,14 @@
   "oauth2DevicePollingInterval": 5,
   "enabled": true,
   "sslRequired": "external",
-  "registrationAllowed": false,
+  "registrationAllowed": true,
   "registrationEmailAsUsername": false,
-  "rememberMe": false,
+  "rememberMe": true,
   "verifyEmail": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
-  "resetPasswordAllowed": false,
-  "editUsernameAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": true,
   "bruteForceProtected": true,
   "permanentLockout": true,
   "maxTemporaryLockouts": 0,
@@ -48,6 +48,24 @@
   "maxSecondaryAuthFailures": 0,
   "roles": {
     "realm": [
+      {
+        "id": "f560dbb2-1c8c-494e-9cc3-3e90de06aab6",
+        "name": "CLIENT_VIEWER",
+        "description": "Observateur d'entreprise cliente - lecture seule des interventions",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "95650fd7-9f4d-4010-aceb-2537848156c5",
+        "attributes": {}
+      },
+      {
+        "id": "dd5cd403-9432-4403-94ae-b16074bd04f7",
+        "name": "CLIENT_ADMIN",
+        "description": "Administrateur d'entreprise cliente - gestion des utilisateurs de sa companie",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "95650fd7-9f4d-4010-aceb-2537848156c5",
+        "attributes": {}
+      },
       {
         "id": "751b85a6-bc59-4868-986d-f58bd5d4acaa",
         "name": "offline_access",
@@ -88,15 +106,6 @@
         "attributes": {}
       },
       {
-        "id": "3ef0ca9a-113d-4ac1-963a-4cb9e37ed1a7",
-        "name": "CLIENT_PORTAL",
-        "description": "Portail de soumission de demande d'intervention",
-        "composite": false,
-        "clientRole": false,
-        "containerId": "95650fd7-9f4d-4010-aceb-2537848156c5",
-        "attributes": {}
-      },
-      {
         "id": "55d44835-ae34-4319-81ab-e932f4d6001e",
         "name": "TECHNICIAN",
         "description": "Interventions terrain, photos, signatures, synchronisation",
@@ -118,6 +127,15 @@
         "id": "d34959c3-35d9-4569-8769-7024a0887d99",
         "name": "ADMIN",
         "description": "Full access + Keycloak administration",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "95650fd7-9f4d-4010-aceb-2537848156c5",
+        "attributes": {}
+      },
+      {
+        "id": "a2ea341a-1838-4a43-8296-fecb4499cce3",
+        "name": "CLIENT_USER",
+        "description": "Utilisateur d'entreprise cliente - soumission de demandes d'intervention",
         "composite": false,
         "clientRole": false,
         "containerId": "95650fd7-9f4d-4010-aceb-2537848156c5",
@@ -512,6 +530,13 @@
       "realmRoles": [
         "default-roles-ng-fields"
       ],
+      "clientRoles": {
+        "realm-management": [
+          "query-users",
+          "view-users",
+          "manage-users"
+        ]
+      },
       "notBefore": 0,
       "groups": []
     }
@@ -765,12 +790,13 @@
         "frontchannel.logout.session.required": "true",
         "post.logout.redirect.uris": "+",
         "oauth2.device.authorization.grant.enabled": "false",
+        "use.jwks.url": "false",
         "backchannel.logout.revoke.offline.tokens": "false",
         "realm_client": "false",
         "oidc.ciba.grant.enabled": "false",
         "backchannel.logout.session.required": "true",
         "display.on.consent.screen": "false",
-        "client.secret": "${KEYCLOAK_CLIENT_SECRET}",
+        "client.secret": "52ea9581183043ce8060d6a1df4402da",
         "dpop.bound.access.tokens": "false"
       },
       "authenticationFlowBindingOverrides": {},
@@ -868,7 +894,7 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "http://localhost:4200/*"
+        "http://localhost:4200/callback"
       ],
       "webOrigins": [
         "http://localhost:4200"
@@ -884,18 +910,29 @@
       "frontchannelLogout": true,
       "protocol": "openid-connect",
       "attributes": {
+        "id.token.as.detached.signature": "false",
         "logout.confirmation.enabled": "false",
+        "client.introspection.response.allow.jwt.claim.enabled": "false",
         "standard.token.exchange.enabled": "false",
         "oauth2.jwt.authorization.grant.enabled": "false",
-        "post.logout.redirect.uris": "http://localhost:4200/*",
+        "post.logout.redirect.uris": "http://localhost:4200",
         "frontchannel.logout.session.required": "true",
         "oauth2.device.authorization.grant.enabled": "false",
         "backchannel.logout.revoke.offline.tokens": "false",
+        "use.refresh.tokens": "true",
         "realm_client": "false",
         "oidc.ciba.grant.enabled": "false",
+        "client.use.lightweight.access.token.enabled": "false",
         "backchannel.logout.session.required": "true",
+        "request.object.required": "not required",
+        "client_credentials.use_refresh_token": "false",
+        "access.token.header.type.rfc9068": "false",
+        "tls.client.certificate.bound.access.tokens": "false",
+        "require.pushed.authorization.requests": "false",
+        "acr.loa.map": "{}",
         "display.on.consent.screen": "false",
         "pkce.code.challenge.method": "S256",
+        "token.response.type.bearer.lower-case": "false",
         "dpop.bound.access.tokens": "false"
       },
       "authenticationFlowBindingOverrides": {},
@@ -2780,7 +2817,7 @@
     "shortVerificationUri": "",
     "actionTokenGeneratedByUserLifespan.reset-credentials": ""
   },
-  "keycloakVersion": "26.6.2",
+  "keycloakVersion": "26.6.4",
   "userManagedAccessAllowed": false,
   "organizationsEnabled": false,
   "verifiableCredentialsEnabled": false,

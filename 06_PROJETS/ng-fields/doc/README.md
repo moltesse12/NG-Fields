@@ -2,7 +2,7 @@
 
 Digitalisation de la gestion des interventions terrain pour NG-STARs.
 
-**Stack :** Spring Boot 4.0.6 / Java 25 + Flutter/Dart + Angular 21 / TypeScript + Tailwind CSS 4 + Vitest + Keycloak 26.6.2 + PostgreSQL/Supabase
+**Stack :** Spring Boot 4.1.0 / Java 25 + Angular 22+ / TypeScript + Tailwind CSS 4 + Keycloak 26.6.4 + PostgreSQL 18
 
 ---
 
@@ -10,6 +10,7 @@ Digitalisation de la gestion des interventions terrain pour NG-STARs.
 
 ```
 Backend/
+├── shared-lib/             Shared exceptions, utils, config
 ├── auth-service/           Auth microservice
 ├── client-service/         Client microservice
 ├── intervention-service/   Intervention microservice
@@ -20,9 +21,9 @@ Backend/
 └── pom.xml
 
 Frontend/
-├── ng-web/                 Dashboard Angular 21
+├── ng-web/                 Dashboard Angular 22+
 └── templates/              Template Next.js
-mobile/                     App Flutter (à créer)
+mobile/                     App Flutter (**Non démarré**)
 Doc/                        Documentation
 ```
 
@@ -48,9 +49,9 @@ npm start        # → http://localhost:4200
 cd Frontend/ng-web
 npm test         # Vitest
 
-# 5. Mobile (autre terminal)
-cd mobile
-flutter run
+# 5. Mobile (non démarré)
+# cd mobile
+# flutter run
 ```
 
 ---

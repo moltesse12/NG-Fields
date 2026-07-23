@@ -75,12 +75,6 @@ public class Intervention {
     @Column(name = "reported_issue")
     private String reportedIssue;
 
-    @Column(name = "openproject_ticket_id")
-    private String openprojectTicketId;
-
-    @Column(name = "openproject_ticket_url")
-    private String openprojectTicketUrl;
-
     private String diagnosis;
 
     @Column(name = "work_done")
@@ -151,18 +145,12 @@ public class Intervention {
     @Column(length = 20)
     private String result;
 
+    @Column(name = "follow_up_recommended")
+    @Builder.Default
+    private Boolean followUpRecommended = false;
+
     @Column(columnDefinition = "TEXT")
     private String recommendations;
-
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean billable = true;
-
-    @Column(name = "billing_amount")
-    private BigDecimal billingAmount;
-
-    @Column(name = "billing_notes")
-    private String billingNotes;
 
     @Column(name = "local_id", unique = true)
     private String localId;

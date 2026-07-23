@@ -1,6 +1,6 @@
 # 01 — Installer et lancer Keycloak (sans Docker)
 
-**Objectif :** Keycloak 26.6.2 tourne sur `http://localhost:8080`
+**Objectif :** Keycloak 26.6.4 tourne sur `http://localhost:8080`
 **Temps estimé :** 10 minutes
 **Dépend de :** Rien (Java 21+ inclus dans la distribution)
 
@@ -14,27 +14,27 @@
 
 ## Étapes
 
-### 1. Télécharger Keycloak 26.6.2
+### 1. Télécharger Keycloak 26.6.4
 
 ```powershell
 cd F:\03_Pro_IT\07_Clients\NG-STARs\06_PROJETS\Projet_NG-Fields\apps
 
 # Télécharger Keycloak ZIP à la racine du projet
-Invoke-WebRequest -Uri "https://github.com/keycloak/keycloak/releases/download/26.6.2/keycloak-26.6.2.zip" `
-  -OutFile "apps\keycloak-26.6.2.zip"
+Invoke-WebRequest -Uri "https://github.com/keycloak/keycloak/releases/download/26.6.4/keycloak-26.6.4.zip" `
+  -OutFile "apps\keycloak-26.6.4.zip"
 
 ### 2. Extraire l'archive
 
 ```powershell
-# Avec l'explorateur : clic droit sur apps/keycloak-26.6.2.zip → Extraire tout → apps/
+# Avec l'explorateur : clic droit sur apps/keycloak-26.6.4.zip → Extraire tout → apps/
 # Ou en ligne de commande :
-Expand-Archive -Path "apps\keycloak-26.6.2.zip" -DestinationPath "apps\"
+Expand-Archive -Path "apps\keycloak-26.6.4.zip" -DestinationPath "apps\"
 ```
 
 Vérifier la structure :
 ```
 apps/
-├── keycloak-26.6.2/         ← dossier extrait dans apps/
+├── keycloak-26.6.4/         ← dossier extrait dans apps/
 │   ├── bin/
 │   │   ├── kc.bat          ← Lanceur Windows
 │   │   └── kc.sh           ← Lanceur Linux/Mac
@@ -63,13 +63,13 @@ $env:KEYCLOAK_ADMIN_PASSWORD="Master1234!"
 ### 4. Démarrer Keycloak en mode développement
 
 ```powershell
-cd F:\03_Pro_IT\07_Clients\NG-STARs\06_PROJETS\Projet_NG-Fields\apps\keycloak-26.6.2\bin
+cd F:\03_Pro_IT\07_Clients\NG-STARs\06_PROJETS\Projet_NG-Fields\apps\keycloak-26.6.4\bin
 .\kc.bat start-dev --http-port=8080
 ```
 
 **Résultat attendu dans la console :**
 ```
-2026-06-01 17:30:00,000 INFO  [io.quarkus] (main) Keycloak 26.6.2 on JVM (powered by Quarkus ...)
+2026-06-01 17:30:00,000 INFO  [io.quarkus] (main) Keycloak 26.6.4 on JVM (powered by Quarkus ...)
 2026-06-01 17:30:02,000 INFO  [org.keycloak.services] (main) Added user 'admin' to realm 'master'
 2026-06-01 17:30:02,500 INFO  [io.quarkus] (main) Installed features: [cdi, ...]
 2026-06-01 17:30:03,000 INFO  [org.keycloak.services] (main) Profile dev on port 8080
@@ -95,7 +95,7 @@ Se connecter avec `admin` / `admin123`.
 | Admin Console | `http://localhost:8080/admin` | `admin` / `admin123` |
 | Port trafic | `8080` | — |
 
-> **Note :** En mode `start-dev`, Keycloak 26.6.2 n'expose pas de port management 9000
+> **Note :** En mode `start-dev`, Keycloak 26.6.4 n'expose pas de port management 9000
 > ni d'endpoint `/health` séparé. Le health check se fait via `GET /realms/master`
 > ou en vérifiant que la Admin Console répond.
 

@@ -1,5 +1,9 @@
 package tg.ngstars.interv.exception;
 
-public class NotFoundException extends RuntimeException {
+/**
+ * @deprecated Use {@link tg.ngstars.common.exception.NotFoundException} instead.
+ */
+@Deprecated(forRemoval = true)
+public class NotFoundException extends tg.ngstars.common.exception.NotFoundException {
     public NotFoundException(String message) { super(message); }
 }

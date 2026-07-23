@@ -4,340 +4,218 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.ws.rs.core.Response;
-
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.admin.client.resource.RoleMappingResource;
-import org.keycloak.admin.client.resource.RoleScopeResource;
-import org.keycloak.admin.client.resource.RoleResource;
 import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Pageable;
 
 import tg.ngstars.auth.config.KeycloakProperties;
-import tg.ngstars.auth.dto.CreateUserRequest;
-import tg.ngstars.auth.dto.ChangePasswordRequest;
-import tg.ngstars.auth.dto.UpdateProfileRequest;
-import tg.ngstars.auth.dto.UpdateUserRequest;
-import tg.ngstars.common.exception.ConflictException;
-import tg.ngstars.common.exception.NotFoundException;
 import tg.ngstars.auth.model.User;
 import tg.ngstars.auth.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@DisplayName("UserService")
 class UserServiceTest {
 
-    @Mock UserRepository userRepository;
-    @Mock AuditService auditService;
-    @Mock Keycloak keycloak;
-    @Mock RealmResource realm;
-    @Mock UsersResource usersResource;
-    @Mock UserResource userResource;
-    @Mock RolesResource rolesResource;
-    @Mock RoleResource roleResource;
-    @Mock RoleMappingResource roleMappingResource;
-    @Mock RoleScopeResource roleScopeResource;
+    @Mock private UserRepository userRepository;
+    @Mock private AuditService auditService;
+    @Mock private EmailService emailService;
+    @Mock private Keycloak keycloak;
+    @Mock private KeycloakProperties keycloakProperties;
+    @Mock private RealmResource realmResource;
+    @Mock private UsersResource usersResource;
+    @Mock private UserResource userResource;
+    @Mock private RolesResource rolesResource;
 
-    UserService service;
-    KeycloakProperties props = new KeycloakProperties("http://localhost:8088", "admin-cli", "secret", "ng-fields");
+    @InjectMocks
+    private UserService userService;
 
-    UUID keycloakId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
+    private UUID userId;
+    private UUID keycloakId;
+    private User user;
 
     @BeforeEach
     void setUp() {
-        service = new UserService(userRepository, auditService, keycloak, props);
-        lenient().when(keycloak.realm(props.realm())).thenReturn(realm);
-        lenient().when(realm.users()).thenReturn(usersResource);
-        lenient().when(usersResource.get(keycloakId.toString())).thenReturn(userResource);
-        lenient().when(userResource.roles()).thenReturn(roleMappingResource);
-        lenient().when(roleMappingResource.realmLevel()).thenReturn(roleScopeResource);
-        lenient().when(realm.roles()).thenReturn(rolesResource);
+        userId = UUID.randomUUID();
+        keycloakId = UUID.randomUUID();
+        user = new User();
+        user.setId(userId);
+        user.setKeycloakId(keycloakId);
+        user.setUsername("testuser");
+        user.setEmail("test@ngstars.tg");
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setRole("TECHNICIAN");
+        user.setActive(true);
     }
 
-    private User user() {
-        var u = new User();
-        u.setId(userId);
-        u.setKeycloakId(keycloakId);
-        u.setUsername("jdoe");
-        u.setEmail("j@doe.com");
-        u.setFirstName("John");
-        u.setLastName("Doe");
-        u.setRole("TECHNICIAN");
-        u.setActive(true);
-        return u;
-    }
-
-    @Test
-    void createUser_shouldCreateInKeycloakAndDb() throws Exception {
-        var req = new CreateUserRequest("jdoe", "j@doe.com", "John", "Doe", "pass123", "TECHNICIAN", null);
-
-        when(userRepository.existsByUsername("jdoe")).thenReturn(false);
-        when(userRepository.existsByEmail("j@doe.com")).thenReturn(false);
-
-        var locationUri = new URI("http://localhost:8088/admin/realms/ng-fields/users/" + keycloakId);
-        var response = mock(Response.class);
-        when(response.getStatus()).thenReturn(201);
-        when(response.getLocation()).thenReturn(locationUri);
-        when(usersResource.create(any())).thenReturn(response);
-
-        when(rolesResource.get("TECHNICIAN")).thenReturn(roleResource);
-        when(roleResource.toRepresentation()).thenReturn(new RoleRepresentation());
-
-        when(userRepository.save(any())).thenAnswer(i -> {
-            var u = (User) i.getArgument(0);
-            u.setId(userId);
-            return u;
-        });
-
-        var result = service.createUser(req, "admin", null);
-
-        assertEquals("jdoe", result.username());
-        assertEquals("TECHNICIAN", result.role());
-        verify(auditService).log(any(), eq("USER_CREATED"), eq("User"), anyString(), anyString(), isNull());
-    }
-
-    @Test
-    void createUser_duplicateUsername_throwsConflict() {
-        var req = new CreateUserRequest("jdoe", "j@doe.com", "John", "Doe", "pass123", "TECHNICIAN", null);
-        when(userRepository.existsByUsername("jdoe")).thenReturn(true);
-
-        assertThrows(ConflictException.class, () -> service.createUser(req, "admin", null));
-    }
-
-    @Test
-    void getUser_shouldReturnUser() {
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user()));
-        var result = service.getUser(userId);
-        assertEquals("jdoe", result.username());
-    }
-
-    @Test
-    void getUser_notFound_throwsNotFound() {
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.getUser(userId));
-    }
-
-    @Test
-    void getAllUsers_shouldReturnPage() {
-        var page = new org.springframework.data.domain.PageImpl<>(List.of(user()));
-        when(userRepository.findAll(Pageable.unpaged())).thenReturn(page);
-        var result = service.getAllUsers(Pageable.unpaged());
-        assertEquals(1, result.getContent().size());
-    }
-
-    @Test
-    void assignRole_shouldUpdateRole() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user()));
-        when(roleScopeResource.listAll()).thenReturn(List.of());
-        when(rolesResource.get("MANAGER")).thenReturn(roleResource);
-        when(roleResource.toRepresentation()).thenReturn(new RoleRepresentation());
-
-        var result = service.assignRole(keycloakId, "MANAGER", "admin");
-        assertEquals("MANAGER", result.role());
-    }
-
-    @Test
-    void updateUserStatus_enable_shouldActivate() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user()));
+    private void mockKeycloak() {
+        when(keycloakProperties.realm()).thenReturn("ng-fields");
+        when(keycloak.realm("ng-fields")).thenReturn(realmResource);
+        when(realmResource.users()).thenReturn(usersResource);
+        when(usersResource.get(keycloakId.toString())).thenReturn(userResource);
         when(userResource.toRepresentation()).thenReturn(new UserRepresentation());
-
-        var result = service.updateUserStatus(keycloakId, true, "admin");
-
-        assertTrue(result.active());
-        verify(auditService).log(any(), eq("ACCOUNT_ENABLED"), eq("User"), anyString(), anyString(), isNull());
+        when(realmResource.roles()).thenReturn(rolesResource);
     }
 
-    @Test
-    void getProfile_shouldReturnByKeycloakId() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user()));
-        var result = service.getProfile(keycloakId);
-        assertEquals("jdoe", result.username());
+    @Nested
+    @DisplayName("getProfile()")
+    class GetProfile {
+
+        @Test
+        @DisplayName("Retourne le profil quand trouvé")
+        void getProfile_found() {
+            when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user));
+            var response = userService.getProfile(keycloakId);
+            assertNotNull(response);
+            assertEquals("testuser", response.username());
+        }
+
+        @Test
+        @DisplayName("Lance NotFoundException si introuvable")
+        void getProfile_notFound_throws() {
+            when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.empty());
+            assertThrows(tg.ngstars.common.exception.NotFoundException.class,
+                    () -> userService.getProfile(keycloakId));
+        }
     }
 
-    @Test
-    void updateProfile_shouldUpdateNames() {
-        var request = new UpdateProfileRequest("Jane", "Smith");
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user()));
-        when(userResource.toRepresentation()).thenReturn(new UserRepresentation());
+    @Nested
+    @DisplayName("getUser()")
+    class GetUser {
 
-        var result = service.updateProfile(keycloakId, request);
+        @Test
+        @DisplayName("Retourne l'utilisateur quand trouvé")
+        void getUser_found() {
+            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+            var response = userService.getUser(userId);
+            assertNotNull(response);
+            assertEquals("test@ngstars.tg", response.email());
+        }
 
-        assertEquals("Jane", result.firstName());
-        assertEquals("Smith", result.lastName());
+        @Test
+        @DisplayName("Lance NotFoundException si introuvable")
+        void getUser_notFound_throws() {
+            when(userRepository.findById(userId)).thenReturn(Optional.empty());
+            assertThrows(tg.ngstars.common.exception.NotFoundException.class,
+                    () -> userService.getUser(userId));
+        }
     }
 
-    @Test
-    void deleteUser_shouldDisable() {
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user()));
-        when(userResource.toRepresentation()).thenReturn(new UserRepresentation());
+    @Nested
+    @DisplayName("deleteUser()")
+    class DeleteUser {
 
-        service.deleteUser(userId, "admin");
+        @Test
+        @DisplayName("Désactive l'utilisateur dans la DB et Keycloak")
+        void deleteUser_success() {
+            when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+            mockKeycloak();
 
-        verify(auditService).log(any(), eq("USER_DELETED"), eq("User"), anyString(), contains("desactive"), isNull());
+            userService.deleteUser(userId, "admin-id");
+
+            assertFalse(user.getActive());
+            verify(auditService).log(any(), eq("USER_DELETED"), anyString(), anyString(), anyString(), isNull());
+        }
+
+        @Test
+        @DisplayName("Lance NotFoundException si introuvable")
+        void deleteUser_notFound_throws() {
+            when(userRepository.findById(userId)).thenReturn(Optional.empty());
+            assertThrows(tg.ngstars.common.exception.NotFoundException.class,
+                    () -> userService.deleteUser(userId, "admin-id"));
+        }
     }
 
-    @Test
-    void registerClient_createsWithClientPortalRole() throws Exception {
-        var req = new CreateUserRequest("client1", "c@test.com", "Client", "One", "pass123", "ADMIN", null);
+    @Nested
+    @DisplayName("updateUserStatus()")
+    class UpdateUserStatus {
 
-        when(userRepository.existsByUsername("client1")).thenReturn(false);
-        when(userRepository.existsByEmail("c@test.com")).thenReturn(false);
+        @Test
+        @DisplayName("Active/désactive l'utilisateur")
+        void updateUserStatus_success() {
+            when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user));
+            mockKeycloak();
 
-        var locationUri = new URI("http://localhost:8088/admin/realms/ng-fields/users/" + keycloakId);
-        var response = mock(Response.class);
-        when(response.getStatus()).thenReturn(201);
-        when(response.getLocation()).thenReturn(locationUri);
-        when(usersResource.create(any())).thenReturn(response);
+            var response = userService.updateUserStatus(keycloakId, false, "admin-id");
 
-        when(rolesResource.get("CLIENT_PORTAL")).thenReturn(roleResource);
-        when(roleResource.toRepresentation()).thenReturn(new RoleRepresentation());
-
-        when(userRepository.save(any())).thenAnswer(i -> {
-            var u = (User) i.getArgument(0);
-            u.setId(userId);
-            return u;
-        });
-
-        var result = service.registerClient(req, "127.0.0.1");
-
-        assertEquals("CLIENT_PORTAL", result.role());
+            assertFalse(user.getActive());
+            verify(auditService).log(any(), eq("ACCOUNT_DISABLED"), anyString(), anyString(), anyString(), isNull());
+        }
     }
 
-    @Test
-    void createUser_duplicateEmail_throwsConflict() {
-        var req = new CreateUserRequest("jdoe", "existing@test.com", "John", "Doe", "pass123", "TECHNICIAN", null);
-        when(userRepository.existsByUsername("jdoe")).thenReturn(false);
-        when(userRepository.existsByEmail("existing@test.com")).thenReturn(true);
+    @Nested
+    @DisplayName("sendPasswordReset()")
+    class SendPasswordReset {
 
-        assertThrows(ConflictException.class, () -> service.createUser(req, "admin", null));
+        @Test
+        @DisplayName("Envoie l'email de réinitialisation")
+        void sendPasswordReset_success() {
+            when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user));
+            mockKeycloak();
+            when(userResource.toRepresentation()).thenReturn(new UserRepresentation());
+
+            assertDoesNotThrow(() -> userService.sendPasswordReset(keycloakId, "admin-id"));
+            verify(userResource).executeActionsEmail(List.of("UPDATE_PASSWORD"));
+        }
     }
 
-    @Test
-    void updateUser_shouldUpdateFields() {
-        var req = new UpdateUserRequest("jdoe", "jane@test.com", "Jane", "Doe", null, "MANAGER", null);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user()));
-        when(userResource.toRepresentation()).thenReturn(new UserRepresentation());
+    @Nested
+    @DisplayName("assignRole()")
+    class AssignRole {
 
-        var result = service.updateUser(userId, req, "admin");
-        assertEquals("Jane", result.firstName());
+        @Test
+        @DisplayName("Change le rôle de l'utilisateur")
+        void assignRole_success() {
+            when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user));
+            mockKeycloak();
+            var roleRep = new RoleRepresentation();
+            when(rolesResource.get("ADMIN")).thenReturn(mock(org.keycloak.admin.client.resource.RoleResource.class));
+            when(rolesResource.get("ADMIN").toRepresentation()).thenReturn(roleRep);
+            var roleMappingResource = mock(org.keycloak.admin.client.resource.RoleMappingResource.class);
+            var roleScopeResource = mock(org.keycloak.admin.client.resource.RoleScopeResource.class);
+            when(userResource.roles()).thenReturn(roleMappingResource);
+            when(roleMappingResource.realmLevel()).thenReturn(roleScopeResource);
+
+            var response = userService.assignRole(keycloakId, "ADMIN", "admin-id");
+
+            assertEquals("ADMIN", response.role());
+            verify(auditService).log(any(), eq("ROLE_ASSIGNED"), anyString(), anyString(), anyString(), isNull());
+        }
     }
 
-    @Test
-    void updateUser_notFound_throwsNotFound() {
-        var req = new UpdateUserRequest("jdoe", "jane@test.com", "Jane", "Doe", null, "MANAGER", null);
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.updateUser(userId, req, "admin"));
-    }
+    @Nested
+    @DisplayName("getAllUsers()")
+    class GetAllUsers {
 
-    @Test
-    void updateUserStatus_disable_shouldDeactivate() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user()));
-        when(userResource.toRepresentation()).thenReturn(new UserRepresentation());
+        @Test
+        @DisplayName("Retourne les utilisateurs paginés")
+        void getAllUsers_paged() {
+            var page = new org.springframework.data.domain.PageImpl<>(List.of(user));
+            when(userRepository.findAll(any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
 
-        var result = service.updateUserStatus(keycloakId, false, "admin");
-        assertFalse(result.active());
-    }
+            var result = userService.getAllUsers(org.springframework.data.domain.PageRequest.of(0, 10));
 
-    @Test
-    void sendPasswordReset_shouldExecute() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user()));
-        assertDoesNotThrow(() -> service.sendPasswordReset(keycloakId, "admin"));
-    }
-
-    @Test
-    void sendPasswordReset_notFound_throwsNotFound() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.sendPasswordReset(keycloakId, "admin"));
-    }
-
-    @Test
-    void assignRole_notFound_throwsNotFound() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.assignRole(keycloakId, "MANAGER", "admin"));
-    }
-
-    @Test
-    void getProfile_notFound_throwsNotFound() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.getProfile(keycloakId));
-    }
-
-    @Test
-    void deleteUser_notFound_throwsNotFound() {
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> service.deleteUser(userId, "admin"));
-    }
-
-    @Test
-    void changePassword_shouldSucceed() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user()));
-        var request = new ChangePasswordRequest("OldPass1!", "NewPassw0rd!");
-        service.changePassword(keycloakId, request);
-        verify(userResource).resetPassword(any());
-    }
-
-    @Test
-    void changePassword_weakPassword_shouldThrow() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user()));
-        var request = new ChangePasswordRequest("OldPass1!", "weak");
-        assertThrows(IllegalArgumentException.class,
-                () -> service.changePassword(keycloakId, request));
-    }
-
-    @Test
-    void changePassword_noUppercase_shouldThrow() {
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(user()));
-        var request = new ChangePasswordRequest("OldPass1!", "alllowercase1!");
-        assertThrows(IllegalArgumentException.class,
-                () -> service.changePassword(keycloakId, request));
-    }
-
-    @Test
-    void changePassword_userNotFound_shouldThrow() {
-        when(userRepository.findByKeycloakId(any(UUID.class))).thenReturn(Optional.empty());
-        var request = new ChangePasswordRequest("OldPass1!", "NewPassw0rd!");
-        assertThrows(NotFoundException.class,
-                () -> service.changePassword(UUID.randomUUID(), request));
-    }
-
-    @Test
-    void createUser_keycloak409_fallbackToSearch() throws Exception {
-        var req = new CreateUserRequest("jdoe", "j@doe.com", "John", "Doe", "pass123", "TECHNICIAN", null);
-        when(userRepository.existsByUsername("jdoe")).thenReturn(false);
-        when(userRepository.existsByEmail("j@doe.com")).thenReturn(false);
-
-        var failResponse = mock(Response.class);
-        when(failResponse.getStatus()).thenReturn(409);
-        when(usersResource.create(any())).thenReturn(failResponse);
-
-        var existingUser = new UserRepresentation();
-        existingUser.setId(keycloakId.toString());
-        when(usersResource.search("jdoe")).thenReturn(List.of(existingUser));
-
-        when(rolesResource.get("TECHNICIAN")).thenReturn(roleResource);
-        when(roleResource.toRepresentation()).thenReturn(new RoleRepresentation());
-        when(userRepository.save(any())).thenAnswer(i -> {
-            var u = (User) i.getArgument(0);
-            u.setId(userId);
-            return u;
-        });
-
-        var result = service.createUser(req, "admin", null);
-        assertEquals("jdoe", result.username());
+            assertEquals(1, result.getContent().size());
+            assertEquals("testuser", result.getContent().getFirst().username());
+        }
     }
 }

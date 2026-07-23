@@ -27,7 +27,7 @@ spring:
       metrics-enabled: true
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     open-in-view: false
     show-sql: false
     properties:
@@ -40,10 +40,7 @@ spring:
           batch_versioned_data: true
         order_inserts: true
         order_updates: true
-  flyway:
-    enabled: true
-    schemas: auth
-    locations: classpath:db/migration
+
   security:
     oauth2:
       resourceserver:
@@ -59,6 +56,11 @@ keycloak:
   admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:ng-fields-backend}
   admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:}
   realm: ${KEYCLOAK_REALM:ng-fields}
+
+resend:
+  api-key: ${RESEND_API_KEY:}
+  from-email: ${RESEND_FROM_EMAIL:noreply@ng-stars.com}
+  from-name: ${RESEND_FROM_NAME:NG-STARs}
 
 springdoc:
   swagger-ui:

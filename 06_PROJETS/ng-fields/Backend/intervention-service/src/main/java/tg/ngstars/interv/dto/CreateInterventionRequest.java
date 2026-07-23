@@ -21,8 +21,6 @@ public record CreateInterventionRequest(
     String equipmentSerial,
     String equipmentLocation,
     String reportedIssue,
-    String openprojectTicketId,
-    String openprojectTicketUrl,
     String diagnosis,
     String workDone,
     String status,

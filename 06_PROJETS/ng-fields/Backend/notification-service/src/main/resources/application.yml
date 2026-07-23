@@ -38,6 +38,10 @@ sentry:
   traces-sample-rate: 0.2
   enable-tracing: true
 
+firebase:
+  enabled: ${FIREBASE_ENABLED:false}
+  service-account-path: ${FIREBASE_SERVICE_ACCOUNT:}
+
 management:
   endpoints:
     web:

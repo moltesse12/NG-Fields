@@ -1,4 +1,8 @@
-# OpenProject - Configuration NG-Fields
+# ~~OpenProject - Configuration NG-Fields~~ ❌ **SUPPRIMÉ**
+
+> **Décision cadrage 21/07/2026 :** L'intégration OpenProject est supprimée du périmètre.
+> Raison : La gestion des tickets est gérée directement en interne. Pas de synchronisation externe nécessaire.
+> Ce document est conservé à titre historique uniquement.
 
 ## 🎯 Objectif
 > Guide de configuration d'OpenProject pour gérer le développement du projet NG-Fields

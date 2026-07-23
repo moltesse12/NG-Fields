@@ -88,7 +88,6 @@ Page d'accueil de l'application affichant les interventions du jour et l'état d
 - **En pause** (🟠): Temporairement arrêtée
 - **Terminée** (✅): Complétée, en attente validation
 - **Validée** (🔵): Approuvée par manager
-- **Facturée** (💰): Envoyée en facturation
 
 ---
 

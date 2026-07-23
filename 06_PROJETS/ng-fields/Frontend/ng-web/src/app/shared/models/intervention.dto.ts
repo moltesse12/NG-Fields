@@ -9,7 +9,7 @@ export interface CreateItemRequest {
 
 export interface CreateInterventionRequest {
   reference: string;
-  clientId: string;
+  clientId?: string;
   clientName?: string;
   clientEmail?: string;
   clientPhone?: string;
@@ -20,8 +20,6 @@ export interface CreateInterventionRequest {
   equipmentSerial?: string;
   equipmentLocation?: string;
   reportedIssue?: string;
-  openprojectTicketId?: string;
-  openprojectTicketUrl?: string;
   diagnosis?: string;
   workDone?: string;
   status?: string;
@@ -58,8 +56,6 @@ export interface InterventionResponse {
   equipmentSerial: string | null;
   equipmentLocation: string | null;
   reportedIssue: string | null;
-  openprojectTicketId: string | null;
-  openprojectTicketUrl: string | null;
   diagnosis: string | null;
   workDone: string | null;
   status: string;
@@ -81,9 +77,6 @@ export interface InterventionResponse {
   durationMinutes: number | null;
   result: string | null;
   recommendations: string | null;
-  billable: boolean | null;
-  billingAmount: number | null;
-  billingNotes: string | null;
   localId: string | null;
   notes: string | null;
   active: boolean;
@@ -112,8 +105,6 @@ export interface UpdateEquipmentRequest {
   serial?: string;
   location?: string;
   problemDescription?: string;
-  openprojectTicketId?: string;
-  openprojectTicketUrl?: string;
 }
 
 export interface UpdateDiagnosisRequest {
@@ -127,12 +118,6 @@ export interface UpdateResultRequest {
 
 export interface UpdateRecommendationsRequest {
   recommendations?: string;
-}
-
-export interface UpdateBillingRequest {
-  billable: boolean;
-  billingAmount?: number;
-  billingNotes?: string;
 }
 
 export interface SignatureRequest {

@@ -13,6 +13,8 @@ public record UserResponse(
     String role,
     String phone,
     boolean active,
+    UUID companyId,
+    boolean mustChangePassword,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt
 ) {}

@@ -49,7 +49,7 @@ Forte d'une équipe de développeurs et techniciens expérimentés de niveau sen
 
 ### 1.2 Contexte du projet
 
-La gestion des interventions techniques terrain constitue le cœur de métier opérationnel de NG-STARs. Chaque jour, des techniciens se rendent chez les clients pour réaliser des prestations de services telles que la maintenance, le dépannage, l'installation ou l'audit informatique, etc. Ces interventions doivent être rigoureusement documentées afin de garantir la traçabilité des actes réalisés, la facturation correcte des prestations et le suivi de la qualité de service.
+La gestion des interventions techniques terrain constitue le cœur de métier opérationnel de NG-STARs. Chaque jour, des techniciens se rendent chez les clients pour réaliser des prestations de services telles que la maintenance, le dépannage, l'installation ou l'audit informatique, etc. Ces interventions doivent être rigoureusement documentées afin de garantir la traçabilité des actes réalisés et le suivi de la qualité de service.
 
 À ce jour, l'ensemble de ce processus de documentation repose sur une fiche d'intervention papier de 3 pages (référence FI-01-2025), conçue en interne. Ce support, bien que fonctionnel dans ses grandes lignes, présente des limitations croissantes au regard des exigences actuelles de réactivité, de traçabilité et de pilotage par la donnée.
 
@@ -89,11 +89,11 @@ Les objectifs spécifiques ci-après traduisent de manière opérationnelle les 
 - **Signatures électroniques :** Le système doit intégrer trois zones de signature tactile distinctes une pour le client sur site, une pour le technicien intervenant, et une pour le responsable hiérarchique (pouvant être apposée au retour au siège).
 - **Preuves visuelles géolocalisées :** La solution doit permettre la capture de photos avant et après intervention (jusqu'à 5), avec enregistrement automatique de la position GPS du technicien à l'arrivée sur site.
 - **Génération automatique de rapports PDF professionnels :** Chaque intervention validée doit générer un rapport PDF incluant le logo NG-STARs, toutes les informations de l'intervention, les photos, les trois signatures et un QR code renvoyant vers la fiche numérique.
-- **Envoi multicanal immédiat :** Le rapport doit pouvoir être envoyé directement par Email et par WhatsApp depuis l'application, immédiatement après validation de l'intervention.
+- **Envoi multicanal immédiat :** Le rapport doit pouvoir être envoyé directement par Email depuis l'application, immédiatement après validation de l'intervention.
 - **Notifications en temps réel :** Le management doit recevoir des alertes automatiques (push et email) à chaque étape clé : création d'une intervention, fin d'intervention, retard constaté par rapport à une durée seuil paramétrable.
 - **Tableau de bord manager :** Un espace web dédié aux managers doit offrir une vue globale et filtrée de toutes les interventions, avec statistiques, indicateurs clés (dont le temps moyen sur site) et exports CSV/Excel.
 - **Historique centralisé par client :** L'ensemble des interventions réalisées chez un client doit être consultable depuis une fiche client avec recherche avancée par date, type ou technicien.
-- **Création de tickets client depuis l'application :** Le client doit pouvoir soumettre une demande d'intervention directement depuis un formulaire dédié dans l'application. Chaque soumission génère automatiquement un ticket dans OpenProject, avec pré-remplissage des informations client, de la nature de la demande et de la priorité estimée.
+- **Création de tickets client depuis l'application :** Le client doit pouvoir soumettre une demande d'intervention directement depuis un formulaire dédié dans l'application.
 
 ### 3.3 Résultats attendus
 
@@ -105,11 +105,11 @@ La solution devra fournir les résultats suivants à l'issue du projet :
 - Trois zones de signatures électroniques distinctes (client, technicien, responsable), correctement enregistrées et intégrées dans les rapports, avec possibilité de signature différée pour le responsable.
 - La capture de photos avant et après intervention (limite de 5 par catégorie), avec enregistrement automatique de la position GPS à l'arrivée sur site.
 - Un rapport PDF généré automatiquement en moins de dix secondes, incluant le logo, les données de l'intervention, les photos, les signatures, un QR code fonctionnel et un identifiant unique.
-- L'envoi des rapports par email (délai inférieur à deux minutes) et via WhatsApp avec accès direct au document pour le destinataire.
+- L'envoi des rapports par email (délai inférieur à deux minutes) avec accès direct au document pour le destinataire.
 - Un tableau de bord web accessible depuis les principaux navigateurs sans installation, avec filtrage avancé, exports CSV/Excel et affichage du temps moyen sur site par technicien.
 - Des notifications automatiques push et email avec délai de réception inférieur à une minute, testées sur iOS et Android.
 - Une base de données centralisée conforme RGPD, avec chiffrement en transit et au repos, sauvegardes quotidiennes automatiques et registre des traitements documenté.
-- Un formulaire de demande d'intervention accessible au client (via lien web ou espace dédié), dont la soumission crée automatiquement un ticket OpenProject dans le projet concerné, avec statut initial « Nouveau », dans un délai inférieur à 30 secondes.
+- Un formulaire de demande d'intervention accessible au client (via lien web ou espace dédié), dont la soumission notifie automatiquement l'équipe concernée.
 - Une documentation complète : guide utilisateur en français (10 pages minimum), documentation technique de l'API et guide d'installation et de maintenance.
 
 ---
@@ -123,7 +123,7 @@ La solution devra fournir les résultats suivants à l'issue du projet :
 La fiche d'intervention papier FI-01-2025 est un document interne de 3 pages, conçu et utilisé exclusivement par NG-STARs pour documenter ses prestations techniques terrain. Elle constitue depuis sa mise en place le seul outil de traçabilité des interventions de l'entreprise. Sa structure a été pensée pour couvrir l'intégralité du cycle de vie d'une prestation, depuis le départ du siège jusqu'à l'archivage final, en passant par l'ensemble des étapes opérationnelles et de validation. Elle se présente comme suit :
 
 **PHASE 1 : DÉPART (Au siège NG-STARs)**
-- Le technicien est notifié d'une intervention (ticket OpenProject ou demande)
+- Le technicien est notifié d'une intervention (demande client)
 - Le technicien informe son responsable hiérarchique de son départ
 - Le technicien se rend au département RH pour retirer la fiche FI
 - Le technicien renseigne les informations préalables (REF, Date, Numéro d'intervention ; Nom de l'entreprise cliente ; Nom de l'intervenant / Administrateur ; Service /Département ; Heure de SORTIE de la société)
@@ -158,9 +158,8 @@ La fiche d'intervention papier FI-01-2025 est un document interne de 3 pages, co
 - La fiche est ARCHIVÉE (classement physique)
 
 **PHASE 7 : TRAITEMENT ULTÉRIEUR**
-- Données saisies dans OpenProject (si ticket lié)
-- Facturation traitée
-- Rapport généré si demandé
+- Rapport PDF généré et envoyé par email
+- Suivi des recommandations
 
 Le document est organisé en sept sections logiques correspondant aux sept phases du processus d'intervention. Chaque section comprend des champs de saisie manuscrite, des cases à cocher et des zones de signature.
 
@@ -172,7 +171,7 @@ La fiche FI-01-2025, bien que fonctionnelle dans sa conception, s'avère structu
 
 **Deuxième axe : La rupture entre la collecte de l'information et sa mise à disposition pour la décision.** Actuellement, les données d'une intervention n'atteignent le management qu'au retour physique du technicien, soit avec un délai de 24 heures. Durant toute la durée de l'intervention, le manager est dans l'impossibilité totale de savoir où en est le technicien, quel est le résultat obtenu ni combien de temps a été passé sur site. Cette opacité est incompatible avec les exigences d'un management réactif et basé sur les données.
 
-**Troisième axe : Le coût caché du processus papier.** Les 15 minutes perdues pour récupérer la fiche, les 10 minutes de double saisie dans OpenProject, les 20 à 30 minutes nécessaires pour retrouver une fiche ancienne, les erreurs de calcul de durée et le risque de perte de données représentent un coût opérationnel significatif. Sur une base de 10 interventions par jour, le seul aller-retour au RH représente 2h30 de temps technicien perdu chaque semaine.
+**Troisième axe : Le coût caché du processus papier.** Les 15 minutes perdues pour récupérer la fiche, les 10 minutes de double saisie dans le système, les 20 à 30 minutes nécessaires pour retrouver une fiche ancienne, les erreurs de calcul de durée et le risque de perte de données représentent un coût opérationnel significatif. Sur une base de 10 interventions par jour, le seul aller-retour au RH représente 2h30 de temps technicien perdu chaque semaine.
 
 En conclusion, le processus actuel présente plusieurs limitations majeures qui entravent l'efficacité globale du service. Un passage à un système numérique centralisé et offline-first permettrait d'améliorer significativement la réactivité, la traçabilité et la qualité de service.
 
@@ -180,10 +179,10 @@ En conclusion, le processus actuel présente plusieurs limitations majeures qui 
 
 Avant d'envisager toute transformation, il est essentiel de reconnaître et de documenter les points forts du processus existant, afin de s'assurer que la solution retenue en conserve les qualités tout en en corrigeant les faiblesses.
 
-- **Couverture fonctionnelle complète :** en trois pages, la fiche couvre l'intégralité du cycle d'une intervention (informations préalables, données client, diagnostic, description des travaux, matériel, consommables, résultat, recommandations, facturation et signatures).
+- **Couverture fonctionnelle complète :** en trois pages, la fiche couvre l'intégralité du cycle d'une intervention (informations préalables, données client, diagnostic, description des travaux, matériel, consommables, résultat, recommandations et signatures).
 - **Processus structuré :** Il dispose d'un processus stable et bien maîtrisé par l'ensemble des techniciens, avec une logique (départ ; arrivée ; intervention ; résultat ; validation ; retour).
 - **Validations multiparties :** trois signatures distinctes (client, technicien, responsable hiérarchique) conférant une valeur de preuve et un mécanisme naturel de contrôle qualité.
-- **Référencement normé (FI-01-2025)** facilitant l'identification dans les classeurs d'archivage et la mise en correspondance avec les tickets OpenProject.
+- **Référencement normé (FI-01-2025)** facilitant l'identification dans les classeurs d'archivage.
 - **Accessibilité universelle :** ne requiert aucune connexion réseau, aucun appareil particulier, aucune formation technique.
 
 #### 4.2.2 Analyse des profils utilisateurs
@@ -288,17 +287,17 @@ Ce choix se justifie par :
 Quelle que soit la solution technologique retenue, la solution cible se décomposera en trois composantes complémentaires :
 
 - **Une application mobile (iOS et Android)** dédiée aux techniciens terrain, permettant la saisie complète des interventions, la capture de photos, la signature électronique et l'envoi de rapports, avec un fonctionnement garanti hors connexion.
-- **Un tableau de bord web** accessible aux managers et administrateurs via navigateur, offrant une vision en temps réel de toutes les interventions, des statistiques, des exports de données, ainsi que la réception et la gestion des tickets soumis par les clients, avec création automatique dans OpenProject via l'API REST d'OpenProject.
+- **Un tableau de bord web** accessible aux managers et administrateurs via navigateur, offrant une vision en temps réel de toutes les interventions, des statistiques, des exports de données, ainsi que la réception et la gestion des demandes clients.
 - **Un backend centralisé (API REST)** assurant la synchronisation des données entre l'application mobile et le dashboard web, la génération des PDF, la gestion des notifications et la sécurisation des données.
 
 L'application mobile comportera les écrans principaux suivants :
 
 - **Écran d'accueil :** liste des interventions du jour, bouton « Nouvelle Intervention », indicateur de statut de synchronisation (vert/orange/rouge), accès rapide aux fiches récentes.
 - **Formulaire d'intervention en 8 sections :** saisie guidée pas à pas, auto-complétions, calcul automatique des durées, validation des champs obligatoires.
-- **Écran de signature :** 3 zones tactiles (Client, Technicien, Responsable), boutons d'envoi Email / WhatsApp.
+- **Écran de signature :** 3 zones tactiles (Client, Technicien, Responsable), bouton d'envoi Email.
 - **Fiche Client :** historique complet des interventions par client, coordonnées et contacts.
 - **Paramètres / Profil :** informations de l'utilisateur connecté, préférences de notification, statut de synchronisation.
-- **Portail Client (accès externe) :** formulaire simplifié de création de demande (nature du problème, urgence, coordonnées, description libre), accessible via un lien sécurisé à usage unique ou un espace client dédié. Soumission déclenchant la création automatique d'un ticket OpenProject et l'envoi d'un email de confirmation au client.
+- **Portail Client (accès externe) :** formulaire simplifié de création de demande (nature du problème, urgence, coordonnées, description libre), accessible via un lien sécurisé à usage unique ou un espace client dédié. L'envoi notifie automatiquement l'équipe concernée.
 
 Cette solution apportera une valeur considérable à l'organisation : zéro papier, 100 % de traçabilité, temps de saisie ramené à moins de 5 minutes par intervention, et visibilité management en temps réel depuis n'importe quel navigateur.
 
@@ -376,16 +375,6 @@ Supabase (free tier) est utilisé pour le développement : PostgreSQL 500MB, Sto
 | Volume base de données à 1 an (hors médias) | < 10 Go |
 | Infrastructure | Supabase Free Tier (500MB DB, 1GB Storage) — suffisant pour V1 |
 
-### 6.8 Intégration OpenProject
-
-| Élément | Détail |
-|---|---|
-| **API utilisée** | API REST OpenProject v3 |
-| **Authentification** | Clé API OpenProject (stockée côté backend, jamais exposée côté client) |
-| **Données transmises** | Sujet, description, priorité, statut initial, projet cible, coordonnées client |
-| **Gestion des erreurs** | File d'attente côté backend en cas d'indisponibilité d'OpenProject — ticket créé dès retour en ligne |
-| **Confirmation client** | Email automatique envoyé au client avec le numéro de ticket généré |
-
 ---
 
 ## 7. PLANNING PRÉVISIONNEL
@@ -421,12 +410,12 @@ Le projet NG-Fields sera développé en suivant la méthodologie Agile Scrum ave
 | S-01 | Mise en place de l'architecture applicative, environnements dev/staging/prod, pipeline CI/CD, authentification JWT + MFA |
 | S-02 | Module gestion des clients, profils et droits utilisateurs, structure de la base de données PostgreSQL |
 | S-03 | Formulaire d'intervention – Sections 1 à 4 : informations préalables, client, détails intervention, consommables |
-| S-04 | Formulaire – Sections 5 à 8 : photos avant/après, recommandations, facturation, signatures électroniques (canvas) |
+| S-04 | Formulaire – Sections 5 à 7 : photos avant/après, recommandations, signatures électroniques (canvas) |
 | S-05 | Géolocalisation GPS, auto-calcul de durée, intégration mode hors-ligne (Drift / SQLite local) |
 | S-06 | Queue de synchronisation offline, résolution de conflits, indicateur visuel de statut réseau en temps réel |
-| S-07 | Génération automatique du rapport PDF (logo, photos, signatures, QR code), envoi par Email et WhatsApp |
+| S-07 | Génération automatique du rapport PDF (logo, photos, signatures, QR code), envoi par Email |
 | S-08 | Système de notifications push et email (création, complétion, retard d'intervention) |
-| S-09 | Dashboard manager web (statistiques, filtres avancés, exports CSV/Excel), intégration API OpenProject pour la création automatique de tickets depuis le portail client, tests d'intégration complets |
+| S-09 | Dashboard manager web (statistiques, filtres avancés, exports CSV/Excel), tests d'intégration complets |
 | S-10 | Tests UAT avec techniciens et managers, recueil des retours, corrections de bugs et optimisations de performance |
 | S-11 | Déploiement en production, publication App Store et Google Play, rédaction documentation technique et guide utilisateur |
 

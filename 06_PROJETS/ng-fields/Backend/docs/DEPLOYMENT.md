@@ -6,9 +6,9 @@
 - Java 25
 - Maven 3.9+
 - Docker & Docker Compose
-- PostgreSQL 15+
+- PostgreSQL 18+
 - Redis 7+
-- Keycloak 26+
+- Keycloak 26.6.4
 
 ### Quick Start
 
@@ -29,6 +29,9 @@ Client: ng-fields-backend (confidential, service account enabled)
 3. Build all services:
 ```bash
 cd Backend
+# Build shared-lib first (required by all services)
+cd shared-lib && mvn clean install -q && cd ..
+# Build all services
 mvn clean install
 ```
 
@@ -128,7 +131,7 @@ GitHub Actions workflow (`.github/workflows/backend.yml`):
 version: '3.8'
 services:
   postgres:
-    image: postgres:15
+    image: postgres:18-alpine
     ports: ["5432:5432"]
     environment:
       POSTGRES_DB: ngfields
@@ -140,7 +143,7 @@ services:
     ports: ["6379:6379"]
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.0
+    image: quay.io/keycloak/keycloak:26.6.4
     ports: ["8088:8080"]
     command: start-dev
     environment:

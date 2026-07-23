@@ -21,6 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import tg.ngstars.client.dto.ClientResponse;
 import tg.ngstars.client.dto.ContactDto;
 import tg.ngstars.client.dto.CreateClientRequest;
@@ -30,6 +34,7 @@ import tg.ngstars.client.service.ClientService;
 
 @RestController
 @RequestMapping("/api/clients")
+@Tag(name = "Clients", description = "Gestion des fiches clients et contacts")
 public class ClientController {
 
     private final ClientService clientService;
@@ -40,6 +45,9 @@ public class ClientController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Creer un client", description = "Cree une fiche client. La reference est generee automatiquement.")
+    @ApiResponse(responseCode = "201", description = "Client cree")
+    @ApiResponse(responseCode = "409", description = "Email deja utilise")
     public ResponseEntity<ClientResponse> createClient(
             @Valid @RequestBody CreateClientRequest request,
             @AuthenticationPrincipal Jwt jwt) {
@@ -49,6 +57,8 @@ public class ClientController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIAN')")
+    @Operation(summary = "Lister les clients", description = "Pagine, trie par nom d'entreprise.")
+    @ApiResponse(responseCode = "200", description = "Page de resultats")
     public ResponseEntity<Page<ClientResponse>> listClients(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -57,8 +67,10 @@ public class ClientController {
 
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIAN')")
+    @Operation(summary = "Rechercher des clients", description = "Recherche ILIKE sur companyName, contactName, email, phone.")
+    @ApiResponse(responseCode = "200", description = "Page de resultats")
     public ResponseEntity<Page<ClientResponse>> searchClients(
-            @RequestParam String q,
+            @RequestParam @Parameter(description = "Terme de recherche") String q,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(clientService.searchClients(q, page, size));
@@ -66,12 +78,17 @@ public class ClientController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIAN')")
+    @Operation(summary = "Obtenir un client", description = "Detail complet avec contacts.")
+    @ApiResponse(responseCode = "200", description = "Client trouve")
+    @ApiResponse(responseCode = "404", description = "Client introuvable")
     public ResponseEntity<ClientResponse> getClient(@PathVariable UUID id) {
         return ResponseEntity.ok(clientService.getClient(id));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Mettre a jour un client", description = "Met a jour les infos et synchronise avec intervention-service.")
+    @ApiResponse(responseCode = "200", description = "Client mis a jour")
     public ResponseEntity<ClientResponse> updateClient(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateClientRequest request) {
@@ -80,6 +97,8 @@ public class ClientController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Desactiver un client", description = "Soft delete : passe active=false.")
+    @ApiResponse(responseCode = "204", description = "Client desactive")
     public ResponseEntity<Void> deactivateClient(@PathVariable UUID id) {
         clientService.deactivateClient(id);
         return ResponseEntity.noContent().build();

@@ -1,5 +1,7 @@
 # Flutter — Référence packages NG-Fields
 
+> **⚠️ Non démarré** — Le répertoire `mobile/` est vide. Ce document est une référence pour le futur.
+
 ---
 
 ## 1. Riverpod (State Management)
@@ -153,7 +155,7 @@ dio.interceptors.add(InterceptorsWrapper(
 | `geolocator` | GPS | ^12.x |
 | `flutter_secure_storage` | Stockage token JWT | ^9.x |
 | `path_provider` | Chemins fichiers locaux | ^2.x |
-| `share_plus` | Partage WhatsApp/files | ^10.x |
+| `share_plus` | Partage de fichiers | ^10.x |
 
 ---
 

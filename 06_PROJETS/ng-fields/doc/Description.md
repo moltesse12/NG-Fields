@@ -19,7 +19,7 @@ Digitaliser et centraliser entièrement la gestion des interventions terrain de 
 
 ##  Description
 
-Application mobile-first de gestion des interventions terrain pour techniciens NG-STARs, permettant la saisie des fiches sur mobile/tablette, avec signature numérique (3 signataires : client, technicien, responsable), génération PDF automatique et envoi email/WhatsApp, avec fonctionnement garanti en zone de faible connectivité.
+Application mobile-first de gestion des interventions terrain pour techniciens NG-STARs, permettant la saisie des fiches sur mobile/tablette, avec signature numérique (3 signataires : client, technicien, responsable), génération PDF automatique et envoi email, avec fonctionnement garanti en zone de faible connectivité.
 
 ### Contexte
 NG-STARs utilise actuellement une fiche d'intervention papier (FI-01-2025) de 3 pages pour documenter les prestations techniques chez les clients.
@@ -50,17 +50,16 @@ NG-STARs utilise actuellement une fiche d'intervention papier (FI-01-2025) de 3 
 ### Solution Proposée
 | Fonctionnalité | Priorité | Status |
 |----------------|----------|--------|
-| Formulaire intervention (identique fiche papier) | 🔴 Obligatoire | À faire |
-| Signature numérique (Client + Technicien + Responsable) | 🔴 Obligatoire | À faire |
-| Photos (3-5 par intervention) | 🟠 Important | À faire |
-| GPS/Localisation | 🟠 Important | À faire |
-| Mode hors-ligne | 🟡 Souhaitable | À faire |
-| Envoi email avec PDF | 🔴 Obligatoire | À faire |
-| Envoi WhatsApp | 🟡 Souhaitable | À faire |
-| Génération PDF (logo, photos, signature, QR code) | 🔴 Obligatoire | À faire |
-| Dashboard manager | 🟡 Souhaitable | À faire |
-| Gestion clients avec historique | 🟠 Important | À faire |
-| RGPD | 🔴 Obligatoire | À faire |
+| Formulaire intervention (identique fiche papier) | 🔴 Obligatoire | ✅ Implémenté |
+| Signature numérique (Client + Technicien + Responsable) | 🔴 Obligatoire | ✅ Implémenté |
+| Photos (3-5 par intervention) | 🟠 Important | ✅ Implémenté |
+| GPS/Localisation | 🟠 Important | ✅ Implémenté |
+| Mode hors-ligne | 🟡 Souhaitable | 📅 Planifié |
+| Envoi email avec PDF | 🔴 Obligatoire | ✅ Implémenté |
+| Génération PDF (logo, photos, signature, QR code) | 🔴 Obligatoire | ✅ Implémenté |
+| Dashboard manager | 🟡 Souhaitable | ✅ Implémenté (Angular 22+) |
+| Gestion clients avec historique | 🟠 Important | ✅ Implémenté |
+| RGPD | 🔴 Obligatoire | ✅ Implémenté |
 
 ## 👥 Parties Prenantes
 
@@ -82,20 +81,20 @@ NG-STARs utilise actuellement une fiche d'intervention papier (FI-01-2025) de 3 
 | Base de données | PostgreSQL via Supabase (500MB free) |
 | Storage photos | Supabase Storage (1GB free) |
 | Méthodologie | Scrum (sprints 1 semaine) |
-| Nombre de sprints | **5 sprints (S-01 à S-05)** |
-| Date début | **28 mai 2026** |
-| Date fin | **28 juin 2026** |
+| Nombre de sprints | **7 sprints (V0-S1 à V1-S2)** |
+| Date début | **1 juin 2026** |
+| Date fin | **--** |
 
 ## 👨‍💻 Équipe Technique
 
 | Rôle                  | Compétences                        | Status             |
 | --------------------- | ---------------------------------- | ------------------ |
-| Développeur principal | Flutter (Dart), Spring Boot (Java) | ✅ Stagiaire        |
+| Développeur principal | Spring Boot (Java), Angular 22+ (TypeScript) | ✅ Stagiaire        |
 | DevOps                | CI/CD, Docker, Supabase            | ✅ Disponible       |
 | Designer UI/UX        | Maquettes, assets                  | ✅ Disponible       |
 | Testeurs              | 3 techniciens (UAT)                | ✅ En fin de projet |
 
-**Stack retenu :** Spring Boot (Java) + Flutter (Dart).
+**Stack retenu :** Spring Boot 4.1.0 (Java 25) + Angular 22+ (TypeScript) + Keycloak 26.6.4 + PostgreSQL 18.
 
 ## 📱 Appareils Cibles
 

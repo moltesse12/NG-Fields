@@ -48,6 +48,8 @@ export const sidebarItems: NavGroup[] = [
     items: [
       { id: 'analytics-reports', title: 'Analytics', url: '/dashboard/analytics', icon: 'chart-bar' },
       { id: 'exports', title: 'Exports', url: '/dashboard/exports', icon: 'download' },
+      { id: 'pdf-templates', title: 'Templates PDF', url: '/dashboard/pdf-templates', icon: 'file-text' },
+      { id: 'email-templates', title: 'Templates Email', url: '/dashboard/email-templates', icon: 'mail' },
     ],
   },
   {

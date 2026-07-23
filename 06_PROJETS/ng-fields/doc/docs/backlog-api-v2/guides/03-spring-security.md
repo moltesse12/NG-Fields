@@ -53,11 +53,11 @@ Ajouter **keycloak-admin-client** (pour la création de comptes via Keycloak Adm
 <dependency>
     <groupId>org.keycloak</groupId>
     <artifactId>keycloak-admin-client</artifactId>
-    <version>26.0.9</version>
+    <version>26.6.4</version>
 </dependency>
 ```
 
-> Spring Boot 4.0.6 utilise `spring-boot-starter-webmvc` (renommage de `spring-boot-starter-web`).
+> Spring Boot 4.1.0 utilise `spring-boot-starter-webmvc` (renommage de `spring-boot-starter-web`).
 > Le pom généré par Initializr contient aussi `spring-boot-h2console` (obsolète depuis le passage à PostgreSQL) et des dépendances de test supplémentaires.
 
 ### Étape 2 : Créer `application.yaml`

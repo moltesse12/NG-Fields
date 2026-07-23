@@ -1,6 +1,5 @@
 package tg.ngstars.report.dto;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -19,8 +18,6 @@ public record InterventionReportDto(
     String status,
     UUID assignedTo,
     String result,
-    Boolean billable,
-    BigDecimal billingAmount,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt
 ) {}

@@ -11,7 +11,7 @@ Le backend NG-Fields est une architecture **microservices** (Spring Boot 4.1.0 /
 | Runtime | Java | 25 |
 | Framework | Spring Boot | 4.1.0 |
 | Gateway | Spring Cloud Gateway (WebFlux) | 2025.1.2 |
-| Auth | Keycloak (OAuth2/JWT) | 26.0.9 |
+| Auth | Keycloak (OAuth2/JWT) | 26.6.4 |
 | Base de données | PostgreSQL | — |
 | ORM | JPA / Hibernate | — |
 | Migrations | Flyway | — |
@@ -67,7 +67,7 @@ Chaque service expose son propre port et son propre SecurityConfig. En développ
 
 ### 3.1 API Gateway — Port 8080
 
-**Rôle** : Point d'entrée unique, routage, rate limiting, CORS, agrégation Swagger.
+**Rôle** : Point d'entrée unique, routage, rate limiting, CORS, agrégation Swagger, gestion d'erreurs centralisée.
 
 **Routes configurées** :
 
@@ -80,20 +80,24 @@ Chaque service expose son propre port et son propre SecurityConfig. En développ
 | `/api/interventions/**` → Intervention (8083) | Interventions | Oui (30 req/s) |
 | `/api/sync/**` → Intervention (8083) | Sync mobile | Non |
 | `/api/media/**` → Media (8084) | Fichiers | Non |
+| `/api/notifications/**` → Notification (8085) | Notifications | Oui (10 req/s) |
+| `/api/reports/**` → Report (8086) | Rapports | Oui (5 req/s) |
 
-**Rate limiting** : Redis + Resilience4j circuit breaker (dépendance présente mais circuits non configurés).
+**Rate limiting** : Redis + Resilience4j circuit breaker.
+
+**Gestion d'erreurs** : `GlobalExceptionHandler` (WebFlux `ErrorWebExceptionHandler`) retourne des réponses RFC 7807 Problem Detail (`application/problem+json`) pour toutes les erreurs gateway (403, 4xx, 500).
 
 ### 3.2 Auth Service — Port 8081
 
-**Rôle** : Gestion des utilisateurs, rôles, authentification (délégation Keycloak), audit trail.
+**Rôle** : Gestion des utilisateurs, rôles, authentification (délégation Keycloak), audit trail, gestion des entreprises.
 
-**Tables** : `users` (copie locale des utilisateurs Keycloak), `audit_logs`.
+**Tables** : `users` (copie locale des utilisateurs Keycloak), `audit_logs`, `companies`, `company_users`, `company_access_log`.
 
 **Endpoints** :
 
 | Méthode | Chemin | Accès | Description |
 |---|---|---|---|
-| POST | `/api/public/register` | Public | Auto-inscription (force rôle CLIENT_PORTAL) |
+| POST | `/api/public/register` | Public | Auto-inscription (force rôle CLIENT_USER) |
 | GET | `/api/public/health` | Public | Health check |
 | GET | `/api/users/me` | Auth | Profil utilisateur courant |
 | PUT | `/api/users/me` | Auth | Mise à jour profil |
@@ -105,8 +109,22 @@ Chaque service expose son propre port et son propre SecurityConfig. En développ
 | PATCH | `/api/admin/users/{keycloakId}/roles` | ADMIN | Changement rôle |
 | PATCH | `/api/admin/users/{keycloakId}/status` | ADMIN | Activer/désactiver |
 | POST | `/api/admin/users/{keycloakId}/reset-password` | ADMIN | Réinitialisation mot de passe |
+| POST | `/api/admin/companies` | ADMIN/MANAGER | Inscription d'une entreprise |
+| GET | `/api/admin/companies` | ADMIN/MANAGER | Liste des entreprises |
+| GET | `/api/admin/companies/{id}` | ADMIN/MANAGER | Détail entreprise |
+| PUT | `/api/admin/companies/{id}` | ADMIN | Modification entreprise |
+| DELETE | `/api/admin/companies/{id}` | ADMIN | Soft delete entreprise |
+| POST | `/api/client/users` | CLIENT_ADMIN | Création utilisateur dans l'entreprise |
+| GET | `/api/client/users` | CLIENT_ADMIN | Liste utilisateurs de l'entreprise |
+| PUT | `/api/client/users/{id}` | CLIENT_ADMIN | Modification utilisateur |
+| DELETE | `/api/client/users/{id}` | CLIENT_ADMIN | Soft delete utilisateur |
+| PUT | `/api/client/users/{id}/role` | CLIENT_ADMIN | Changement rôle |
+| PUT | `/api/client/users/{id}/password` | CLIENT_ADMIN | Réinitialisation mot de passe |
+| PUT | `/api/client/change-password` | CLIENT | Changement mot de passe (1ère connexion) |
+| GET | `/api/client/interventions` | CLIENT | Interventions de l'entreprise |
+| GET | `/api/client/dashboard` | CLIENT_ADMIN | KPIs de l'entreprise |
 
-**Rôles** : `ADMIN`, `MANAGER`, `TECHNICIAN`, `CLIENT_PORTAL`.
+**Rôles** : `ADMIN`, `MANAGER`, `TECHNICIAN`, `CLIENT_ADMIN`, `CLIENT_USER`, `CLIENT_VIEWER`.
 
 **Particularité** : Toute opération utilisateur (création, modification, désactivation, changement rôle) est synchronisée entre Keycloak et la base locale, avec une trace d'audit.
 
@@ -149,7 +167,8 @@ Chaque service expose son propre port et son propre SecurityConfig. En développ
 | PATCH | `/api/interventions/{id}/diagnosis` | Propriétaire* | Diagnostic |
 | PATCH | `/api/interventions/{id}/result` | Propriétaire* | Résultat |
 | PATCH | `/api/interventions/{id}/recommendations` | Propriétaire* | Recommandations |
-| PATCH | `/api/interventions/{id}/billing` | Propriétaire* | Facturation |
+| ~~PATCH~~ | ~~`/api/interventions/{id}/billing`~~ | ~~Propriétaire*~~ | ~~Facturation~~ ❌ SUPPRIMÉ |
+| POST | `/api/interventions/{id}/send/email` | Propriétaire* | Envoi rapport par email |
 | POST | `/api/interventions/{id}/items` | Propriétaire* | Ajout pièce |
 | PUT | `/api/interventions/{id}/items/{itemId}` | Propriétaire* | Modif pièce |
 | DELETE | `/api/interventions/{id}/items/{itemId}` | Propriétaire* | Suppr pièce |
@@ -162,12 +181,11 @@ Chaque service expose son propre port et son propre SecurityConfig. En développ
 
 - Informations client (nom, email, téléphone, adresse)
 - Équipement (type, marque, modèle, série, localisation)
-- Ticket OpenProject (id, URL)
 - Diagnostic, travail effectué
 - Statut (PENDING → COMPLETED)
 - Horaires (départ, arrivée, début, fin, durée calculée)
 - Résultat, recommandations
-- Facturation (facturable, montant, notes)
+- ~~Facturation (facturable, montant, notes)~~ ❌ SUPPRIMÉ
 - 3 signatures (client, technicien, responsable)
 - Photos (avant/après, 5 max chaque)
 - Pièces utilisées (type, description, quantité, prix unitaire)
@@ -192,16 +210,29 @@ Chaque service expose son propre port et son propre SecurityConfig. En développ
 
 ### 3.6 Notification Service — Port 8085
 
-**Statut** : SQUELETTE — non implémenté.
+**Statut** : IMPLÉMENTÉ.
 
-**Prévu** : Envoi d'emails (Mail + Thymeleaf), notifications in-app, SMS.
-Dépendances déjà dans le pom.xml : `spring-boot-starter-mail`, `spring-boot-starter-thymeleaf`.
+**Fonctionnalités** : Envoi d'emails (Mail + Thymeleaf) avec retry (3 tentatives, backoff exponentiel). 5 templates : intervention-notification, password-reset, welcome, intervention-assigned, intervention-completed.
+
+**Endpoints** :
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| POST | `/api/notifications/email` | Envoi email (202 ACCEPTED) |
 
 ### 3.7 Report Service — Port 8086
 
-**Statut** : SQUELETTE — non implémenté.
+**Statut** : IMPLÉMENTÉ.
 
-**Prévu** : Génération de rapports (CSV en premier lieu, puis PDF).
+**Fonctionnalités** : Export CSV, PDF (OpenPDF), analytics agrégées. Circuit breaker + retry sur l'appel à intervention-service.
+
+**Endpoints** :
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| GET | `/api/reports/interventions/csv` | Export CSV |
+| GET | `/api/reports/interventions/pdf` | Export PDF |
+| GET | `/api/reports/analytics` | Statistiques agrégées |
 
 ---
 
@@ -218,10 +249,12 @@ Dépendances déjà dans le pom.xml : `spring-boot-starter-mail`, `spring-boot-s
 
 | Rôle | Lectures | Écritures |
 |---|---|---|
-| ADMIN | Toutes | Toutes |
+| ADMIN | Toutes | Toutes (incluant gestion entreprises) |
 | MANAGER | Toutes | Toutes sauf admin users |
 | TECHNICIAN | Interventions assignées, clients | Interventions assignées uniquement |
-| CLIENT_PORTAL | Profil, interventions client | Profil uniquement |
+| CLIENT_ADMIN | Interventions entreprise, utilisateurs entreprise | Créer/modifier/supprimer utilisateurs entreprise |
+| CLIENT_USER | Interventions entreprise | Profil uniquement |
+| CLIENT_VIEWER | Interventions entreprise (lecture seule) | Aucune |
 
 ### Flux d'authentification
 
@@ -243,21 +276,19 @@ Origines autorisées : `http://localhost:4200` (Angular), `http://localhost:8100
 
 | Schéma | Service | Tables |
 |---|---|---|
-| `auth` | Auth | `users`, `audit_logs` |
-| `client` | Client | `clients` |
+| `auth` | Auth | `users`, `audit_logs`, `companies`, `company_users`, `company_access_log` |
+| `client` | Client | `clients`, `contacts` |
 | `intervention` | Intervention | `interventions`, `intervention_items`, `intervention_photos` |
-| `notification` | Notification | (à créer) |
 
 ### Migrations Flyway
 
-Chaque service gère ses propres migrations dans `src/main/resources/db/migration/`.
+Chaque service gère ses propres migrations dans `src/main/resources/db/migration/`. Configuration `baseline-on-migrate: true` sur tous les services pour permettre la migration de bases existantes.
 
 | Service | Migrations |
 |---|---|
-| Auth | V1 : init (users, audit_logs) |
-| Client | V1 : init (clients) |
-| Intervention | V1 : init, V2 : photos+signatures, V3 : sections horaires/résultat/facturation/sync |
-| Notification | (à créer) |
+| Auth | V1 : init (users, audit_logs), V2 : index audit, V3 : optimistic locking, V4 : companies + company_users + company_access_log |
+| Client | V1 : init (clients), V2 : séquence ref, V3 : trigram, V4 : version, V5 : contacts |
+| Intervention | V1 : init, V2 : photos+signatures, V3 : sections horaires/résultat/sync, V4 : index, V5 : version, V6 : supprimer facturation |
 
 ---
 
@@ -280,8 +311,8 @@ Chaque service gère ses propres migrations dans `src/main/resources/db/migratio
 | Client | 8082 | — |
 | Intervention | 8083 | — |
 | Media | 8084 | — |
-| Notification | 8085 | Squelette |
-| Report | 8086 | Squelette |
+| Notification | 8085 | — |
+| Report | 8086 | — |
 | Keycloak | 8088 | Externe |
 | PostgreSQL | 5432 | Externe |
 | Redis | 6379 | Externe |
@@ -290,23 +321,9 @@ Chaque service gère ses propres migrations dans `src/main/resources/db/migratio
 
 ## 7. Tests
 
-### Couverture actuelle
+### Tests
 
-| Service | Tests | Méthode | Statut |
-|---|---|---|---|
-| Auth | UserServiceTest (11) + AuditServiceTest (1) | Mockito | ✅ |
-| Client | ClientServiceTest (10) | Mockito | ✅ |
-| Gateway | KeycloakJwtAuthenticationConverterTest (4) | JUnit | ✅ |
-| Intervention | InterventionServiceTest (12) | Mockito | ✅ |
-| Notification | contextLoads (1) | Spring Boot | ✅ |
-| Report | contextLoads (1) | Spring Boot | ✅ |
-| **Total** | **40 tests** | — | **0 échec** |
-
-### Ce qui reste à tester
-
-- Tests d'intégration avec base de données (Testcontainers)
-- Tests bout-en-bout via le gateway
-- Tests de sécurité (rôles, permissions)
+Tests à implémenter — aucune couverture actuellement. La collection Postman assure la vérification fonctionnelle en attendant.
 
 ---
 
@@ -314,14 +331,14 @@ Chaque service gère ses propres migrations dans `src/main/resources/db/migratio
 
 | Service | Statut | Remarques |
 |---|---|---|
-| Gateway | ✅ Fonctionnel | Rate limiting actif, manque circuit breaker |
-| Auth | ✅ Fonctionnel | Keycloak synchronisé, audit trail |
-| Client | ✅ Fonctionnel | CRUD complet, recherche, soft delete |
-| Intervention | ✅ Fonctionnel | Tous endpoints métier implémentés |
-| Media | ✅ Fonctionnel | Stockage fichier, upload/download/suppression |
-| Notification | ⏳ Squelette | Mail + Thymeleaf prêts dans pom.xml |
-| Report | ⏳ Squelette | Aucune implémentation |
-| Tests | ✅ 40 tests | Auth, Client, Gateway, Intervention |
+| Gateway | ✅ Fonctionnel | Rate limiting actif, circuit breaker, GlobalExceptionHandler (RFC 7807) |
+| Auth | ✅ Fonctionnel | Keycloak synchronisé, audit trail, change-password |
+| Client | ✅ Fonctionnel | CRUD complet, recherche, soft delete, contacts |
+| Intervention | ✅ Fonctionnel | Tous endpoints métier, state machine, sync mobile |
+| Media | ✅ Fonctionnel | Stockage fichier, MIME validation, sécurité renforcée |
+| Notification | ✅ Fonctionnel | Email Thymeleaf, retry, 5 templates |
+| Report | ✅ Fonctionnel | CSV, PDF (OpenPDF), analytics |
+| Tests | ⏳ À implémenter | Aucune couverture actuellement |
 
 ---
 
@@ -342,10 +359,11 @@ Chaque service gère ses propres migrations dans `src/main/resources/db/migratio
 
 ## 10. Prochaines étapes
 
-1. **Notification service** — Implémentation complète (email, SMS, in-app)
-2. **Report service** — Génération CSV/PDF
-3. **Tests d'intégration** — Testcontainers pour tests avec vraie DB
-4. **Circuit breaker** — Configurer Resilience4j sur les routes gateway
+1. **Tests** — Implémenter tests unitaires (JUnit 5 + Mockito) et d'intégration (Testcontainers)
+2. **InterventionItem** — Refactoring du CRUD pièces/consommables via un contrôleur dédié (stubs créés)
+3. **Gestion Entreprises** — Implémenter les endpoints `/api/admin/companies` et `/api/client/users` (US-037→043)
+4. **Suppression Facturation** — Retirer les champs billable/billing de l'entité Intervention
 5. **Média** — Migrer vers Supabase Storage / MinIO S3
 6. **Séparation DB** — Utilisateurs PostgreSQL distincts par service
 7. **Documentation API** — Swagger agrégé via gateway
+8. **Mobile Flutter** — Démarrer le développement de l'application mobile

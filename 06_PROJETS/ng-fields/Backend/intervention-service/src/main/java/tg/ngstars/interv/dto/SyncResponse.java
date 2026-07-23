@@ -27,4 +27,8 @@ public record SyncResponse(
     public static SyncResponse conflict(InterventionResponse serverVersion, String message) {
         return new SyncResponse(serverVersion, SyncAction.CONFLICT, true, message, serverVersion.updatedAt());
     }
+
+    public static SyncResponse error(String message) {
+        return new SyncResponse(null, SyncAction.CONFLICT, true, message, null);
+    }
 }

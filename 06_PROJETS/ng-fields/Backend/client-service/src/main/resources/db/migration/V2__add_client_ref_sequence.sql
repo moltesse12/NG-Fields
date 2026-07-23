@@ -1,1 +1,0 @@
-CREATE SEQUENCE IF NOT EXISTS client_ref_seq START 1;

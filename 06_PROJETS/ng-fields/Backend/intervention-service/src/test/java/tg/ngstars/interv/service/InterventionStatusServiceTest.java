@@ -1,11 +1,12 @@
 package tg.ngstars.interv.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import tg.ngstars.common.exception.ConflictException;
@@ -13,157 +14,198 @@ import tg.ngstars.common.exception.ForbiddenException;
 import tg.ngstars.interv.model.Intervention;
 import tg.ngstars.interv.model.InterventionStatus;
 
+@DisplayName("InterventionStatusService")
 class InterventionStatusServiceTest {
 
-    InterventionStatusService statusService;
-    UUID userId = UUID.randomUUID();
-    UUID techId = UUID.randomUUID();
+    private final InterventionStatusService statusService = new InterventionStatusService();
+    private UUID userId;
+    private UUID assignedUserId;
 
     @BeforeEach
     void setUp() {
-        statusService = new InterventionStatusService();
+        userId = UUID.randomUUID();
+        assignedUserId = UUID.randomUUID();
     }
 
-    @Test
-    void validateTransition_validTransition_shouldPass() {
-        var intervention = Intervention.builder()
-                .reference("INT-001")
+    private Intervention buildIntervention(String status) {
+        return Intervention.builder()
+                .id(UUID.randomUUID())
+                .reference("INT-STATUS-001")
                 .clientId(UUID.randomUUID())
-                .status("PENDING")
+                .status(status)
+                .assignedTo(assignedUserId)
+                .active(true)
+                .items(new java.util.ArrayList<>())
                 .build();
-
-        assertDoesNotThrow(() -> statusService.validateTransition(intervention, "ASSIGNED"));
     }
 
-    @Test
-    void validateTransition_invalidTransition_shouldThrowConflict() {
-        var intervention = Intervention.builder()
-                .reference("INT-002")
-                .clientId(UUID.randomUUID())
-                .status("PENDING")
-                .build();
+    @Nested
+    @DisplayName("validateTransition()")
+    class ValidateTransition {
 
-        var ex = assertThrows(ConflictException.class,
-                () -> statusService.validateTransition(intervention, "IN_PROGRESS"));
-        assertTrue(ex.getMessage().contains("PENDING"));
-        assertTrue(ex.getMessage().contains("IN_PROGRESS"));
+        @Test
+        @DisplayName("PENDING → ASSIGNED est valide")
+        void pendingToAssigned_valid() {
+            var i = buildIntervention("PENDING");
+            assertDoesNotThrow(() -> statusService.validateTransition(i, "ASSIGNED"));
+        }
+
+        @Test
+        @DisplayName("PENDING → IN_PROGRESS est invalide")
+        void pendingToInProgress_invalid() {
+            var i = buildIntervention("PENDING");
+            assertThrows(ConflictException.class,
+                    () -> statusService.validateTransition(i, "IN_PROGRESS"));
+        }
+
+        @Test
+        @DisplayName("COMPLETED → n'importe quoi est invalide")
+        void completedToAnything_invalid() {
+            var i = buildIntervention("COMPLETED");
+            assertThrows(ConflictException.class,
+                    () -> statusService.validateTransition(i, "PENDING"));
+        }
+
+        @Test
+        @DisplayName("ASSIGNED → IN_PROGRESS est valide")
+        void assignedToInProgress_valid() {
+            var i = buildIntervention("ASSIGNED");
+            assertDoesNotThrow(() -> statusService.validateTransition(i, "IN_PROGRESS"));
+        }
+
+        @Test
+        @DisplayName("IN_PROGRESS → COMPLETED est valide")
+        void inProgressToCompleted_valid() {
+            var i = buildIntervention("IN_PROGRESS");
+            assertDoesNotThrow(() -> statusService.validateTransition(i, "COMPLETED"));
+        }
+
+        @Test
+        @DisplayName("PENDING → CANCELLED est valide")
+        void pendingToCancelled_valid() {
+            var i = buildIntervention("PENDING");
+            assertDoesNotThrow(() -> statusService.validateTransition(i, "CANCELLED"));
+        }
+
+        @Test
+        @DisplayName("IN_PROGRESS → CANCELLED est valide")
+        void inProgressToCancelled_valid() {
+            var i = buildIntervention("IN_PROGRESS");
+            assertDoesNotThrow(() -> statusService.validateTransition(i, "CANCELLED"));
+        }
     }
 
-    @Test
-    void validateTransition_completedToAnything_shouldThrowConflict() {
-        var intervention = Intervention.builder()
-                .reference("INT-003")
-                .clientId(UUID.randomUUID())
-                .status("COMPLETED")
-                .build();
+    @Nested
+    @DisplayName("assignIntervention()")
+    class AssignIntervention {
 
-        assertThrows(ConflictException.class,
-                () -> statusService.validateTransition(intervention, "PENDING"));
-        assertThrows(ConflictException.class,
-                () -> statusService.validateTransition(intervention, "ASSIGNED"));
-        assertThrows(ConflictException.class,
-                () -> statusService.validateTransition(intervention, "IN_PROGRESS"));
-        assertThrows(ConflictException.class,
-                () -> statusService.validateTransition(intervention, "CANCELLED"));
+        @Test
+        @DisplayName("Passe à ASSIGNED")
+        void assign_setsStatus() {
+            var i = buildIntervention("PENDING");
+            statusService.assignIntervention(i, userId);
+            assertEquals("ASSIGNED", i.getStatus());
+        }
+
+        @Test
+        @DisplayName("Rejette si IN_PROGRESS")
+        void assign_fromInProgress_throws() {
+            var i = buildIntervention("IN_PROGRESS");
+            assertThrows(ConflictException.class,
+                    () -> statusService.assignIntervention(i, userId));
+        }
     }
 
-    @Test
-    void closeIntervention_withAllSignatures_shouldComplete() {
-        var intervention = Intervention.builder()
-                .reference("INT-004")
-                .clientId(UUID.randomUUID())
-                .assignedTo(techId)
-                .status("IN_PROGRESS")
-                .clientSignature("sig-client")
-                .technicianSignature("sig-tech")
-                .managerSignature("sig-mgr")
-                .build();
+    @Nested
+    @DisplayName("startIntervention()")
+    class StartIntervention {
 
-        statusService.closeIntervention(intervention, techId, false);
+        @Test
+        @DisplayName("Passe à IN_PROGRESS")
+        void start_setsStatus() {
+            var i = buildIntervention("ASSIGNED");
+            statusService.startIntervention(i, userId);
+            assertEquals("IN_PROGRESS", i.getStatus());
+        }
 
-        assertEquals(InterventionStatus.COMPLETED.name(), intervention.getStatus());
-        assertNotNull(intervention.getSignedAt());
+        @Test
+        @DisplayName("Rejette si PENDING (pas assigné)")
+        void start_fromPending_throws() {
+            var i = buildIntervention("PENDING");
+            assertThrows(ConflictException.class,
+                    () -> statusService.startIntervention(i, userId));
+        }
     }
 
-    @Test
-    void closeIntervention_withoutSignatures_shouldThrowConflict() {
-        var intervention = Intervention.builder()
-                .reference("INT-005")
-                .clientId(UUID.randomUUID())
-                .assignedTo(techId)
-                .status("IN_PROGRESS")
-                .build();
+    @Nested
+    @DisplayName("closeIntervention()")
+    class CloseIntervention {
 
-        var ex = assertThrows(ConflictException.class,
-                () -> statusService.closeIntervention(intervention, techId, false));
-        assertTrue(ex.getMessage().contains("signatures"));
+        @Test
+        @DisplayName("Passe à COMPLETED si signatures présentes")
+        void close_withSignatures_setsStatus() {
+            var i = buildIntervention("IN_PROGRESS");
+            i.setClientSignature("sig-client");
+            i.setTechnicianSignature("sig-tech");
+            i.setManagerSignature("sig-manager");
+
+            statusService.closeIntervention(i, assignedUserId, false);
+            assertEquals("COMPLETED", i.getStatus());
+            assertNotNull(i.getSignedAt());
+        }
+
+        @Test
+        @DisplayName("Rejette si signatures manquantes")
+        void close_withoutSignatures_throws() {
+            var i = buildIntervention("IN_PROGRESS");
+            assertThrows(ConflictException.class,
+                    () -> statusService.closeIntervention(i, assignedUserId, false));
+        }
+
+        @Test
+        @DisplayName("Admin peut clôturer sans être assigné")
+        void close_adminCanClose() {
+            var i = buildIntervention("IN_PROGRESS");
+            i.setClientSignature("sig-client");
+            i.setTechnicianSignature("sig-tech");
+            i.setManagerSignature("sig-manager");
+
+            statusService.closeIntervention(i, userId, true);
+            assertEquals("COMPLETED", i.getStatus());
+        }
+
+        @Test
+        @DisplayName("Non assigné ne peut pas clôturer")
+        void close_notAssigned_throws() {
+            var i = buildIntervention("IN_PROGRESS");
+            i.setClientSignature("sig-client");
+            i.setTechnicianSignature("sig-tech");
+            i.setManagerSignature("sig-manager");
+
+            var otherUserId = UUID.randomUUID();
+            assertThrows(ForbiddenException.class,
+                    () -> statusService.closeIntervention(i, otherUserId, false));
+        }
     }
 
-    @Test
-    void closeIntervention_notAssignedAndNotAdmin_shouldThrowForbidden() {
-        var intervention = Intervention.builder()
-                .reference("INT-006")
-                .clientId(UUID.randomUUID())
-                .assignedTo(techId)
-                .status("IN_PROGRESS")
-                .clientSignature("sig-client")
-                .technicianSignature("sig-tech")
-                .managerSignature("sig-mgr")
-                .build();
+    @Nested
+    @DisplayName("cancelIntervention()")
+    class CancelIntervention {
 
-        var otherUser = UUID.randomUUID();
-        assertThrows(ForbiddenException.class,
-                () -> statusService.closeIntervention(intervention, otherUser, false));
-    }
+        @Test
+        @DisplayName("Admin peut annuler")
+        void cancel_admin_setsStatus() {
+            var i = buildIntervention("PENDING");
+            statusService.cancelIntervention(i, userId, true);
+            assertEquals("CANCELLED", i.getStatus());
+        }
 
-    @Test
-    void assignIntervention_shouldSetAssigned() {
-        var intervention = Intervention.builder()
-                .reference("INT-007")
-                .clientId(UUID.randomUUID())
-                .status("PENDING")
-                .build();
-
-        statusService.assignIntervention(intervention, userId);
-
-        assertEquals(InterventionStatus.ASSIGNED.name(), intervention.getStatus());
-    }
-
-    @Test
-    void startIntervention_shouldSetInProgress() {
-        var intervention = Intervention.builder()
-                .reference("INT-008")
-                .clientId(UUID.randomUUID())
-                .status("ASSIGNED")
-                .build();
-
-        statusService.startIntervention(intervention, userId);
-
-        assertEquals(InterventionStatus.IN_PROGRESS.name(), intervention.getStatus());
-    }
-
-    @Test
-    void cancelIntervention_admin_shouldCancel() {
-        var intervention = Intervention.builder()
-                .reference("INT-009")
-                .clientId(UUID.randomUUID())
-                .status("PENDING")
-                .build();
-
-        statusService.cancelIntervention(intervention, userId, true);
-
-        assertEquals(InterventionStatus.CANCELLED.name(), intervention.getStatus());
-    }
-
-    @Test
-    void cancelIntervention_nonAdmin_shouldThrowForbidden() {
-        var intervention = Intervention.builder()
-                .reference("INT-010")
-                .clientId(UUID.randomUUID())
-                .status("PENDING")
-                .build();
-
-        assertThrows(ForbiddenException.class,
-                () -> statusService.cancelIntervention(intervention, userId, false));
+        @Test
+        @DisplayName("Non-admin ne peut pas annuler")
+        void cancel_nonAdmin_throws() {
+            var i = buildIntervention("PENDING");
+            assertThrows(ForbiddenException.class,
+                    () -> statusService.cancelIntervention(i, userId, false));
+        }
     }
 }

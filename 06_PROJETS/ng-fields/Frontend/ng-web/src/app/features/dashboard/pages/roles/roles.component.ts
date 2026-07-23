@@ -99,7 +99,8 @@ export class RolesComponent {
     { id: '1', name: 'Administrateur', description: 'Accès complet à tous les modules', type: 'System', usersCount: 2, permissions: ['users.manage', 'clients.manage', 'interventions.manage', 'reports.export', 'settings.admin'], status: 'active' },
     { id: '2', name: 'Manager', description: 'Gestion des interventions, clients et équipe', type: 'System', usersCount: 3, permissions: ['clients.view', 'interventions.manage', 'reports.export', 'team.manage'], status: 'active' },
     { id: '3', name: 'Technicien', description: 'Créer et gérer ses propres interventions', type: 'System', usersCount: 12, permissions: ['interventions.create', 'interventions.own', 'clients.view'], status: 'active' },
-    { id: '4', name: 'Portail Client', description: 'Accès pour soumettre des demandes', type: 'Custom', usersCount: 45, permissions: ['portal.submit', 'portal.view-own'], status: 'needs-review' },
-    { id: '5', name: 'Auditeur', description: 'Accès en lecture seule pour la conformité', type: 'Custom', usersCount: 1, permissions: ['interventions.view', 'reports.view', 'audit.view'], status: 'needs-review' },
+    { id: '4', name: 'Client Admin', description: 'Administrateur d\'entreprise client - gestion des utilisateurs', type: 'System', usersCount: 0, permissions: ['portal.manage-users', 'portal.view-all', 'portal.submit'], status: 'active' },
+    { id: '5', name: 'Client Utilisateur', description: 'Utilisateur client - soumission et consultation', type: 'System', usersCount: 0, permissions: ['portal.view-own', 'portal.submit'], status: 'active' },
+    { id: '6', name: 'Client Observateur', description: 'Accès en lecture seule pour les clients', type: 'System', usersCount: 0, permissions: ['portal.view-own'], status: 'active' },
   ]);
 }

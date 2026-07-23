@@ -5,6 +5,6 @@ import jakarta.validation.constraints.Pattern;
 
 public record RoleAssignRequest(
     @NotBlank
-    @Pattern(regexp = "ADMIN|MANAGER|TECHNICIAN|CLIENT_PORTAL")
+    @Pattern(regexp = "ADMIN|MANAGER|TECHNICIAN|CLIENT_ADMIN|CLIENT_USER|CLIENT_VIEWER")
     String role
 ) {}

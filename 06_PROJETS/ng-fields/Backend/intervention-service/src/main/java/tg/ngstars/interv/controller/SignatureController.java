@@ -31,7 +31,7 @@ public class SignatureController {
     @PreAuthorize("hasAnyRole('TECHNICIAN','MANAGER','ADMIN')")
     public ResponseEntity<SignatureResponse> signClient(
             @PathVariable UUID id,
-            @Valid @RequestBody SignatureRequest req) {
+            @Valid @RequestBody SignatureRequest req) throws java.io.IOException {
         String url = signatureService.signClient(id, req);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(SignatureResponse.created("Signature client enregistrée", url));
@@ -41,7 +41,7 @@ public class SignatureController {
     @PreAuthorize("hasAnyRole('TECHNICIAN','MANAGER','ADMIN')")
     public ResponseEntity<SignatureResponse> signTechnician(
             @PathVariable UUID id,
-            @Valid @RequestBody SignatureRequest req) {
+            @Valid @RequestBody SignatureRequest req) throws java.io.IOException {
         String url = signatureService.signTechnician(id, req);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(SignatureResponse.created("Signature technicien enregistrée", url));
@@ -51,7 +51,7 @@ public class SignatureController {
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<SignatureResponse> signManager(
             @PathVariable UUID id,
-            @Valid @RequestBody SignatureRequest req) {
+            @Valid @RequestBody SignatureRequest req) throws java.io.IOException {
         String url = signatureService.signManager(id, req);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(SignatureResponse.created("Signature manager enregistrée. Intervention validée.", url));

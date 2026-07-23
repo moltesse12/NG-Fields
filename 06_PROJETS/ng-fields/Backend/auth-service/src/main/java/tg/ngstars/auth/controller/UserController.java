@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import tg.ngstars.auth.dto.ChangePasswordRequest;
 import tg.ngstars.auth.dto.CreateUserRequest;
 import tg.ngstars.auth.dto.RoleAssignRequest;
@@ -33,6 +37,7 @@ import tg.ngstars.auth.dto.UserStatusRequest;
 import tg.ngstars.auth.service.UserService;
 
 @RestController
+@Tag(name = "Users", description = "Gestion des utilisateurs, profils et authentification")
 public class UserController {
 
     private final UserService userService;
@@ -43,6 +48,9 @@ public class UserController {
 
     @PostMapping("/api/admin/users")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Creer un utilisateur", description = "Cree un compte utilisateur dans Keycloak et enregistre en base.")
+    @ApiResponse(responseCode = "201", description = "Utilisateur cree")
+    @ApiResponse(responseCode = "409", description = "Email deja utilise")
     public ResponseEntity<UserResponse> createUser(
             @Valid @RequestBody CreateUserRequest request,
             @AuthenticationPrincipal Jwt jwt) {
@@ -52,6 +60,8 @@ public class UserController {
 
     @GetMapping("/api/admin/users")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Lister tous les utilisateurs", description = "Pagine. Admin uniquement.")
+    @ApiResponse(responseCode = "200", description = "Page de resultats")
     public ResponseEntity<Page<UserResponse>> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -60,12 +70,17 @@ public class UserController {
 
     @GetMapping("/api/admin/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Obtenir un utilisateur", description = "Detail complet d'un utilisateur par son ID.")
+    @ApiResponse(responseCode = "200", description = "Utilisateur trouve")
+    @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
     public ResponseEntity<UserResponse> getUser(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUser(id));
     }
 
     @PutMapping("/api/admin/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Mettre a jour un utilisateur", description = "Met a jour les infos dans Keycloak et en base.")
+    @ApiResponse(responseCode = "200", description = "Utilisateur mis a jour")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateUserRequest request,
@@ -75,6 +90,8 @@ public class UserController {
 
     @DeleteMapping("/api/admin/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Supprimer un utilisateur", description = "Desactive dans Keycloak et en base.")
+    @ApiResponse(responseCode = "204", description = "Utilisateur supprime")
     public ResponseEntity<Void> deleteUser(
             @PathVariable UUID id,
             @AuthenticationPrincipal Jwt jwt) {
@@ -84,6 +101,8 @@ public class UserController {
 
     @PatchMapping("/api/admin/users/{keycloakId}/roles")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Assigner un role", description = "Change le role d'un utilisateur dans Keycloak.")
+    @ApiResponse(responseCode = "200", description = "Role assigne")
     public ResponseEntity<UserResponse> assignRole(
             @PathVariable UUID keycloakId,
             @Valid @RequestBody RoleAssignRequest request,
@@ -94,6 +113,8 @@ public class UserController {
 
     @PatchMapping("/api/admin/users/{keycloakId}/status")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Activer/Desactiver un utilisateur", description = "Change le statut enabled dans Keycloak.")
+    @ApiResponse(responseCode = "200", description = "Statut mis a jour")
     public ResponseEntity<UserResponse> updateStatus(
             @PathVariable UUID keycloakId,
             @RequestBody UserStatusRequest request,
@@ -104,6 +125,8 @@ public class UserController {
 
     @PostMapping("/api/admin/users/{keycloakId}/reset-password")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reinitialiser le mot de passe", description = "Envoie un email de reinitialisation via Keycloak.")
+    @ApiResponse(responseCode = "200", description = "Email envoye")
     public ResponseEntity<Map<String, String>> resetPassword(
             @PathVariable UUID keycloakId,
             @AuthenticationPrincipal Jwt jwt) {
@@ -112,11 +135,15 @@ public class UserController {
     }
 
     @GetMapping("/api/users/me")
+    @Operation(summary = "Obtenir son profil", description = "Retourne le profil de l'utilisateur connecte.")
+    @ApiResponse(responseCode = "200", description = "Profil retourne")
     public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(userService.getProfile(UUID.fromString(jwt.getSubject())));
     }
 
     @PutMapping("/api/users/me")
+    @Operation(summary = "Mettre a jour son profil", description = "Met a jour les infos personnelles de l'utilisateur connecte.")
+    @ApiResponse(responseCode = "200", description = "Profil mis a jour")
     public ResponseEntity<UserResponse> updateProfile(
             @Valid @RequestBody UpdateProfileRequest request,
             @AuthenticationPrincipal Jwt jwt) {
@@ -125,6 +152,9 @@ public class UserController {
     }
 
     @PostMapping("/api/users/me/change-password")
+    @Operation(summary = "Changer son mot de passe", description = "Verifie l'ancien mot de passe puis applique le nouveau.")
+    @ApiResponse(responseCode = "200", description = "Mot de passe modifie")
+    @ApiResponse(responseCode = "400", description = "Ancien mot de passe incorrect")
     public ResponseEntity<Map<String, String>> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
             @AuthenticationPrincipal Jwt jwt) {
@@ -133,6 +163,9 @@ public class UserController {
     }
 
     @PostMapping("/api/public/register")
+    @Operation(summary = "Inscription client", description = "Cree un compte CLIENT_USER. Endpoint public, pas d'auth requise.")
+    @ApiResponse(responseCode = "201", description = "Compte cree")
+    @ApiResponse(responseCode = "409", description = "Email deja utilise")
     public ResponseEntity<Map<String, Object>> register(
             @Valid @RequestBody CreateUserRequest request,
             HttpServletRequest httpRequest) {

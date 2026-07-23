@@ -6,7 +6,7 @@ import {
   CreateInterventionRequest, InterventionResponse,
   ItemRequest, UpdateScheduleRequest, UpdateEquipmentRequest,
   UpdateDiagnosisRequest, UpdateResultRequest, UpdateRecommendationsRequest,
-  UpdateBillingRequest, SyncRequest,
+  SyncRequest,
 } from '../../shared/models/intervention.dto';
 
 @Injectable({ providedIn: 'root' })
@@ -59,10 +59,6 @@ export class InterventionService {
 
   updateRecommendations(id: string, req: UpdateRecommendationsRequest): Observable<InterventionResponse> {
     return this.api.patch<InterventionResponse>(`/interventions/${id}/recommendations`, req);
-  }
-
-  updateBilling(id: string, req: UpdateBillingRequest): Observable<InterventionResponse> {
-    return this.api.patch<InterventionResponse>(`/interventions/${id}/billing`, req);
   }
 
   addItem(id: string, req: ItemRequest): Observable<InterventionResponse> {

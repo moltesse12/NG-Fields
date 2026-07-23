@@ -27,7 +27,7 @@ spring:
       metrics-enabled: true
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     open-in-view: false
     show-sql: false
     properties:
@@ -40,10 +40,7 @@ spring:
           batch_versioned_data: true
         order_inserts: true
         order_updates: true
-  flyway:
-    enabled: true
-    schemas: client
-    locations: classpath:db/migration
+
   security:
     oauth2:
       resourceserver:

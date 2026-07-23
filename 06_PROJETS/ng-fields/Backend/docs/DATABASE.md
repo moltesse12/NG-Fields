@@ -13,8 +13,9 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 | email | VARCHAR(150) | NOT NULL UNIQUE |
 | first_name | VARCHAR(100) | |
 | last_name | VARCHAR(100) | |
-| role | VARCHAR(20) | NOT NULL |
+| role | VARCHAR(50) | NOT NULL |
 | phone | VARCHAR(30) | |
+| company_id | UUID | FK -> companies(id) (NULL pour ADMIN/MANAGER/TECHNICIAN) |
 | active | BOOLEAN | NOT NULL DEFAULT TRUE |
 | version | BIGINT | NOT NULL DEFAULT 0 |
 | created_at | TIMESTAMPTZ | NOT NULL |
@@ -33,6 +34,53 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 | created_at | TIMESTAMPTZ | NOT NULL |
 
 **Indexes:** `idx_audit_user_id`, `idx_audit_created_at`
+
+### `companies` (NOUVEAU — Post-Cadrage 21/07/2026)
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| name | VARCHAR(200) | NOT NULL |
+| email | VARCHAR(150) | |
+| phone | VARCHAR(30) | |
+| address | TEXT | |
+| contact_name | VARCHAR(150) | |
+| contact_phone | VARCHAR(30) | |
+| keycloak_organization_id | UUID | |
+| active | BOOLEAN | NOT NULL DEFAULT TRUE |
+| created_at | TIMESTAMPTZ | NOT NULL |
+| updated_at | TIMESTAMPTZ | NOT NULL |
+
+**Indexes:** `idx_companies_name`, `idx_companies_active`
+
+### `company_users` (NOUVEAU — Post-Cadrage 21/07/2026)
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| company_id | UUID | NOT NULL FK -> companies(id) |
+| keycloak_user_id | UUID | UNIQUE |
+| email | VARCHAR(150) | |
+| first_name | VARCHAR(100) | |
+| last_name | VARCHAR(100) | |
+| role | VARCHAR(50) | NOT NULL (CLIENT_ADMIN, CLIENT_USER, CLIENT_VIEWER) |
+| active | BOOLEAN | NOT NULL DEFAULT TRUE |
+| created_at | TIMESTAMPTZ | NOT NULL |
+| updated_at | TIMESTAMPTZ | NOT NULL |
+
+**Indexes:** `idx_company_users_company_id`, `idx_company_users_keycloak_id`
+
+### `company_access_log` (NOUVEAU — Post-Cadrage 21/07/2026)
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PRIMARY KEY |
+| company_id | UUID | NOT NULL FK -> companies(id) |
+| user_id | UUID | FK -> company_users(id) |
+| action | VARCHAR(100) | NOT NULL |
+| resource | VARCHAR(100) | |
+| resource_id | UUID | |
+| ip_address | INET | |
+| created_at | TIMESTAMPTZ | NOT NULL |
+
+**Indexes:** `idx_company_access_company_id`, `idx_company_access_created_at`
 
 ---
 
@@ -104,6 +152,11 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 | equipment_brand | VARCHAR(100) | |
 | diagnosis | TEXT | |
 | resolution | TEXT | |
+| ~~billable~~ | ~~BOOLEAN~~ | ❌ SUPPRIMÉ (Post-Cadrage 21/07/2026) |
+| ~~billing_amount~~ | ~~NUMERIC~~ | ❌ SUPPRIMÉ (Post-Cadrage 21/07/2026) |
+| ~~billing_notes~~ | ~~TEXT~~ | ❌ SUPPRIMÉ (Post-Cadrage 21/07/2026) |
+| ~~openproject_ticket_id~~ | ~~VARCHAR~~ | ❌ SUPPRIMÉ (Post-Cadrage 21/07/2026) |
+| ~~openproject_ticket_url~~ | ~~VARCHAR~~ | ❌ SUPPRIMÉ (Post-Cadrage 21/07/2026) |
 | version | BIGINT | NOT NULL DEFAULT 0 |
 | created_by | VARCHAR(100) | |
 | created_at | TIMESTAMPTZ | NOT NULL |
@@ -176,9 +229,9 @@ Each service uses Flyway for schema management. Migrations are in `src/main/reso
 
 | Service | Versions | Description |
 |---------|----------|-------------|
-| auth-service | V1-V3 | Users, audit logs, optimistic locking |
+| auth-service | V1-V4 | Users, audit logs, optimistic locking, **companies + company_users + company_access_log** |
 | client-service | V1-V5 | Clients, reference sequence, trigram index, version, contacts |
-| intervention-service | V1-V5+ | Interventions, items, indexes |
+| intervention-service | V1-V6 | Interventions, items, indexes, **suppression facturation** |
 | media-service | V1-V3 | Media files |
 | notification-service | V1-V2 | Email logs |
 | report-service | V1-V2 | Report requests |

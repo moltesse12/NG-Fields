@@ -2,10 +2,8 @@ package tg.ngstars.report.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -41,23 +39,6 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
         detail.setDetail("Access denied");
-        return detail;
-    }
-
-    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ProblemDetail handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
-        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        detail.setTitle("Conflict");
-        detail.setDetail("Ce document a été modifié par un autre utilisateur. Veuillez recharger la page.");
-        return detail;
-    }
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ProblemDetail handleDataIntegrity(DataIntegrityViolationException ex) {
-        log.error("Data integrity violation", ex);
-        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        detail.setTitle("Conflict");
-        detail.setDetail("Violation de contrainte de données. L'opération ne peut pas être effectuée.");
         return detail;
     }
 

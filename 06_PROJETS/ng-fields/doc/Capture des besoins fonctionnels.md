@@ -3,6 +3,8 @@
 **Rédigé par :** FOLLY Nelson Emmanuel (Stagiaire) 
 **Validateur :** David KATOH (Responsable IT)
 
+> **⚠️ Note Post-Cadrage (21/07/2026) :** Ce document contient des references obsolètes aux fonctionnalites supprimees du perimetre : WhatsApp, OpenProject, facturation. Les diagrammes UML et cas d'utilisation concernes necessitent une revision complete. Se referer au Backlog V5.0 pour la version actualisee.
+
 ---
 
 ## Sommaire
@@ -41,11 +43,9 @@ Nous pouvons identifier les acteurs suivants :
 | Technicien terrain                         | Crée et remplit les fiches d'intervention numériques sur mobile. Capture les photos, collecte les signatures et soumet les rapports depuis le terrain.             | Primaire      |
 | Manager                                    | Supervise les activités terrain via le tableau de bord web. Consulte les statistiques, reçoit les notifications en temps réel et appose la signature hiérarchique. | Primaire      |
 | Directeur                                  | Configure et administre le système : gestion des comptes utilisateurs, des droits d'accès, des référentiels clients et des paramètres de notification.             | Primaire      |
-| Client                                     | Saisit directement sa demande d'intervention depuis le portail client de l'application NG-Fields, déclenchant la création d'un ticket dans OpenProject.            | Primaire      |
+| Client                                     | Saisit directement sa demande d'intervention depuis le portail client de l'application NG-Fields.                                                                 | Primaire      |
 | Service Email (SMTP / SendGrid)            | Reçoit les requêtes d'envoi et achemine les rapports PDF par email aux destinataires désignés.                                                                     | Secondaire    |
-| WhatsApp Business API                      | Reçoit les requêtes d'envoi et transmet les rapports PDF via la messagerie WhatsApp aux clients.                                                                   | Secondaire    |
 | Service de notifications Push (FCM / APNs) | Reçoit les déclencheurs d'événements et achemine les alertes push en temps réel vers les appareils mobiles des techniciens et managers.                            | Secondaire    |
-| OpenProject                                | Héberge les tickets d'intervention créés via le portail client ou le formulaire NG-Fields. Met à disposition l'API REST v3 (création, mise à jour, consultation).  | Secondaire    |
 
 ---
 
@@ -53,80 +53,74 @@ Nous pouvons identifier les acteurs suivants :
 
 L'identification des cas d'utilisation constitue une étape clé dans la compréhension des besoins fonctionnels du système. Elle permet de modéliser les interactions entre les différents acteurs et le système à développer. Pour ce projet, chaque cas d'utilisation décrit un scénario fonctionnel répondant à un objectif précis pour un acteur donné. Cette démarche vise à structurer les principales fonctionnalités de la future application NG-Fields, tout en assurant une couverture complète des exigences exprimées dans le cahier des charges. Les cas d'utilisation identifiés serviront de base pour les spécifications détaillées, les tests, et la conception technique du système.
 
-| MODULE                           | CAS D'UTILISATION GÉNÉRALISÉ  | CAS D'UTILISATION SPÉCIFIQUE                             | ACTEURS                                |
-| -------------------------------- | ----------------------------- | -------------------------------------------------------- | -------------------------------------- |
-| **Authentification**             | Compte utilisateur            | Se connecter                                             | Tous                                   |
-|                                  |                               | Réinitialiser son mot de passe                           | Tous                                   |
-|                                  |                               | Modifier son profil                                      | Tous                                   |
-|                                  |                               | Créer un compte utilisateur                              | Directeur                              |
-|                                  |                               | Attribuer les droits d'accès                             | Directeur                              |
-|                                  |                               | Désactiver un compte                                     | Directeur                              |
-| **Intervention**                 | Créer une intervention        | Démarrer une intervention                                | Technicien terrain                     |
-|                                  |                               | Sélectionner un client                                   | Technicien terrain                     |
-|                                  | Remplir le formulaire         | Saisir les informations générales                        | Technicien terrain                     |
-|                                  |                               | Saisir les horaires                                      | Technicien terrain                     |
-|                                  |                               | Choisir le type d'intervention                           | Technicien terrain                     |
-|                                  |                               | Décrire l'équipement concerné                            | Technicien terrain                     |
-|                                  |                               | Décrire le problème et le ticket OpenProject             | Technicien terrain                     |
-|                                  |                               | Renseigner le diagnostic et les travaux                  | Technicien terrain                     |
-|                                  |                               | Lister les pièces utilisées                              | Technicien terrain                     |
-|                                  |                               | Indiquer le résultat                                     | Technicien terrain                     |
-|                                  |                               | Formuler des recommandations                             | Technicien terrain                     |
-|                                  |                               | Définir la facturation                                   | Technicien terrain                     |
-|                                  | Modifier une intervention     | Modifier une intervention en cours                       | Technicien terrain                     |
-|                                  |                               | Consulter une intervention                               | Tous                                   |
-| **Géolocalisation**              | Localiser le site             | Saisir la position manuellement                          | Technicien terrain                     |
-|                                  |                               | Visualiser la position sur la carte                      | Manager                                |
-| **Photos**                       | Photographier avant           | Prendre une photo                                        | Technicien terrain                     |
-|                                  |                               | Choisir une photo depuis la galerie                      | Technicien terrain                     |
-|                                  | Photographier après           | Prendre une photo                                        | Technicien terrain                     |
-|                                  |                               | Choisir une photo depuis la galerie                      | Technicien terrain                     |
-|                                  | Gérer les photos              | Supprimer une photo                                      | Technicien terrain                     |
-| **Signatures**                   | Signer sur site               | Faire signer le client                                   | Technicien terrain                     |
-|                                  |                               | Signer en tant que technicien                            | Technicien terrain                     |
-|                                  |                               | Signaler un refus de signature                           | Technicien terrain                     |
-|                                  |                               | Signer à distance (manager)                              | Manager                                |
-| **Mode hors-ligne**              | Travailler sans connexion     | Vérifier l'état de connexion                             | Technicien terrain                     |
-|                                  |                               | Synchroniser les données                                 | Technicien terrain                     |
-| **Rapport PDF**                  | Générer un rapport            | Télécharger le rapport PDF                               | Technicien terrain, Manager, Directeur |
-|                                  |                               | Régénérer le rapport                                     | Technicien terrain, Manager            |
-| **Envoi du rapport**             | Envoyer le rapport            | Envoyer le rapport par email                             | Technicien terrain, Manager, Service Email |
-|                                  |                               | Envoyer le rapport par WhatsApp                          | Technicien terrain, Manager, WhatsApp Business API |
-|                                  |                               | Renvoyer un rapport depuis l'historique                  | Technicien terrain, Manager            |
-| **Clients**                      | Gérer les fiches client       | Créer une fiche client                                   | Directeur                              |
-|                                  |                               | Modifier une fiche client                                | Directeur                              |
-|                                  |                               | Consulter l'historique des interventions                 | Tous                                   |
-|                                  |                               | Rechercher dans l'historique                             | Tous                                   |
-| **Notifications**                | Recevoir une alerte           | Être alerté d'une nouvelle intervention                  | Manager, Service Push FCM/APNs         |
-|                                  |                               | Être alerté d'une intervention clôturée                  | Manager, Service Push FCM/APNs         |
-|                                  |                               | Être alerté d'un dépassement de durée                    | Manager, Service Push FCM/APNs         |
-|                                  |                               | Être alerté d'un nouveau ticket client                   | Manager, Service Push FCM/APNs         |
-|                                  | Paramétrer les alertes        | Définir les seuils de durée                              | Directeur                              |
-| **Tableau de bord**              | Piloter l'activité            | Consulter la vue globale des interventions               | Manager, Directeur                     |
-|                                  |                               | Filtrer les interventions                                | Manager, Directeur                     |
-|                                  |                               | Consulter les indicateurs KPI                            | Manager                                |
-|                                  |                               | Exporter les données                                     | Manager, Directeur                     |
-| **Planning**                     | Planifier une intervention    | Créer une intervention planifiée                         | Manager, Directeur                     |
-|                                  |                               | Assigner un technicien                                   | Manager, Directeur                     |
-|                                  |                               | Modifier une intervention planifiée                      | Manager, Directeur                     |
-|                                  |                               | Annuler une intervention planifiée                       | Manager, Directeur                     |
-|                                  |                               | Consulter l'agenda d'un technicien                       | Technicien terrain                     |
-|                                  |                               | Consulter le planning global                             | Manager, Directeur                     |
-|                                  |                               | Réassigner un technicien                                 | Manager, Directeur                     |
-| **Rappels**                      | Suivre les actions en attente | Consulter la liste des actions en attente                | Tous                                   |
-|                                  |                               | Marquer une action comme traitée                         | Technicien terrain, Manager            |
-| **Portail client & OpenProject** | Soumettre une demande         | Soumettre une demande d'intervention                     | Client, OpenProject                    |
-|                                  | Gérer les tickets             | Suivre les tickets en attente d'affectation              | Manager, Directeur, OpenProject        |
-|                                  |                               | Consulter l'historique des interventions liées au ticket | Tous, OpenProject                      |
-|                                  |                               | Rouvrir un ticket non résolu                             | Technicien terrain, Manager            |
-|                                  | Affecter un technicien        | Planifier la première intervention depuis le ticket      | Manager, Directeur                     |
-|                                  |                               | Planifier une intervention de suivi                      | Manager, Directeur                     |
-| ~~**Facturation**~~              | ~~Facturer une intervention~~ | ~~Créer une facture~~                                    | ~~Manager, Directeur~~                 |
-|                                  |                               | ~~Envoyer la facture par email~~                         | ~~Manager, Directeur~~                 |
-|                                  |                               | ~~Régénérer une facture~~                                | ~~Manager, Directeur~~                 |
-|                                  |                               | ~~Mettre à jour le statut de paiement~~                  | ~~Manager, Directeur~~                 |
-|                                  |                               | ~~Consulter le chiffre d'affaires~~                      | ~~Manager, Directeur~~                 |
-|                                  |                               | ~~Alerte facture impayée~~                               | ~~Système~~                            |
+| MODULE                           | CAS D'UTILISATION GÉNÉRALISÉ  | CAS D'UTILISATION SPÉCIFIQUE                             | ACTEURS                                            |
+| -------------------------------- | ----------------------------- | -------------------------------------------------------- | -------------------------------------------------- |
+| **Authentification**             | Compte utilisateur            | Se connecter                                             | Tous                                               |
+|                                  |                               | Réinitialiser son mot de passe                           | Tous                                               |
+|                                  |                               | Modifier son profil                                      | Tous                                               |
+|                                  |                               | Créer un compte utilisateur                              | Directeur                                          |
+|                                  |                               | Attribuer les droits d'accès                             | Directeur                                          |
+|                                  |                               | Désactiver un compte                                     | Directeur                                          |
+| **Intervention**                 | Créer une intervention        | Démarrer une intervention                                | Technicien terrain                                 |
+|                                  |                               | Sélectionner un client                                   | Technicien terrain                                 |
+|                                  | Remplir le formulaire         | Saisir les informations générales                        | Technicien terrain                                 |
+|                                  |                               | Saisir les horaires                                      | Technicien terrain                                 |
+|                                  |                               | Choisir le type d'intervention                           | Technicien terrain                                 |
+|                                  |                               | Décrire l'équipement concerné                            | Technicien terrain                                 |
+|                                  |                               | Décrire le problème et le diagnostic                      | Technicien terrain                                 |
+|                                  |                               | Renseigner le diagnostic et les travaux                  | Technicien terrain                                 |
+|                                  |                               | Lister les pièces utilisées                              | Technicien terrain                                 |
+|                                  |                               | Indiquer le résultat                                     | Technicien terrain                                 |
+|                                  |                               | Formuler des recommandations                             | Technicien terrain                                 |
+|                                  |                               | Définir les recommandations                              | Technicien terrain                                 |
+|                                  | Modifier une intervention     | Modifier une intervention en cours                       | Technicien terrain                                 |
+|                                  |                               | Consulter une intervention                               | Tous                                               |
+| **Géolocalisation**              | Localiser le site             | Saisir la position manuellement                          | Technicien terrain                                 |
+|                                  |                               | Visualiser la position sur la carte                      | Manager                                            |
+| **Photos**                       | Photographier avant           | Prendre une photo                                        | Technicien terrain                                 |
+|                                  |                               | Choisir une photo depuis la galerie                      | Technicien terrain                                 |
+|                                  | Photographier après           | Prendre une photo                                        | Technicien terrain                                 |
+|                                  |                               | Choisir une photo depuis la galerie                      | Technicien terrain                                 |
+|                                  | Gérer les photos              | Supprimer une photo                                      | Technicien terrain                                 |
+| **Signatures**                   | Signer sur site               | Faire signer le client                                   | Technicien terrain                                 |
+|                                  |                               | Signer en tant que technicien                            | Technicien terrain                                 |
+|                                  |                               | Signaler un refus de signature                           | Technicien terrain                                 |
+|                                  |                               | Signer à distance (manager)                              | Manager                                            |
+| **Mode hors-ligne**              | Travailler sans connexion     | Vérifier l'état de connexion                             | Technicien terrain                                 |
+|                                  |                               | Synchroniser les données                                 | Technicien terrain                                 |
+| **Rapport PDF**                  | Générer un rapport            | Télécharger le rapport PDF                               | Technicien terrain, Manager, Directeur             |
+|                                  |                               | Régénérer le rapport                                     | Technicien terrain, Manager                        |
+| **Envoi du rapport**             | Envoyer le rapport            | Envoyer le rapport par email                             | Technicien terrain, Manager, Service Email         |
+|                                  |                               | Renvoyer un rapport depuis l'historique                  | Technicien terrain, Manager                        |
+| **Clients**                      | Gérer les fiches client       | Créer une fiche client                                   | Directeur                                          |
+|                                  |                               | Modifier une fiche client                                | Directeur                                          |
+|                                  |                               | Consulter l'historique des interventions                 | Tous                                               |
+|                                  |                               | Rechercher dans l'historique                             | Tous                                               |
+| **Notifications**                | Recevoir une alerte           | Être alerté d'une nouvelle intervention                  | Manager, Service Push FCM/APNs                     |
+|                                  |                               | Être alerté d'une intervention clôturée                  | Manager, Service Push FCM/APNs                     |
+|                                  |                               | Être alerté d'un dépassement de durée                    | Manager, Service Push FCM/APNs                     |
+|                                  |                               | Être alerté d'un nouveau ticket client                   | Manager, Service Push FCM/APNs                     |
+|                                  | Paramétrer les alertes        | Définir les seuils de durée                              | Directeur                                          |
+| **Tableau de bord**              | Piloter l'activité            | Consulter la vue globale des interventions               | Manager, Directeur                                 |
+|                                  |                               | Filtrer les interventions                                | Manager, Directeur                                 |
+|                                  |                               | Consulter les indicateurs KPI                            | Manager                                            |
+|                                  |                               | Exporter les données                                     | Manager, Directeur                                 |
+| **Planning**                     | Planifier une intervention    | Créer une intervention planifiée                         | Manager, Directeur                                 |
+|                                  |                               | Assigner un technicien                                   | Manager, Directeur                                 |
+|                                  |                               | Modifier une intervention planifiée                      | Manager, Directeur                                 |
+|                                  |                               | Annuler une intervention planifiée                       | Manager, Directeur                                 |
+|                                  |                               | Consulter l'agenda d'un technicien                       | Technicien terrain                                 |
+|                                  |                               | Consulter le planning global                             | Manager, Directeur                                 |
+|                                  |                               | Réassigner un technicien                                 | Manager, Directeur                                 |
+| **Rappels**                      | Suivre les actions en attente | Consulter la liste des actions en attente                | Tous                                               |
+|                                  |                               | Marquer une action comme traitée                         | Technicien terrain, Manager                        |
+| **Portail client**                 | Soumettre une demande         | Soumettre une demande d'intervention                     | Client                                             |
+|                                  | Gérer les tickets             | Suivre les demandes en attente d'affectation             | Manager, Directeur                                 |
+|                                  |                               | Consulter l'historique des interventions liées à la demande | Tous                                            |
+|                                  |                               | Rouvrir un ticket non résolu                             | Technicien terrain, Manager                        |
+|                                  | Affecter un technicien        | Planifier la première intervention depuis le ticket      | Manager, Directeur                                 |
+|                                  |                               | Planifier une intervention de suivi                      | Manager, Directeur                                 |
+
 
 ---
 
@@ -172,12 +166,12 @@ flowchart LR
     UC4((Saisir les horaires))
     UC5((Choisir le type d'intervention))
     UC6((Décrire l'équipement concerné))
-    UC7((Décrire le problème et le ticket OpenProject))
+    UC7((Décrire le problème et le diagnostic))
     UC8((Renseigner le diagnostic et les travaux))
     UC9((Lister les pièces utilisées))
     UC10((Indiquer le résultat))
     UC11((Formuler des recommandations))
-    UC12((Définir la facturation))
+    UC12((Formuler des recommandations))
     UC13((Modifier une intervention en cours))
     UC14((Consulter une intervention))
 
@@ -302,22 +296,17 @@ flowchart LR
     T[Technicien terrain]
     M[Manager]
     SMTP[Service Email]
-    WA[WhatsApp Business API]
 
     UC1((Envoyer le rapport par email))
-    UC2((Envoyer le rapport par WhatsApp))
-    UC3((Renvoyer un rapport depuis l'historique))
+    UC2((Renvoyer un rapport depuis l'historique))
 
     T --> UC1
     T --> UC2
-    T --> UC3
 
     M --> UC1
     M --> UC2
-    M --> UC3
 
     UC1 --> SMTP
-    UC2 --> WA
 ```
 
 ---
@@ -450,7 +439,7 @@ flowchart LR
 
 ---
 
-### 3.14 Diagramme – Module Portail Client & OpenProject
+### 3.14 Diagramme – Module Portail Client & Gestion des Demandes
 
 ```mermaid
 flowchart LR
@@ -458,13 +447,12 @@ flowchart LR
     M[Manager]
     D[Directeur]
     T[Technicien terrain]
-    OP[OpenProject]
 
     UC1((Soumettre une demande d'intervention))
-    UC2((Suivre les tickets en attente d'affectation))
-    UC3((Consulter l'historique des interventions liées au ticket))
-    UC4((Rouvrir un ticket non résolu))
-    UC5((Planifier la première intervention depuis le ticket))
+    UC2((Suivre les demandes en attente d'affectation))
+    UC3((Consulter l'historique des interventions liees))
+    UC4((Rouvrir une demande non resolue))
+    UC5((Planifier la premiere intervention depuis la demande))
     UC6((Planifier une intervention de suivi))
 
     C --> UC1
@@ -483,10 +471,6 @@ flowchart LR
 
     T --> UC3
     T --> UC4
-
-    UC1 --> OP
-    UC2 --> OP
-    UC3 --> OP
 ```
 
 ---
@@ -509,7 +493,7 @@ mindmap
     Tableau de Bord
     Planning
     Rappels
-    Portail Client & OpenProject
+    Portail Client & Gestion des Demandes
 ```
 
 ---
@@ -593,7 +577,7 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 3. Le système tente de capturer les coordonnées GPS de la position actuelle du technicien. (A1)
 4. Le système enregistre les coordonnées GPS dans la section 1 de la fiche.
 5. Le technicien sélectionne le client concerné depuis la liste ou crée une nouvelle fiche client. (A2)
-6. Le technicien renseigne le type d'intervention, la priorité et la référence du ticket OpenProject.
+6. Le technicien renseigne le type d'intervention et la priorite.
 7. Le système enregistre automatiquement les données saisies en local.
 8. La fiche d'intervention passe au statut « En cours ».
 
@@ -620,7 +604,7 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 | **Titre**       | Remplir le formulaire d'intervention                                                                                                                                                                                                      |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Acteurs**     | Technicien terrain                                                                                                                                                                                                                        |
-| **Résumé**      | Ce cas d'utilisation décrit le remplissage complet du formulaire d'intervention FI-01-2025 par le technicien, couvrant les informations générales, client, horaires, équipement, diagnostic, pièces, résultat, facturation et signatures. |
+| **Résumé**      | Ce cas d'utilisation decrit le remplissage complet du formulaire d'intervention FI-01-2025 par le technicien, couvrant les informations generales, client, horaires, equipement, diagnostic, pieces, resultat et signatures. |
 | **Responsable** | FOLLY Nelson Emmanuel                                                                                                                                                                                                                     |
 | **Version**     | 1.0                                                                                                                                                                                                                                       |
 | **Date**        | 22/05/2026                                                                                                                                                                                                                                |
@@ -641,11 +625,11 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 5. Le système calcule automatiquement la durée d'intervention.
 6. Le technicien sélectionne le **type d'intervention** (Maintenance, Dépannage, Installation, Mise à jour, Audit/Contrôle, Autre).
 7. Le technicien saisit l'**équipement concerné** (voir cas d'utilisation « Saisir le matériel et l'équipement concerné »).
-8. Le technicien saisit la description du problème / N° ticket OpenProject, le diagnostic et les travaux réalisés.
+8. Le technicien saisit la description du probleme, le diagnostic et les travaux realises.
 9. Le technicien saisit les pièces et consommables utilisés (voir cas d'utilisation « Saisir les pièces et consommables utilisés »).
 10. Le technicien choisit le résultat de l'intervention (voir cas d'utilisation « Choisir le résultat de l'intervention »). (A2)
 11. Le technicien saisit les recommandations ou actions futures.
-12. Le technicien configure la facturation (facturable Oui/Non, observations).
+12. Le technicien saisit les observations ou recommandations.
 13. Le technicien capture les photos (voir cas d'utilisation « Photographier l'état avant/après intervention »).
 14. Le système valide les champs obligatoires. (A3)
 15. La fiche passe au statut « Terminer » et est prête pour la signature.
@@ -909,51 +893,9 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 
 ---
 
-### Cas d'utilisation « Envoyer le rapport via WhatsApp »
+### ~~Cas d'utilisation « Envoyer le rapport via WhatsApp »~~ ❌ SUPPRIME
 
----
-
-**SOMMAIRE D'IDENTIFICATION**
-
-| **Titre**       | Envoyer le rapport via WhatsApp                                                                                                                                                                               |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Acteurs**     | Technicien terrain, Manager                                                                                                                                                                                   |
-| **Résumé**      | Ce cas d'utilisation permet à l'utilisateur de partager le rapport PDF d'intervention directement via WhatsApp, en transmettant au client un lien d'accès direct au document hébergé sur le serveur NG-Fields |
-| **Responsable** | FOLLY Nelson Emmanuel                                                                                                                                                                                         |
-| **Version**     | 1.0                                                                                                                                                                                                           |
-| **Date**        | 14/05/2026                                                                                                                                                                                                    |
-
-
-**Description des scénarios**
-
-**Préconditions :**
-
-- Le rapport PDF est généré et hébergé sur le backend.
-- Une connexion réseau est disponible.
-- L'intégration WhatsApp Business API est opérationnelle.
-
-**Scénario nominal :**
-
-1. L'utilisateur accède à la fiche d'intervention validée.
-2. L'utilisateur appuie sur le bouton « Envoyer via WhatsApp ».
-3. Le système récupère le numéro de téléphone du client depuis la fiche client et pré-remplit le champ destinataire. (A1)
-4. Le système génère un lien d'accès direct et sécurisé vers le PDF hébergé sur le serveur.
-5. L'utilisateur confirme l'envoi en appuyant sur « Envoyer ».
-6. Le système transmet le message avec le lien via l'API WhatsApp Business.
-7. Le client reçoit le message WhatsApp contenant le lien de téléchargement du rapport.
-8. Le système affiche une confirmation à l'utilisateur : « Message WhatsApp envoyé avec succès. »
-9. L'envoi est consigné dans l'historique de la fiche.
-
-**Scénarios alternatifs :**
-
-- **A1 :** Aucun numéro de téléphone n'est renseigné dans la fiche client.
-    - L'utilisateur saisit manuellement le numéro du destinataire.
-    - Le processus reprend au scénario nominal étape 4.
-- **A2 :** L'API WhatsApp est indisponible.
-    - Le système affiche un message : « L'envoi WhatsApp est temporairement indisponible. Veuillez utiliser l'envoi par email. »
-    - Le processus bascule vers le cas d'utilisation « Envoyer le rapport par email ».
-
-**Post-conditions :** Le client a reçu un message WhatsApp contenant un lien d'accès direct au rapport PDF. L'envoi est consigné dans l'historique de la fiche.
+> **Decision cadrage 21/07/2026 :** L'envoi WhatsApp est supprime du perimetre. Seul l'envoi par email reste.
 
 ---
 
@@ -1188,7 +1130,7 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 2. Le système affiche une zone de texte libre multi-lignes.
 3. Le technicien saisit la liste des pièces et consommables avec quantités si nécessaire.
 4. Le système enregistre les données dans la fiche locale.
-5. Les éléments saisis seront intégrés dans la section facturation et le rapport PDF.
+5. Les elements saisis seront integres dans le rapport PDF.
 
 **Post-conditions :** La liste des pièces et consommables est enregistrée dans la fiche d'intervention.
 
@@ -1217,7 +1159,7 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 2. Le système affiche les 3 options sous forme de boutons radio.
 3. Le technicien sélectionne une option : « Problème résolu », « Partiellement résolu » ou « Non résolu ». (A1)
 4. Le système enregistre le résultat dans la fiche.
-5. Si « Non résolu », le système propose de créer automatiquement un ticket de suivi dans OpenProject.
+5. Si « Non résolu », le système propose de créer automatiquement une intervention de suivi.
 
 **Scénarios alternatifs :**
 - **A1 :** Le technicien ne sélectionne aucune option et tente de passer à la section suivante.
@@ -1237,15 +1179,14 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 | **Titre**       | Soumettre une demande d'intervention                                                                                                                                                              |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Acteurs**     | Client                                                                                                                                                                                            |
-| **Résumé**      | Ce cas d'utilisation permet à un client NG-Fields de saisir directement une demande d'intervention depuis le portail client. La soumission crée un ticket dans OpenProject et notifie le manager. |
+| **Résumé**      | Ce cas d'utilisation permet a un client NG-Fields de saisir directement une demande d'intervention depuis le portail client. La soumission cree un ticket et notifie le manager. |
 | **Responsable** | FOLLY Nelson Emmanuel                                                                                                                                                                             |
 | **Version**     | 1.0                                                                                                                                                                                               |
 | **Date**        | 22/05/2026                                                                                                                                                                                        |
 
 **Préconditions :**
 - Le client dispose d'un lien sécurisé ou d'un accès au portail client NG-Fields.
-- Le backend NG-Fields est opérationnel.
-- La connexion à OpenProject est configurée.
+- Le backend NG-Fields est operationnel.
 
 **Scénario nominal :**
 1. Le client accède au portail client via un lien sécurisé (email, QR code, site web).
@@ -1255,13 +1196,13 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 5. Le client rédige une description libre de sa demande.
 6. Le client indique le niveau d'urgence : Faible, Moyen ou Élevé.
 7. Le client valide en cliquant sur « Envoyer ma demande ». (A2)
-8. Le système reçoit la demande et crée automatiquement un ticket dans OpenProject avec :
+8. Le systeme recoit la demande et cree automatiquement un ticket avec :
     - Titre généré à partir du type et du nom client
     - Description libre saisie par le client
     - Priorité selon le niveau d'urgence
     - Statut initial : « Nouveau »
     - Projet cible configuré
-9. Le système envoie un email de confirmation au client avec le numéro de ticket OpenProject. (A3)
+9. Le systeme envoie un email de confirmation au client avec le numero de ticket. (A3)
 10. Le système notifie le manager : « Nouveau ticket client reçu — en attente d'affectation. »
 11. Le ticket apparaît dans la file d'attente du tableau de bord manager, statut « Non affecté ».
 12. **Le processus d'affectation relève du manager** (voir cas d'utilisation « Affecter un technicien »).
@@ -1273,12 +1214,12 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 - **A2 :** Des champs obligatoires sont vides.
     - Le système affiche un message d'erreur sous chaque champ manquant.
     - Le processus reprend à l'étape 3.
-- **A3 :** OpenProject est temporairement indisponible.
+- **A3 :** Le systeme est temporairement indisponible.
     - Le système place la demande dans une file d'attente.
     - Le système renvoie un accusé : « Votre demande a bien été enregistrée. Elle sera traitée sous peu. »
     - La création du ticket est tentée automatiquement jusqu'à succès (retry avec backoff exponentiel) dans un délai max de 24h.
 
-**Post-conditions :** Un ticket OpenProject est créé (immédiatement ou en différé), le client reçoit un numéro de suivi, le manager est notifié, le ticket est en file d'attente d'affectation.
+**Post-conditions :** Un ticket est cree (immediatement ou en differe), le client recoit un numero de suivi, le manager est notifie, le ticket est en file d'attente d'affectation.
 
 ---
 
@@ -1291,13 +1232,13 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 | **Titre**       | Affecter un technicien                                                                                                                                                                                  |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Acteurs**     | Manager, Directeur                                                                                                                                                                                      |
-| **Résumé**      | Ce cas d'utilisation permet au manager de consulter les tickets en attente, vérifier le planning des techniciens disponibles, affecter un technicien, et créer la première intervention liée au ticket. |
+| **Résumé**      | Ce cas d'utilisation permet au manager de consulter les demandes en attente, verifier le planning des techniciens disponibles, affecter un technicien, et creer la premiere intervention liee a la demande. |
 | **Responsable** | FOLLY Nelson Emmanuel                                                                                                                                                                                   |
 | **Version**     | 1.0                                                                                                                                                                                                     |
 | **Date**        | 22/05/2026                                                                                                                                                                                              |
 
 **Préconditions :**
-- Un ticket OpenProject existe avec le statut « Nouveau » ou « En attente d'affectation ».
+- Une demande d'intervention existe avec le statut « Nouveau » ou « En attente d'affectation ».
 - Le manager est authentifié sur le tableau de bord.
 
 **Scénario nominal :**
@@ -1313,7 +1254,7 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
     - Client et problème repris du ticket
     - Date/heure selon planning
 8. Le système notifie le technicien : « Nouvelle mission assignée — [client] — [date]. »
-9. Le système met à jour le statut du ticket OpenProject : « En cours ».
+9. Le systeme met a jour le statut de la demande : « En cours ».
 10. Le ticket et l'intervention sont désormais liés (relation 1 ticket → N interventions possibles).
 
 **Scénarios alternatifs :**
@@ -1324,7 +1265,7 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
     - Le manager peut programmer une affectation ultérieure.
     - Le processus reprend à l'étape 5 dès qu'un créneau se libère.
 
-**Post-conditions :** Un technicien est affecté, une intervention planifiée est créée, le ticket OpenProject est lié à l'intervention.
+**Post-conditions :** Un technicien est affecte, une intervention planifiee est creee, la demande est liee a l'intervention.
 
 ---
 
@@ -1337,7 +1278,7 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 | **Titre**       | Planifier une intervention de suivi                                                                                                                                                                         |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Acteurs**     | Manager, Directeur                                                                                                                                                                                          |
-| **Résumé**      | Ce cas d'utilisation permet de créer une nouvelle intervention liée au même ticket OpenProject lorsque le problème n'a pas été résolu lors de la précédente intervention (résultat = Partiellement ou Non). |
+| **Résumé**      | Ce cas d'utilisation permet de creer une nouvelle intervention liee a la meme demande lorsque le probleme n'a pas ete resolu lors de la precedente intervention (resultat = Partiellement ou Non). |
 | **Responsable** | FOLLY Nelson Emmanuel                                                                                                                                                                                       |
 | **Version**     | 1.0                                                                                                                                                                                                         |
 | **Date**        | 22/05/2026                                                                                                                                                                                                  |
@@ -1345,15 +1286,15 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
 **Préconditions :**
 - Une intervention existe avec le statut « Terminée ».
 - Le résultat de l'intervention est « Partiellement résolu » ou « Non résolu ».
-- Le ticket OpenProject correspondant est toujours ouvert.
+- La demande correspondante est toujours ouverte.
 
 **Scénario nominal :**
 1. Le technicien clôture l'intervention avec le résultat « Partiellement résolu » ou « Non résolu ». (A1)
 2. Le système détecte que le problème n'est pas résolu et propose au manager de planifier une intervention de suivi.
 3. Le manager reçoit une notification : « Intervention non résolue — [client] — suivi requis. »
-4. Le manager ouvre le ticket OpenProject et consulte l'historique des interventions déjà réalisées.
+4. Le manager ouvre la demande et consulte l'historique des interventions deja realisees.
 5. Le manager sélectionne un technicien (même ou différent) et planifie une nouvelle intervention de suivi.
-6. Le système crée une nouvelle intervention liée au même ticket OpenProject.
+6. Le systeme cree une nouvelle intervention liee a la meme demande.
 7. Le système conserve la liaison : 1 ticket → 2 interventions (et ainsi de suite jusqu'à résolution).
 8. Le système notifie le technicien de la nouvelle intervention de suivi.
 
@@ -1363,7 +1304,7 @@ Une description textuelle de cas d'utilisation est un document rédigé en langa
     - Le manager peut rouvrir le ticket précédent et créer une intervention de suivi.
     - Le processus reprend à l'étape 4.
 
-**Post-conditions :** Une nouvelle intervention de suivi est créée et liée au ticket existant. Le même ticket OpenProject peut référencer N interventions jusqu'à résolution complète.
+**Post-conditions :** Une nouvelle intervention de suivi est creee et liee a la demande existante. La meme demande peut referencer N interventions jusqu'a resolution complete.
 
 ---
 
@@ -1713,37 +1654,9 @@ _Figure 8 : Diagramme de classes candidates du cas d'utilisation Envoyer le rapp
 
 ---
 
-**Envoyer le rapport via WhatsApp :**
+**~~Envoyer le rapport via WhatsApp~~** ❌ SUPPRIME
 
-```mermaid
-classDiagram
-    class RapportPDF {
-        +url : String
-        +obtenir()
-    }
-    class LienAcces {
-        +url : String
-        +expiration : DateTime
-        +generer()
-    }
-    class WhatsAppAPI {
-        +numeroDestinataire : String
-        +envoyer()
-        +confirmer()
-    }
-    class HistoriqueEnvoi {
-        +dateEnvoi : DateTime
-        +canal : String
-        +statut : String
-        +consigner()
-    }
-
-    RapportPDF "1" --> "1" LienAcces : accessible via
-    LienAcces "1" --> "1" WhatsAppAPI : transmis par
-    WhatsAppAPI "1" --> "1" HistoriqueEnvoi : confirme dans
-```
-
-_Figure 9 : Diagramme de classes candidates du cas d'utilisation Envoyer le rapport via WhatsApp_
+> **Decision cadrage 21/07/2026 :** L'envoi WhatsApp est supprime du perimetre.
 
 ---
 
@@ -1971,14 +1884,8 @@ classDiagram
         +statut : String
         +mettreAJourResultat()
     }
-    class OpenProjectAPI {
-        +url : String
-        +creerTicketSuivi()
-    }
-
     Technicien "1" --> "1" ResultatIntervention : definit
     ResultatIntervention "1" --> "1" FicheIntervention : enregistree dans
-    ResultatIntervention --> OpenProjectAPI : declenche si non resolu
 ```
 
 _Figure 16 : Diagramme de classes candidates du cas d'utilisation Indiquer le résultat_
@@ -2009,23 +1916,9 @@ classDiagram
         +dateCreation : DateTime
         +creer()
     }
-    class Ticket {
-        +idOP : String
-        +titre : String
-        +priorite : String
-        +statut : String
-        +creer()
-    }
-    class OpenProjectAPI {
-        +url : String
-        +creerTicket()
-        +confirmer()
-    }
 
     Client "1" --> "1" FormulairePortail : remplit
     FormulairePortail "1" --> "1" DemandeIntervention : genere
-    DemandeIntervention "1" --> "1" Ticket : produit
-    Ticket "1" --> "1" OpenProjectAPI : synchronise avec
 ```
 
 _Figure 17 : Diagramme de classes candidates du cas d'utilisation Soumettre une demande d'intervention_
@@ -2042,7 +1935,7 @@ classDiagram
         +affecter()
     }
     class Ticket {
-        +idOP : String
+        +id : String
         +urgence : String
         +statut : String
         +mettreAJourStatut()
@@ -2083,7 +1976,7 @@ classDiagram
         +cloture()
     }
     class Ticket {
-        +idOP : String
+        +id : String
         +statut : String
         +resterOuvert()
     }
@@ -2188,9 +2081,7 @@ classDiagram
         -String equipmentModel
         -String equipmentSerial
         -String equipmentLocation
-        -Boolean billable
         -String signatureUrl
-        -String openProjectTicketId
         -Instant syncedAt
         -Instant createdAt
         -Instant updatedAt
@@ -2633,7 +2524,7 @@ _Figure 32 : Diagramme de classes du module Rappels_
 
 ---
 
-### 6.14 Diagramme de classes – Module Portail Client & OpenProject
+### 6.14 Diagramme de classes – Module Portail Client & Gestion des Demandes
 
 ```mermaid
 classDiagram
@@ -2678,7 +2569,7 @@ classDiagram
     Intervention ..> InterventionStatus : statut
 ```
 
-_Figure 33 : Diagramme de classes du module Portail Client & OpenProject_
+_Figure 33 : Diagramme de classes du module Portail Client & Gestion des Demandes_
 
 ---
 
@@ -2703,21 +2594,17 @@ flowchart TD
         DB[(PostgreSQL\nSupabase)]
     end
 
-    subgraph Intégration_Externe
-        OP[OpenProject\nAPI REST v3]
+    subgraph Integration_Externe
         PUSH[FCM / APNs\nPush Notifications]
-        SMTP[Service Email\nSendGrid / SMTP]
-        WA[WhatsApp\nBusiness API]
+        SMTP[Service Email\nResend]
     end
 
     Client(R) --> CTRL
     CTRL --> SRV
     SRV --> REPO
     SRV --> DTO
-    SRV --> OP
     SRV --> PUSH
     SRV --> SMTP
-    SRV --> WA
     REPO --> ENT
     REPO --> DB
 ```
@@ -2755,7 +2642,7 @@ flowchart TD
     G --> H{Client existant ?}
     H -- Oui --> I[Sélection dans la liste]
     H -- Non --> J[Création d'une fiche client locale]
-    I --> K[Saisie du type d'intervention\net référence ticket OpenProject]
+    I --> K[Saisie du type d'intervention]
     J --> K
     K --> L[Enregistrement automatique\nen base locale SQLite]
     L --> M[Intervention au statut PENDING]
@@ -2822,13 +2709,13 @@ flowchart TD
     E -- Non --> F[Affichage d'erreur\nsous les champs vides]
     F --> D
     E -- Oui --> G[Validation de la soumission]
-    G --> H{OpenProject\ndisponible ?}
-    H -- Oui --> I[Création du ticket via API v3\nstatut Nouveau + priorité]
+    G --> H{Systeme\ndisponible ?}
+    H -- Oui --> I[Creation de la demande\nstatut Nouveau + priorite]
     H -- Non --> J[Mise en file d'attente\nretry automatique max 24h]
     J --> I
     I --> K[Email de confirmation\nau client avec N° de ticket]
-    K --> L[Notification push et email\nenvoyées au manager]
-    L --> M[Ticket affiché en file\nd'attente — statut Non affecté]
+    K --> L[Notification push et email\nenvoyees au manager]
+    L --> M[Ticket affiche en file\nattente — statut Non affecte]
     M --> N([Fin])
 ```
 
@@ -2848,10 +2735,8 @@ flowchart TD
     H --> C
     F --> I[Notification push envoyée\nau technicien et au manager]
     I --> J{Mode d'envoi choisi ?}
-    J -- Email --> K[Envoi via EmailService\navec PDF en pièce jointe]
-    J -- WhatsApp --> L[Envoi du lien sécurisé\nvia WhatsAppService]
-    K --> M[Horodatage consigné\ndans l'historique]
-    L --> M
+    J -- Email --> K[Envoi via EmailService\navec PDF en piece jointe]
+    K --> M[Horodatage consigne\ndans l'historique]
     M --> N([Fin])
 ```
 
@@ -2871,9 +2756,9 @@ flowchart TD
     H -- Non --> I[Ticket marqué En attente\nplanning complet]
     I --> G
     H -- Oui --> J[Le manager sélectionne un technicien\net confirme l'affectation]
-    J --> K[Le système crée une intervention\nliée au ticket OpenProject]
-    K --> L[Notification envoyée\nau technicien assigné]
-    L --> M[Ticket mis à jour —\nstatut En cours dans OpenProject]
+    J --> K[Le systeme cree une intervention\nliee a la demande]
+    K --> L[Notification envoyee\nau technicien assigne]
+    L --> M[Ticket mis a jour —\nstatut En cours]
     M --> N([Fin])
 ```
 
@@ -2886,9 +2771,9 @@ flowchart TD
     A([Début]) --> B[Le technicien indique\nPartiellement ou Non résolu]
     B --> C[Le système détecte le problème\nnon résolu]
     C --> D[Notification au manager :\nSuivi requis pour [client]]
-    D --> E[Le manager ouvre le ticket OP\net consulte l'historique]
-    E --> F[Le manager sélectionne un technicien\net planifie une nouvelle intervention]
-    F --> G[Le système crée une intervention de suivi\nliée au même ticket OpenProject]
+    D --> E[Le manager ouvre la demande\net consulte l'historique]
+    E --> F[Le manager selectionne un technicien\net planifie une nouvelle intervention]
+    F --> G[Le systeme cree une intervention de suivi\nliee a la meme demande]
     G --> H[Relation préservée :\n1 ticket → N interventions]
     H --> I[Notification envoyée\nau technicien désigné]
     I --> J([Fin])
@@ -3001,23 +2886,21 @@ sequenceDiagram
     actor C as Client
     participant P as Portail Client
     participant B as Backend API
-    participant OP as OpenProject API
     actor M as Manager
 
-    C->>P: Accède via lien sécurisé
+    C->>P: Accede via lien securise
     P->>C: Affiche le formulaire de demande
     C->>P: Remplit et valide le formulaire
     P->>B: POST /api/client-requests
-    B->>OP: POST /api/v3/work_packages
-    alt OpenProject disponible
-        OP->>B: 201 Created — ID ticket
+    alt Systeme disponible
+        B->>B: Cree la demande (statut Nouveau)
         B->>C: Email de confirmation + N° ticket
         B->>M: Notification push + email
-    else OpenProject indisponible
+    else Systeme indisponible
         B->>B: File d'attente (retry backoff 24h max)
-        B->>C: Accusé de réception différé
+        B->>C: Accuse de reception differe
     end
-    B->>M: Ticket affiché — statut « Non affecté »
+    B->>M: Demande affichee — statut « Non affecte »
 ```
 
 ---
@@ -3028,21 +2911,20 @@ sequenceDiagram
 sequenceDiagram
     actor M as Manager
     participant B as Backend API
-    participant OP as OpenProject API
     participant APP as Application Mobile
     actor T as Technicien
 
     M->>B: Ouvre le tableau de bord
     B->>M: Affiche la file d'attente des tickets
-    M->>B: Sélectionne un ticket
-    B->>M: Affiche les détails du ticket
+    M->>B: Selectionne un ticket
+    B->>M: Affiche les details du ticket
     M->>B: Demande le planning techniciens
-    B->>M: Affiche les disponibilités
+    B->>M: Affiche les disponibilites
     M->>B: Confirme l'affectation (technicien + date)
-    B->>OP: PATCH /api/v3/work_packages/{id} (statut = En cours)
-    B->>B: Crée l'intervention liée au ticket
+    B->>B: Met a jour le statut (En cours)
+    B->>B: Cree l'intervention liee au ticket
     B->>APP: Notification push au technicien
-    APP->>T: Affiche « Nouvelle mission assignée »
+    APP->>T: Affiche « Nouvelle mission assignee »
 ```
 
 ---
@@ -3054,19 +2936,16 @@ sequenceDiagram
     actor TEC as Technicien terrain
     participant App as Application Mobile
     participant B as Backend API
-    participant OP as OpenProject API
     actor M as Manager
 
-    TEC->>App: Indique résultat = Partiellement/Non résolu
+    TEC->>App: Indique resultat = Partiellement/Non resolu
     App->>B: PUT /api/interventions/{id} (result)
-    B->>B: Détecte problème non résolu
+    B->>B: Detecte probleme non resolu
     B->>M: Notification « Suivi requis — [client] »
-    M->>B: Ouvre le ticket OP
-    B->>OP: GET /api/v3/work_packages/{id}
-    OP->>B: Retourne historique + statut
-    M->>B: Crée intervention de suivi
-    B->>B: Lie la nouvelle intervention au même ticket
-    B->>App: Notification nouvelle intervention planifiée
+    M->>B: Ouvre la demande
+    M->>B: Cree intervention de suivi
+    B->>B: Lie la nouvelle intervention a la meme demande
+    B->>App: Notification nouvelle intervention planifiee
     App->>TEC: Affiche « Nouvelle intervention de suivi »
 ```
 
@@ -3108,12 +2987,9 @@ flowchart TD
     G --> H[Relance manuelle\nbouton Régénérer]
     H --> C
     F --> I[Notification push envoyée\nau technicien et au manager]
-    I --> J{Mode d'envoi choisi ?}
-    J -- Email --> K[Envoi via service SMTP\navec PDF en pièce jointe]
-    J -- WhatsApp --> L[Envoi du lien sécurisé\nvia API WhatsApp Business]
-    K --> M[Horodatage consigné\ndans l'historique]
-    L --> M
-    M --> N([Fin])
+    I --> J[Envoi via service SMTP\navec PDF en piece jointe]
+    J --> K[Horodatage consigne\ndans l'historique]
+    K --> L([Fin])
 ```
 
 ---
@@ -3129,8 +3005,8 @@ flowchart TD
     E -- Non --> F[Affichage d'erreur\nsous les champs vides]
     F --> D
     E -- Oui --> G[Validation de la soumission]
-    G --> H{OpenProject\ndisponible ?}
-    H -- Oui --> I[Création du ticket\nstatut Nouveau · priorité · projet]
+    G --> H{Systeme\ndisponible ?}
+    H -- Oui --> I[Creation de la demande\nstatut Nouveau · priorite]
     H -- Non --> J[Mise en file d'attente\nretry automatique max 24h]
     J --> I
     I --> K[Email de confirmation\nenvoyé au client avec N° ticket]
@@ -3239,23 +3115,15 @@ sequenceDiagram
     participant B as Backend API
     participant PDF as Moteur PDF
     participant SMTP as Service Email
-    participant WA as WhatsApp API
 
-    B->>PDF: Déclenche génération (fiche = Validée)
-    PDF->>B: PDF généré en ≤ 10 s — URL de stockage
-    B->>U: Notification push « Rapport PDF prêt »
-    alt Envoi par email
-        U->>B: POST /send-email
-        B->>SMTP: Envoi avec PDF en pièce jointe
-        SMTP->>B: Confirmation d'envoi
-        B->>U: « Email envoyé avec succès »
-    else Envoi via WhatsApp
-        U->>B: POST /send-whatsapp
-        B->>WA: Envoi du lien sécurisé
-        WA->>B: Confirmation de transmission
-        B->>U: « Message WhatsApp envoyé »
-    end
-    B->>B: Horodatage consigné dans l'historique
+    B->>PDF: Declenche generation (fiche = Validee)
+    PDF->>B: PDF genere en ≤ 10 s — URL de stockage
+    B->>U: Notification push « Rapport PDF pret »
+    U->>B: POST /send-email
+    B->>SMTP: Envoi avec PDF en piece jointe
+    SMTP->>B: Confirmation d'envoi
+    B->>U: « Email envoye avec succes »
+    B->>B: Horodatage consigne dans l'historique
 ```
 
 ---
@@ -3267,23 +3135,21 @@ sequenceDiagram
     actor C as Client
     participant P as Portail Client
     participant B as Backend API
-    participant OP as OpenProject API
     actor M as Manager
 
-    C->>P: Accède via lien sécurisé
+    C->>P: Accede via lien securise
     P->>C: Affiche le formulaire de demande
     C->>P: Remplit et valide le formulaire
     P->>B: POST /client-requests
-    B->>OP: POST /api/v3/work_packages
-    alt OpenProject disponible
-        OP->>B: 201 Created — ID ticket
+    alt Systeme disponible
+        B->>B: Cree la demande (statut Nouveau)
         B->>C: Email de confirmation + N° ticket
         B->>M: Notification push + email
-    else OpenProject indisponible
+    else Systeme indisponible
         B->>B: Mise en file d'attente (retry backoff)
-        B->>C: Accusé de réception différé
+        B->>C: Accuse de reception differe
     end
-    B->>M: Ticket affiché — statut « Non affecté »
+    B->>M: Demande affichee — statut « Non affecte »
 ```
 
 ---

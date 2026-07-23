@@ -19,7 +19,7 @@
 | # | Requête | Username | Mot de passe | Code |
 |---|---------|----------|-------------|:---:|
 | 1 | Health check | — | — | 200 |
-| 2 | Login CLIENT_PORTAL | `client1` | `Client123!` | 200 |
+| 2 | Login CLIENT_USER | `clientuser1` | `ClientUser123!` | 200 |
 | 3 | Login TECHNICIEN | `tech1` | `Tech123!` | 200 |
 | 4 | Login MANAGER | `manager1` | `Mngr123!` | 200 |
 | 5 | Login ADMIN | `admin` | `Admin123!` | 200 |
@@ -36,8 +36,8 @@
 
 | # | Requête | Token | Code |
 |---|---------|-------|:---:|
-| 9 | GET /users/me (CLIENT_PORTAL) | `userToken` | 200 |
-| 10 | PUT /users/me (CLIENT_PORTAL) | `userToken` | 200 |
+| 9 | GET /users/me (CLIENT_USER) | `userToken` | 200 |
+| 10 | PUT /users/me (CLIENT_USER) | `userToken` | 200 |
 | 11 | GET /users/me (non auth) | Aucun | 401 |
 
 ### Admin Users (12-19)
@@ -63,7 +63,7 @@
 | 23 | Détail d'un client | `adminToken` | 200 |
 | 24 | Modifier un client (ADMIN) | `adminToken` | 200 |
 | 25 | Supprimer un client (ADMIN) | `adminToken` | 204 |
-| 26 | Créer un client (CLIENT_PORTAL — 403) | `userToken` | 403 |
+| 26 | Créer un client (CLIENT_USER — 403) | `userToken` | 403 |
 
 ### Media (27-30)
 
@@ -99,7 +99,7 @@
 | 44 | Démarrer l'intervention | `technicianToken` | 200 |
 | 45 | Fermer l'intervention | `technicianToken` | 200 |
 | 46 | Télécharger PDF | `technicianToken` | 200 |
-| 47 | Créer intervention (CLIENT_PORTAL — 403) | `userToken` | 403 |
+| 47 | Créer intervention (CLIENT_USER — 403) | `userToken` | 403 |
 | 48 | Interventions par client | `adminToken` | 200 |
 
 ### Interventions Lifecycle & Sync (49-52)

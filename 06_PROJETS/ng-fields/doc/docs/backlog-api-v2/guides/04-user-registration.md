@@ -30,7 +30,7 @@ gateway:8080
 | POST | `/api/admin/users/{keycloakId}/reset-password` | ADMIN | Envoyer email reset |
 | GET | `/api/users/me` | Tous | Profil de l'utilisateur connecté |
 | PUT | `/api/users/me` | Tous | Modifier son profil |
-| POST | `/api/public/register` | Anonyme | Inscription self-service (CLIENT_PORTAL) |
+| POST | `/api/public/register` | Anonyme | Inscription self-service (CLIENT_USER par défaut) |
 
 ---
 
@@ -63,7 +63,7 @@ public record CreateUserRequest(
     @NotBlank String lastName,
     String phone,
     @NotBlank @Size(min = 8) String password,
-    String role                     // null → CLIENT_PORTAL par défaut
+    String role                     // null → CLIENT_USER par défaut
 ) {}
 
 // UserResponse
@@ -97,7 +97,7 @@ POST /api/admin/users
 POST /api/public/register
   → UserController (pas d'auth)
     → UserService.registerClient(request, clientIp)
-      → keycloak-admin-client → Keycloak Admin API (rôle forcé CLIENT_PORTAL)
+      → keycloak-admin-client → Keycloak Admin API (rôle forcé CLIENT_USER)
       → UserRepository.save()
     → Retourne 201 + message + UserResponse
 ```
@@ -194,7 +194,7 @@ curl -X POST http://localhost:8080/api/admin/users `
 | ADMIN crée un user | `POST /api/admin/users` → 201 avec id + keycloakId |
 | User existe dans Keycloak | Admin Console → Users |
 | Rôle correct dans le JWT | `realm_access.roles` contient le rôle |
-| Inscription publique | `POST /api/public/register` → 201, rôle CLIENT_PORTAL |
+| Inscription publique | `POST /api/public/register` → 201, rôle CLIENT_USER |
 | Profil utilisateur | `GET /api/users/me` → 200 avec firstName, lastName, phone |
 | Audit log créé | Table `auth.audit_logs` contient une entrée |
 

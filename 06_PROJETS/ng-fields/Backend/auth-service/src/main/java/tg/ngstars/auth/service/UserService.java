@@ -33,13 +33,16 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final AuditService auditService;
+    private final EmailService emailService;
     private final Keycloak keycloak;
     private final KeycloakProperties keycloakProperties;
 
     public UserService(UserRepository userRepository, AuditService auditService,
+            EmailService emailService,
             Keycloak keycloak, KeycloakProperties keycloakProperties) {
         this.userRepository = userRepository;
         this.auditService = auditService;
+        this.emailService = emailService;
         this.keycloak = keycloak;
         this.keycloakProperties = keycloakProperties;
     }
@@ -150,8 +153,15 @@ public class UserService {
 
         if (request.password() != null)
             userResource.resetPassword(passwordCredential(request.password()));
-        if (request.role() != null && !request.role().equals(user.getRole()))
+        if (request.role() != null && !request.role().equals(user.getRole())) {
+            var metierRoles = List.of("ADMIN", "MANAGER", "TECHNICIAN", "CLIENT_ADMIN", "CLIENT_USER", "CLIENT_VIEWER");
+            var toRemove = realm().users().get(kcIdStr).roles().realmLevel().listAll().stream()
+                    .filter(r -> metierRoles.contains(r.getName()))
+                    .toList();
+            if (!toRemove.isEmpty())
+                realm().users().get(kcIdStr).roles().realmLevel().remove(toRemove);
             assignRealmRole(kcIdStr, request.role());
+        }
 
         auditService.log(userIdOrNull(updatedBy), "USER_UPDATED", "User", user.getId().toString(),
                 "Compte mis a jour: " + user.getUsername(), null);
@@ -183,7 +193,7 @@ public class UserService {
         var kcIdStr = keycloakId.toString();
         var realm = realm();
 
-        var metierRoles = List.of("ADMIN", "MANAGER", "TECHNICIAN", "CLIENT_PORTAL");
+        var metierRoles = List.of("ADMIN", "MANAGER", "TECHNICIAN", "CLIENT_ADMIN", "CLIENT_USER", "CLIENT_VIEWER");
         var toRemove = realm.users().get(kcIdStr).roles().realmLevel().listAll().stream()
                 .filter(r -> metierRoles.contains(r.getName()))
                 .toList();
@@ -264,6 +274,29 @@ public class UserService {
         var user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + keycloakId));
 
+        // Vérifier l'ancien mot de passe via Keycloak token endpoint
+        var tokenUrl = keycloakProperties.authServerUrl() + "/realms/" + keycloakProperties.realm() + "/protocol/openid-connect/token";
+        var httpClient = java.net.http.HttpClient.newHttpClient();
+        var body = "client_id=" + keycloakProperties.adminClientId()
+                + "&client_secret=" + keycloakProperties.adminClientSecret()
+                + "&username=" + user.getUsername()
+                + "&password=" + request.currentPassword()
+                + "&grant_type=password";
+        try {
+            var tokenRequest = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(tokenUrl))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+            var tokenResponse = httpClient.send(tokenRequest, java.net.http.HttpResponse.BodyHandlers.ofString());
+            if (tokenResponse.statusCode() != 200) {
+                throw new IllegalArgumentException("L'ancien mot de passe est incorrect");
+            }
+        } catch (java.io.IOException | InterruptedException e) {
+            log.warn("Erreur vérification mot de passe Keycloak: {}", e.getMessage());
+            throw new RuntimeException("Impossible de vérifier le mot de passe");
+        }
+
         validatePasswordStrength(request.newPassword());
 
         var userResource = realm().users().get(keycloakId.toString());
@@ -288,10 +321,16 @@ public class UserService {
     }
 
     public UserResponse registerClient(CreateUserRequest request, String ip) {
-        return createUser(new CreateUserRequest(
+        var response = createUser(new CreateUserRequest(
                 request.username(), request.email(),
                 request.firstName(), request.lastName(),
-                request.password(), "CLIENT_PORTAL", request.phone()), "SELF_REGISTER", ip);
+                request.password(), "CLIENT_USER", request.phone()), "SELF_REGISTER", ip);
+
+        var user = userRepository.findById(response.id()).orElseThrow();
+        user.setMustChangePassword(true);
+        userRepository.save(user);
+
+        return toResponse(user);
     }
 
     private void assignRealmRole(String userId, String role) {
@@ -326,6 +365,8 @@ public class UserService {
                 user.getUsername(), user.getEmail(),
                 user.getFirstName(), user.getLastName(),
                 user.getRole(), user.getPhone(),
-                user.getActive(), user.getCreatedAt(), user.getUpdatedAt());
+                user.getActive(), user.getCompanyId(),
+                Boolean.TRUE.equals(user.getMustChangePassword()),
+                user.getCreatedAt(), user.getUpdatedAt());
     }
 }

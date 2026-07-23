@@ -1,6 +1,6 @@
 # Kit de Démarrage — NG-Fields
 
-**Stack :** Spring Boot 4.1.0 / Java 25, Spring Cloud 2025.1.2, Keycloak 26.0.9, PostgreSQL 18
+**Stack :** Spring Boot 4.1.0 / Java 25, Spring Cloud 2025.1.2, Keycloak 26.6.4, PostgreSQL 18
 
 ---
 
@@ -12,7 +12,7 @@
 | Maven | Wrapper (inclus) | Via `Backend/<service>/mvnw` |
 | PostgreSQL | 18 | [PostgreSQL](https://www.postgresql.org/download/) |
 | Redis | 7+ | [Redis Windows](https://github.com/tporadowski/redis/releases) |
-| Keycloak | 26.0.9 | [Keycloak](https://www.keycloak.org/downloads) |
+| Keycloak | 26.6.4 | [Keycloak](https://www.keycloak.org/downloads) |
 
 ---
 
@@ -43,12 +43,12 @@ Les schémas (`auth`, `client`, `intervention`) sont créés automatiquement par
 ### Keycloak
 
 ```bash
-# Télécharger et extraire Keycloak 26.0.9
-cd keycloak-26.0.9/bin
+# Télécharger et extraire Keycloak 26.6.4
+cd keycloak-26.6.4/bin
 ./kc.bat start-dev --http-port=8088
 ```
 
-Créer le realm `ng-fields` avec les clients OIDC et rôles (ADMIN, MANAGER, TECHNICIAN, CLIENT_PORTAL).
+Créer le realm `ng-fields` avec les clients OIDC et rôles (ADMIN, MANAGER, TECHNICIAN, CLIENT_ADMIN, CLIENT_USER, CLIENT_VIEWER).
 
 ### Redis
 
@@ -59,40 +59,45 @@ redis-server.exe
 
 ---
 
-## 4. Backend (5 microservices)
+## 4. Backend (7 microservices + shared-lib)
 
 Chaque service a son propre `mvnw.cmd` et son `.env`. Démarrer dans l'ordre :
 
 ```bash
 cd Backend
 
-# 1. Gateway (port 8080) — point d'entrée unique
+# 1. Shared-lib (compiler en premier)
+cd shared-lib; .\mvnw.cmd install -q
+
+# 2. Gateway (port 8080)
 cd gateway-service; .\mvnw.cmd spring-boot:run
 
-# 2. Auth (port 8081) — utilisateurs, rôles, Keycloak
+# 3. Auth (port 8081)
 cd auth-service; .\mvnw.cmd spring-boot:run
 
-# 3. Client (port 8082) — gestion clients
+# 4. Client (port 8082)
 cd client-service; .\mvnw.cmd spring-boot:run
 
-# 4. Intervention (port 8083) — interventions, photos, signatures, PDF
+# 5. Intervention (port 8083)
 cd intervention-service; .\mvnw.cmd spring-boot:run
 
-# 5. Media (port 8084) — upload/download fichiers
+# 6. Media (port 8084)
 cd media-service; .\mvnw.cmd spring-boot:run
+
+# 7. Notification (port 8085)
+cd notification-service; .\mvnw.cmd spring-boot:run
+
+# 8. Report (port 8086)
+cd report-service; .\mvnw.cmd spring-boot:run
 ```
 
 Tous les appels API passent par le gateway sur `http://localhost:8080`.
 
 ---
 
-## 5. Mobile (Flutter)
+## 5. Mobile (Flutter) — **Non démarré**
 
-```bash
-cd apps/mobile
-flutter pub get
-flutter run
-```
+Le répertoire `mobile/` est vide. Flutter sera implémenté ultérieurement.
 
 ---
 
@@ -101,30 +106,19 @@ flutter run
 ```
 ng-fields/
 ├── Backend/
+│   ├── shared-lib/             → Bibliothèque partagée (exceptions, utils)
 │   ├── gateway-service/        → Spring Cloud Gateway (WebFlux, port 8080)
 │   ├── auth-service/           → Auth (Spring MVC, port 8081)
 │   ├── client-service/         → Clients CRUD (Spring MVC, port 8082)
 │   ├── intervention-service/   → Interventions (Spring MVC, port 8083)
-│   └── media-service/          → Fichiers (Spring MVC, port 8084)
-├── apps/
-│   ├── mobile/                 → App Flutter (Dart)
-│   └── web/                    → Dashboard Angular (TS)
-├── infra/
-│   ├── docker-compose.yml
-│   ├── supabase/
-│   │   ├── schema.sql
-│   │   └── seed.sql
-│   └── keycloak/
-│       └── realm-export.json
-├── doc/
-│   ├── Setup.md                ← vous êtes ici
-│   ├── Technologies.md
-│   ├── docs/
-│   │   ├── backlog-api-v2/     → Guides API
-│   │   ├── database/           → Modèle de données
-│   │   └── tests/              → Postman
-│   └── ...
-└── .github/workflows/
+│   ├── media-service/          → Fichiers (Spring MVC, port 8084)
+│   ├── notification-service/   → Notifications email (Spring MVC, port 8085)
+│   └── report-service/         → Rapports CSV/PDF (Spring MVC, port 8086)
+├── Frontend/
+│   ├── ng-web/                → Dashboard Angular 22+ (TS)
+│   └── templates/             → Template Next.js
+├── mobile/                    → App Flutter (Non démarré)
+├── Doc/                       → Documentation
 ```
 
 ---
@@ -136,13 +130,13 @@ ng-fields/
 cd Backend/<service> && .\mvnw.cmd compile          # Compiler
 cd Backend/<service> && .\mvnw.cmd spring-boot:run  # Lancer
 
-# Mobile
-cd apps/mobile && flutter pub get                   # Dépendances
-cd apps/mobile && flutter run                       # Lancer
+# Mobile (non démarré)
+# cd mobile && flutter pub get
+# cd mobile && flutter run
 
 # Web
-cd apps/web && npm install                          # Dépendances
-cd apps/web && ng serve                             # Lancer
+cd Frontend/ng-web && npm install               # Dépendances
+cd Frontend/ng-web && npm start                 # Lancer → http://localhost:4200
 ```
 
 ---
@@ -157,6 +151,8 @@ http://localhost:8080/swagger-ui.html
 http://localhost:8080/api/clients/v3/api-docs
 http://localhost:8080/api/interventions/v3/api-docs
 http://localhost:8080/api/media/v3/api-docs
+http://localhost:8080/api/notifications/v3/api-docs
+http://localhost:8080/api/reports/v3/api-docs
 ```
 
 ---
@@ -174,4 +170,4 @@ Importer les deux fichiers dans Postman. Les tokens sont récupérés automatiqu
 
 ---
 
-_Version 3.0 — 03/07/2026_
+_Version 4.0 — 21/07/2026_

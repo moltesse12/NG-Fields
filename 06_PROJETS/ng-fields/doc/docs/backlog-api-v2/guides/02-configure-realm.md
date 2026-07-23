@@ -20,12 +20,15 @@ Realm: ng-fields
 │   ├── ADMIN               (accès complet)
 │   ├── MANAGER             (dashboard, exports)
 │   ├── TECHNICIAN          (interventions terrain)
-│   └── CLIENT_PORTAL       (portail client)
+│   ├── CLIENT_ADMIN        (admin entreprise multi-utilisateurs)
+│   ├── CLIENT_USER         (utilisateur entreprise, soumission demandes)
+│   └── CLIENT_VIEWER       (consultation seule)
 └── Utilisateurs de test
     ├── admin / Admin123!
     ├── tech1 / Tech123!
     ├── manager1 / Mgr123!
-    └── client1 / Client123!
+    ├── clientadmin1 / ClientAdmin123!
+    └── clientuser1 / ClientUser123!
 ```
 
 ---
@@ -232,12 +235,26 @@ Aller dans **Realm Roles → Create role** :
 | Role Name   | `TECHNICIAN`                                                 |
 | Description | `Interventions terrain, photos, signatures, synchronisation` |
 
-### Rôle CLIENT_PORTAL
+### Rôle CLIENT_ADMIN
 
 | Champ       | Valeur                                            |
 | ----------- | ------------------------------------------------- |
-| Role Name   | `CLIENT_PORTAL`                                   |
-| Description | `Portail de soumission de demande d'intervention` |
+| Role Name   | `CLIENT_ADMIN`                                    |
+| Description | `Admin entreprise — gère les utilisateurs de sa société` |
+
+### Rôle CLIENT_USER
+
+| Champ       | Valeur                                            |
+| ----------- | ------------------------------------------------- |
+| Role Name   | `CLIENT_USER`                                     |
+| Description | `Utilisateur entreprise — soumet des demandes d'intervention` |
+
+### Rôle CLIENT_VIEWER
+
+| Champ       | Valeur                                            |
+| ----------- | ------------------------------------------------- |
+| Role Name   | `CLIENT_VIEWER`                                   |
+| Description | `Consultation seule — voit les interventions et rapports` |
 
 ## Étape 5 : Créer les utilisateurs de test
 
@@ -298,20 +315,35 @@ Aller dans l'onglet **Role mapping → Assign role** :
 **Credentials :** `Mngr123!` (temporaire : ON)
 **Role mapping :** `MANAGER`
 
-### Utilisateur client1
+### Utilisateur clientadmin1
 
 **General :**
 
-| Champ          | Valeur             |
-| -------------- | ------------------ |
-| Username       | `client1`          |
-| Email          | `client1@test.com` |
-| First name     | `Client`           |
-| Last name      | `Test`             |
-| Email verified | **ON**             |
+| Champ          | Valeur                         |
+| -------------- | ------------------------------ |
+| Username       | `clientadmin1`                 |
+| Email          | `clientadmin1@test.com`        |
+| First name     | `Admin`                        |
+| Last name      | `Entreprise`                   |
+| Email verified | **ON**                         |
 
-**Credentials :** `Client123!` (temporaire : ON)
-**Role mapping :** `CLIENT_PORTAL`
+**Credentials :** `ClientAdmin123!` (temporaire : ON)
+**Role mapping :** `CLIENT_ADMIN`
+
+### Utilisateur clientuser1
+
+**General :**
+
+| Champ          | Valeur                         |
+| -------------- | ------------------------------ |
+| Username       | `clientuser1`                  |
+| Email          | `clientuser1@test.com`         |
+| First name     | `User`                         |
+| Last name      | `Entreprise`                   |
+| Email verified | **ON**                         |
+
+**Credentials :** `ClientUser123!` (temporaire : ON)
+**Role mapping :** `CLIENT_USER`
 
 ## Étape 6 : Vérifier que tout fonctionne
 
@@ -408,13 +440,13 @@ GET http://localhost:8081/api/public/health
 ### 6.6 Vérifier les utilisateurs dans l'Admin Console
 
 1. Aller dans **Admin Console → Realm `ng-fields` → Users → View all users**
-2. Vérifier que `admin`, `tech1`, `manager1`, `client1` apparaissent
+2. Vérifier que `admin`, `tech1`, `manager1`, `clientadmin1`, `clientuser1` apparaissent
 3. Cliquer sur chaque utilisateur → **Role mapping** → vérifier que le bon rôle est assigné
 
 ## Étape 7 : Exporter le Realm (pour Git)
 
 ```powershell
-cd F:\03_Pro_IT\07_Clients\NG-STARs\06_PROJETS\Projet_NG-Fields\apps\keycloak-26.6.2\bin
+cd F:\03_Pro_IT\07_Clients\NG-STARs\06_PROJETS\Projet_NG-Fields\apps\keycloak-26.6.4\bin
 
 # Arrêter Keycloak (Ctrl+C dans la console), puis :
 .\kc.bat export --dir F:\03_Pro_IT\07_Clients\NG-STARs\06_PROJETS\Projet_NG-Fields\docs\keycloak --realm ng-fields

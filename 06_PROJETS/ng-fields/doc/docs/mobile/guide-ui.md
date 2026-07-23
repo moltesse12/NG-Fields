@@ -1,5 +1,7 @@
 # Guide UI — Application Mobile NG-Fields
 
+> **⚠️ Non démarré** — Application Flutter non encore créée.
+
 ## Principes
 - Material 3 (Android) + Cupertino (iOS)
 - Thème suivant la charte NG-STARs (voir `Technologies.md`)
@@ -15,7 +17,7 @@
 | 3 | Formulaire intervention | À créer |
 | 4 | Signature | À créer |
 | 5 | Profil | À créer |
-| 6 | Dashboard manager (web) | Planifié S-04 |
+| 6 | Dashboard manager (web) | Non démarré |
 
 ## Navigation
 - `GoRouter` avec routes nommées

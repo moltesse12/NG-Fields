@@ -1,4 +1,4 @@
-export type UserRole = 'ADMIN' | 'MANAGER' | 'TECHNICIAN' | 'CLIENT_PORTAL';
+export type UserRole = 'ADMIN' | 'MANAGER' | 'TECHNICIAN' | 'CLIENT_ADMIN' | 'CLIENT_USER' | 'CLIENT_VIEWER';
 
 export interface CreateUserRequest {
   username: string;

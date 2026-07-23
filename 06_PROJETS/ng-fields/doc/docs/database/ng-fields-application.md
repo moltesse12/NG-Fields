@@ -2,7 +2,7 @@
 
 **Base :** `ng_fields` (principale) + `ng_fields_test` (tests, même structure)
 **Propriétaire :** `ng_fields_user`
-**Schémas :** `auth`, `client`, `intervention`, `notification`, `audit`
+**Schémas :** `auth`, `client`, `intervention`, `media`, `notification`, `report`
 
 ---
 
@@ -10,11 +10,12 @@
 
 ```
 ng_fields
-├── auth           ← Utilisateurs locaux (référence Keycloak)
-├── client         ← Clients NG-STARs
-├── intervention   ← Fiches terrain, pièces, photos
-├── notification   ← Logs d'envoi push/email/WhatsApp
-└── audit          ← Journal d'audit horodaté
+├── auth           ← Utilisateurs locaux (référence Keycloak) + audit_logs
+├── client         ← Clients NG-STARs + contacts
+├── intervention   ← Fiches terrain, pièces, photos, signatures
+├── media          ← Fichiers uploadés (photos, signatures, PDF)
+├── notification   ← Logs d'envoi email
+└── report         ← Requêtes de rapports (CSV, PDF, analytics)
 ```
 
 ## 2. Dictionnaire des Tables
@@ -61,7 +62,6 @@ ng_fields
 | `return_time` | `TIME` | | | S2 | Heure retour base |
 | `duration_minutes` | `INTEGER` | | | S2 | Durée calculée |
 | `problem_desc` | `TEXT` | | | S3 | Description du problème |
-| `openproject_ticket_id` | `VARCHAR(50)` | | | S3 | Ticket OpenProject |
 | `diagnosis` | `TEXT` | | | S3 | Diagnostic technique |
 | `work_done` | `TEXT` | | | S4 | Travaux effectués |
 | `equipment_type` | `VARCHAR(100)` | | | S4 | Type d'équipement |
@@ -71,8 +71,6 @@ ng_fields
 | `equipment_location` | `VARCHAR(200)` | | | S4 | Localisation |
 | `result` | `VARCHAR(20)` | | | S6 | `RESOLVED / PARTIAL / UNRESOLVED` |
 | `recommendations` | `TEXT` | | | S7 | Recommandations |
-| `billable` | `BOOLEAN` | `NOT NULL` | `TRUE` | S8 | Facturable |
-| `billing_notes` | `TEXT` | | | S8 | Notes facturation |
 | `signature_client_url` | `TEXT` | | | S8 | URL signature client |
 | `signature_technician_url` | `TEXT` | | | S8 | URL signature technicien |
 | `signature_manager_url` | `TEXT` | | | S8 | URL signature manager |
@@ -140,7 +138,7 @@ ng_fields
 | `email` | `VARCHAR(255)` | `NOT NULL` | | Email |
 | `first_name` | `VARCHAR(100)` | | | Prénom |
 | `last_name` | `VARCHAR(100)` | | | Nom |
-| `role` | `VARCHAR(20)` | `NOT NULL` | | `ADMIN / MANAGER / TECHNICIAN / CLIENT_PORTAL` |
+| `role` | `VARCHAR(20)` | `NOT NULL` | | `ADMIN / MANAGER / TECHNICIAN / CLIENT_ADMIN / CLIENT_USER / CLIENT_VIEWER` |
 | `department` | `VARCHAR(100)` | | | Département |
 | `phone` | `VARCHAR(20)` | | | Téléphone |
 | `active` | `BOOLEAN` | `NOT NULL` | `TRUE` | Compte actif |
@@ -250,17 +248,19 @@ intervention.interventions     │   *
 
 | Sprint | Guide | Tables créées / modifiées | Statut |
 |---|---|---|---|
-| Sprint 1b | 04-user-registration | `auth.users` (optionnel) | ⏳ À créer |
-| Sprint 2 | 05-client-crud | `client.clients` | ✅ Existe |
-| Sprint 2 | 06-intervention-crud | `intervention.interventions`, `intervention.intervention_items` | ✅ Existe |
-| Sprint 3 | 07-photos-storage | `intervention.intervention_photos` | ⏳ À créer |
-| Sprint 3 | 08-signatures | *(colonnes `signature_*_url` dans `interventions`)* | ✅ Existe |
-| Sprint 3 | 09-pdf-generation | *(colonne `pdf_url` dans `interventions`)* | ✅ Existe |
-| Sprint 4 | 10-hors-ligne | *(colonnes `local_id`, `synced_at` dans `interventions`)* | ✅ Existe |
-| Sprint 4 | 11-openproject | *(colonne `openproject_ticket_id` dans `interventions`)* | ✅ Existe |
-| Sprint 4 | 12-dashboard | *(requêtes d'agrégation)* | ⏳ Requêtes |
-| — | Notification | `notification.notification_log` | 📅 Planifié |
-| — | Audit | `audit.audit_log` | 📅 Planifié |
+| Sprint 1b | 04-user-registration | `auth.users` | ✅ Implémenté |
+| Sprint 2 | 05-client-crud | `client.clients`, `client.contacts` | ✅ Implémenté |
+| Sprint 2 | 06-intervention-crud | `intervention.interventions`, `intervention.intervention_items` | ✅ Implémenté |
+| Sprint 3 | 07-photos-storage | `intervention.intervention_photos` | ✅ Implémenté |
+| Sprint 3 | 08-signatures | *(colonnes `signature_*_url` dans `interventions`)* | ✅ Implémenté |
+| Sprint 3 | 09-pdf-generation | *(colonne `pdf_url` dans `interventions`)* | ✅ Implémenté |
+| Sprint 4 | 10-hors-ligne | *(colonnes `local_id`, `synced_at` dans `interventions`)* | ✅ Implémenté |
+| Sprint 4 | 11-openproject | *(colonne `openproject_ticket_id` dans `interventions`)* | ✅ Implémenté |
+| Sprint 4 | 12-dashboard | *(requêtes d'agrégation)* | ✅ Implémenté |
+| — | Notification | `notification.email_logs` | ✅ Implémenté |
+| — | Media | `media.media_files` | ✅ Implémenté |
+| — | Report | `report.report_requests` | ✅ Implémenté |
+| — | Audit | `auth.audit_logs` | ✅ Implémenté |
 
 ---
 
@@ -276,22 +276,26 @@ intervention.interventions     │   *
 
 ## 6. État d'avancement
 
-### ✅ Existant (3 entités JPA)
+### ✅ Existant (entités JPA)
 
-| Table | Schéma | Entité JPA | Colonnes | Lignes |
+| Table | Schéma | Entité JPA | Colonnes | Statut |
 |---|---|---|---|---|
-| `clients` | `client` | `Client.java` | 12 | 0 |
-| `interventions` | `intervention` | `Intervention.java` | 32 | 0 |
-| `intervention_items` | `intervention` | `InterventionItem.java` | 5 | 0 |
+| `clients` | `client` | `Client.java` | 12 | ✅ Implémenté |
+| `contacts` | `client` | `Contact.java` | 8 | ✅ Implémenté |
+| `interventions` | `intervention` | `Intervention.java` | 37+ | ✅ Implémenté |
+| `intervention_items` | `intervention` | `InterventionItem.java` | 7 | ✅ Implémenté |
+| `intervention_photos` | `intervention` | `InterventionPhoto.java` | 8 | ✅ Implémenté |
+| `users` | `auth` | `User.java` | 12 | ✅ Implémenté |
+| `audit_logs` | `auth` | `AuditLog.java` | 8 | ✅ Implémenté |
+| `media_files` | `media` | — | 7 | ✅ Implémenté |
+| `email_logs` | `notification` | — | 7 | ✅ Implémenté |
+| `report_requests` | `report` | — | 9 | ✅ Implémenté |
 
-### ⏳ À créer (4 tables)
+### ⏳ À créer
 
-| Table | Schéma | Priorité | Sprint |
+| Table | Schéma | Priorité | Statut |
 |---|---|---|---|
-| `intervention_photos` | `intervention` | Haute | Sprint 3 |
-| `users` | `auth` | Moyenne | Sprint 1b (optionnel) |
-| `notification_log` | `notification` | Basse | Futur |
-| `audit_log` | `audit` | Basse | Futur |
+| — | — | — | Toutes les tables critiques sont implémentées |
 
 ---
 
@@ -368,8 +372,6 @@ CREATE TABLE intervention.interventions (
     equipment_location      VARCHAR(200),
     result                  VARCHAR(20),
     recommendations         TEXT,
-    billable                BOOLEAN NOT NULL DEFAULT TRUE,
-    billing_notes           TEXT,
     signature_client_url    TEXT,
     signature_technician_url TEXT,
     signature_manager_url   TEXT,

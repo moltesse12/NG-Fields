@@ -47,6 +47,12 @@ public class User {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Column(name = "company_id")
+    private UUID companyId;
+
+    @Column(name = "must_change_password", nullable = false)
+    private Boolean mustChangePassword = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -90,6 +96,10 @@ public class User {
     public void setPhone(String phone) { this.phone = phone; }
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+    public UUID getCompanyId() { return companyId; }
+    public void setCompanyId(UUID companyId) { this.companyId = companyId; }
+    public Boolean getMustChangePassword() { return mustChangePassword; }
+    public void setMustChangePassword(Boolean mustChangePassword) { this.mustChangePassword = mustChangePassword; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public UUID getUpdatedBy() { return updatedBy; }

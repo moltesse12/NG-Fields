@@ -37,4 +37,33 @@ public class SecurityUtils {
         var roles = getCurrentUserRoles();
         return roles.contains("ADMIN") || roles.contains("MANAGER");
     }
+
+    public boolean isClientRole() {
+        var roles = getCurrentUserRoles();
+        return roles.contains("CLIENT_ADMIN") || roles.contains("CLIENT_USER") || roles.contains("CLIENT_VIEWER");
+    }
+
+    public boolean isClientAdmin() {
+        return getCurrentUserRoles().contains("CLIENT_ADMIN");
+    }
+
+    public UUID getCompanyId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof Jwt jwt)) return null;
+        var companyId = jwt.getClaimAsString("company_id");
+        if (companyId != null && !companyId.isBlank()) {
+            try {
+                return UUID.fromString(companyId);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public String getCurrentUserEmail() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof Jwt jwt)) return null;
+        return jwt.getClaimAsString("email");
+    }
 }

@@ -12,10 +12,10 @@ status: v4.0
 **Projet :** NG-Fields — Digitalisation de la gestion des interventions terrain
 **Période :** 1 juin — 17 juillet 2026
 **Méthodologie :** Agile Scrum — Sprints hebdomadaires
-**Stack :** Spring Boot 4.0.6 / Java 25 + Angular 21 / TypeScript + Flutter 3.x / Dart + Keycloak 26.6.2 + Supabase
+**Stack :** Spring Boot 4.1.0 / Java 25 + Angular 22+ / TypeScript + Keycloak 26.6.4 + PostgreSQL 18
 **Rédigé par :** FOLLY Nelson Emmanuel
 **Validateur :** David KATOH
-**Version :** 4.0 — 02/07/2026
+**Version :** 5.0 — 21/07/2026 (Post-Cadrage)
 
 ---
 
@@ -196,11 +196,13 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 **Critères d'acceptation :**
 - Realm exporté dans `infra/keycloak/realm-export.json`
 - 3 clients OIDC : backend (confidentiel), mobile (public), web (public)
-- 4 rôles : ADMIN, MANAGER, TECHNICIAN, CLIENT_PORTAL
+- 6 rôles : ADMIN, MANAGER, TECHNICIAN, CLIENT_ADMIN, CLIENT_USER, CLIENT_VIEWER
 - PKCE pour clients publics, politique mot de passe, Brute Force Detection
+- Attributs utilisateur : company_id, company_name, user_type
 
 **Tâches :**
 - [API] Finaliser la configuration (MFA, politique mdp)
+- [API] Créer les rôles CLIENT_ADMIN, CLIENT_USER, CLIENT_VIEWER
 - [API] Exporter et versionner le realm JSON
 
 **Git :** `git add . && git commit -m "feat(US-004): configuration Realm Keycloak" && git push origin feature/V0-S1`
@@ -439,7 +441,7 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 
 ---
 
-#### US-017 — Résultat, recommandations, facturation
+#### US-017 — Résultat et recommandations (Section 7 — DERNIÈRE)
 
 **Priorité :** 🔴 CRITIQUE | **SP :** 2 | **Statut :** 🔴 PENDING
 
@@ -448,13 +450,15 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 **Afin de** clôturer la fiche.
 
 **Critères d'acceptation :**
-- `PATCH` : result (RESOLVED/PARTIAL/UNRESOLVED), recommendations, billable
+- `PATCH` : result (RESOLVED/PARTIAL/UNRESOLVED), recommendations
 - result obligatoire pour passer à COMPLETED
 - Si UNRESOLVED → follow_up_recommended: true
+- ❌ Section 8 (Facturation) SUPPRIMÉE du périmètre
 
 **Tâches :**
 - [API] Étendre `UpdateInterventionRequest`
 - [API] Logique `follow_up_recommended`
+- [API] Supprimer les champs billable, billing_amount, billing_notes de l'entité
 
 **Git :** `git add . && git commit -m "feat(US-017): résultat et recommandations" && git push origin feature/V0-S2`
 
@@ -567,7 +571,7 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 
 **Critères d'acceptation :**
 - Déclenché à COMPLETED ou manuellement (POST /pdf)
-- Contient : logo, 8 sections, photos, signatures, QR code
+- Contient : logo, 7 sections (sans facturation), photos, signatures, QR code
 - Stocké Supabase Storage, URL signée 72h
 - Génération asynchrone (Redis queue)
 - Max 3 retries
@@ -581,7 +585,7 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 
 ---
 
-#### US-022 — Envoi du rapport par Email
+#### US-022 — Envoi du rapport par Email (UNIQUEMENT)
 
 **Priorité :** 🔴 CRITIQUE | **SP :** 3 | **Statut :** 🔴 PENDING
 
@@ -594,6 +598,7 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 - Destinataires par défaut : email du client
 - Queue Redis email_queue, retry backoff max 24h
 - Journalisé dans audit_logs
+- ❌ Envoi WhatsApp SUPPRIMÉ du périmètre
 
 **Tâches :**
 - [API] Créer `EmailService` (JavaMailSender)
@@ -604,26 +609,10 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 
 ---
 
-#### US-023 — Envoi du rapport via WhatsApp
+~~#### US-023 — Envoi du rapport via WhatsApp~~ ❌ **SUPPRIMÉE**
 
-**Priorité :** 🔴 CRITIQUE | **SP :** 3 | **Statut :** 🔴 PENDING
-
-**En tant que** technicien,
-**Je veux** envoyer le PDF par WhatsApp,
-**Afin de** partager sur le canal privilégié.
-
-**Critères d'acceptation :**
-- `POST /api/interventions/{id}/send/whatsapp`
-- Numéro par défaut : téléphone client
-- Fallback email si API WhatsApp indisponible
-- Queue Redis whatsapp_queue
-
-**Tâches :**
-- [API] Créer `WhatsAppService` (API Meta Cloud)
-- [API] Créer `WhatsAppQueueConsumer` avec fallback
-- [API] Tester avec WireMock
-
-**Git :** `git add . && git commit -m "feat(US-023): envoi rapport WhatsApp" && git push origin feature/V0-S3`
+> **Décision cadrage 21/07/2026 :** Cette US est supprimée du périmètre.
+> Raison : Complexité d'intégration, coût API Meta. Seul l'email reste comme canal d'envoi.
 
 ---
 
@@ -657,11 +646,11 @@ Afin d'améliorer les performances du dashboard et la maintenabilité.
 Critères d'acceptation :
 [API] Utilisation de DTOs de projection (Records Java) pour les listes (réduction du payload JSON)
 [API] Zéro logique métier dans les Controllers (validation et délégation uniquement)
-[API] Appels OpenProject/WhatsApp 100% asynchrones via files Redis
+[API] ~~Appels OpenProject/WhatsApp 100% asynchrones via files Redis~~ → Appels Email 100% asynchrones via file Redis
 Tâches :
 [API] Créer les Records `InterventionListDTO`, `ClientListDTO`
 [API] Auditer et nettoyer les Controllers
-[API] Vérifier l'asynchronisme strict des services d'intégration
+[API] Vérifier l'asynchronisme strict du service Email
 Git : `git add . && git commit -m "refactor(US-036): optimisation API et clean architecture" && git push origin feature/V0-S3`
 
 ---
@@ -807,8 +796,8 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 **Critères d'acceptation :**
 - [WEB] Liste avec tous les filtres
-- [WEB] Détail complet (8 sections, photos, signatures)
-- [WEB] Déclencher PDF, Email, WhatsApp
+- [WEB] Détail complet (7 sections, photos, signatures)
+- [WEB] Déclencher PDF, Email
 - [WEB] Voir les stats
 
 **Tâches :**
@@ -827,57 +816,18 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 ---
 
-### EPIC 10 — Portail Client & OpenProject
+### EPIC 10 — ~~Portail Client & OpenProject~~ → Gestion Entreprises Client
 
-#### US-026 — Portail client (Angular)
+~~#### US-026 — Portail client (Angular)~~ ❌ **SUPPRIMÉE**
 
-**Priorité :** 🟠 HAUTE | **SP :** 8 | **Statut :** 🔴 PENDING
+> **Décision cadrage 21/07/2026 :** Cette US est supprimée du périmètre.
+> Raison : Pas de portail client public. Les demandes sont gérées en interne par les managers/admins.
+> Remplacée par les US ci-dessous (gestion des entreprises et de leurs utilisateurs).
 
-**En tant que** client,
-**Je veux** soumettre une demande d'intervention,
-**Afin de** signaler un problème rapidement.
+~~#### US-027 — Intégration OpenProject API v3~~ ❌ **SUPPRIMÉE**
 
-**Critères d'acceptation :**
-- `POST /api/client-portal/requests` public (rate limit 5/IP/h)
-- Champs : nom, email, phone, issue_type, description, urgency
-- Crée ticket OpenProject automatiquement
-- Email de confirmation au client
-- Queue Redis si OP indisponible
-- [WEB] Page portail public
-- [WEB] Page confirmation avec numéro de ticket
-
-**Tâches :**
-- [API] `ClientPortalController` + `ClientPortalService`
-- [API] Rate limiting
-- [WEB] Page portail (Angular)
-- [WEB] Page confirmation
-
-**Git :** `git add . && git commit -m "feat(US-026): portail client" && git push origin feature/V01-S2`
-
----
-
-#### US-027 — Intégration OpenProject API v3
-
-**Priorité :** 🟠 HAUTE | **SP :** 5 | **Statut :** 🔴 PENDING
-
-**En tant que** système NG-Fields,
-**Je veux** créer et suivre des tickets OpenProject,
-**Afin de** centraliser le suivi des demandes.
-
-**Critères d'acceptation :**
-- `createTicket()` → retourne ID
-- `updateTicket()` → met à jour statut
-- `getTicket()` → consulte
-- Bearer Token, queue Redis, retry max 24h
-- Échecs dans audit_logs
-
-**Tâches :**
-- [API] `OpenProjectClient` (WebClient)
-- [API] `OpenProjectService`
-- [API] `OpenProjectQueueConsumer`
-- [API] Tests WireMock
-
-**Git :** `git add . && git commit -m "feat(US-027): intégration OpenProject" && git push origin feature/V01-S2`
+> **Décision cadrage 21/07/2026 :** Cette US est supprimée du périmètre.
+> Raison : Gestion des tickets gérée directement en interne. Pas de synchronisation externe.
 
 ---
 
@@ -903,6 +853,197 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 - [API] Logback JSON
 
 **Git :** `git add . && git commit -m "feat(US-030): monitoring Prometheus" && git push origin feature/V01-S2`
+
+---
+
+### EPIC 12 — Gestion Entreprises & Utilisateurs Clients (NOUVEAU — Post-Cadrage 21/07/2026)
+
+> **Contexte :** Suite à la réunion de cadrage du 21/07/2026, le périmètre inclut désormais la gestion des entreprises clientes et de leurs utilisateurs. Les admins/managers NG-STARs inscrivent les entreprises, et chaque entreprise peut gérer ses propres utilisateurs.
+
+#### US-037 — Inscription d'une entreprise (Company)
+
+**Priorité :** 🔴 CRITIQUE | **SP :** 5 | **Statut :** 🔴 PENDING
+
+**En tant qu'** admin/manager NG-STARs,
+**Je veux** inscrire une nouvelle entreprise cliente,
+**Afin de** lui donner accès à la plateforme.
+
+**Critères d'acceptation :**
+- `POST /api/admin/companies` → crée l'entreprise + le compte CLIENT_ADMIN
+- Champs : nom entreprise, email, téléphone, adresse, contact principal
+- Le système génère :
+  - UUID unique pour l'entreprise
+  - Nom d'utilisateur (ex: `client_nom_entreprise_001`)
+  - Mot de passe temporaire aléatoire (12 caractères)
+- **Email automatique envoyé** avec credentials (username + mot de passe temporaire + lien connexion)
+- Réservé ADMIN/MANAGER
+- Journalisé dans audit_logs
+- [WEB] Formulaire d'inscription entreprise
+- [WEB] Confirmation avec envoi email
+
+**Tâches :**
+- [API] `CompanyController` + `CompanyService`
+- [API] Intégration Keycloak Admin API (création utilisateur CLIENT_ADMIN)
+- [API] `EmailService` (template bienvenue entreprise)
+- [WEB] `CompanyFormComponent` (inscription)
+- [WEB] `CompanyListComponent` (liste)
+
+**Git :** `git add . && git commit -m "feat(US-037): inscription entreprise" && git push origin feature/V01-S2`
+
+---
+
+#### US-038 — Première connexion + changement mot de passe
+
+**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🔴 PENDING
+
+**En tant que** CLIENT_ADMIN,
+**Je veux** changer mon mot de passe à la première connexion,
+**Afin de** sécuriser mon compte.
+
+**Critères d'acceptation :**
+- Le système détecte la première connexion
+- Modal obligatoire : « Changement de mot de passe requis »
+- Champs : mot de passe temporaire, nouveau mot de passe (min 8 car., majuscule, chiffre, caractère spécial), confirmation
+- Validation côté client et serveur
+- Mise à jour Keycloak avec le nouveau mot de passe
+- Le modal disparaît après validation
+- Accès au tableau de bord CLIENT_ADMIN
+
+**Tâches :**
+- [API] Endpoint `PUT /api/client/change-password` (CLIENT_ADMIN)
+- [WEB] Composant modal `PasswordChangeModalComponent`
+- [WEB] Guard détectant première connexion
+
+**Git :** `git add . && git commit -m "feat(US-038): première connexion + changement mdp" && git push origin feature/V01-S2`
+
+---
+
+#### US-039 — Gestion des utilisateurs par entreprise (CLIENT_ADMIN)
+
+**Priorité :** 🔴 CRITIQUE | **SP :** 5 | **Statut :** 🔴 PENDING
+
+**En tant que** CLIENT_ADMIN,
+**Je veux** créer et gérer les utilisateurs de mon entreprise,
+**Afin de** contrôler les accès.
+
+**Critères d'acceptation :**
+- `POST /api/client/users` → crée un utilisateur dans l'entreprise
+- `GET /api/client/users` → liste les utilisateurs de l'entreprise
+- `PUT /api/client/users/{id}` → modifie un utilisateur
+- `DELETE /api/client/users/{id}` → soft delete
+- `PUT /api/client/users/{id}/role` → change le rôle (CLIENT_USER ↔ CLIENT_VIEWER)
+- `PUT /api/client/users/{id}/password` → réinitialise le mot de passe
+- Chaque utilisateur reçoit un email avec ses credentials
+- Réservé CLIENT_ADMIN (isolation par entreprise)
+- [WEB] Liste utilisateurs de l'entreprise
+- [WEB] Formulaire création/édition
+- [WEB] Gestion des rôles
+
+**Tâches :**
+- [API] `ClientUserController` + `ClientUserService`
+- [API] Isolation multi-tenant (company_id)
+- [WEB] `ClientUserListComponent`
+- [WEB] `ClientUserFormComponent`
+
+**Git :** `git add . && git commit -m "feat(US-039): gestion utilisateurs entreprise" && git push origin feature/V01-S2`
+
+---
+
+#### US-040 — Portail consultation interventions (CLIENT_USER / CLIENT_VIEWER)
+
+**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🔴 PENDING
+
+**En tant que** CLIENT_USER ou CLIENT_VIEWER,
+**Je veux** consulter l'historique des interventions de mon entreprise,
+**Afin de** suivre les prestations réalisées.
+
+**Critères d'acceptation :**
+- `GET /api/client/interventions` → interventions de l'entreprise (filtré par company_id)
+- Détail intervention (7 sections, photos, signatures)
+- CLIENT_USER : possibilité télécharger le PDF
+- CLIENT_VIEWER : consultation seule (pas de téléchargement)
+- [WEB] Liste interventions entreprise
+- [WEB] Détail intervention
+- [WEB] Bouton téléchargement PDF (selon rôle)
+
+**Tâches :**
+- [API] `ClientInterventionController` (filtrage company_id)
+- [WEB] `ClientInterventionListComponent`
+- [WEB] `ClientInterventionDetailComponent`
+
+**Git :** `git add . && git commit -m "feat(US-040): portail consultation interventions" && git push origin feature/V01-S2`
+
+---
+
+#### US-041 — Rôles et accès CLIENT (RBAC multi-tenant)
+
+**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🔴 PENDING
+
+**En tant que** CLIENT_ADMIN,
+**Je veux** attribuer des rôles à mes utilisateurs,
+**Afin de** contrôler leurs permissions.
+
+**Critères d'acceptation :**
+- 3 rôles CLIENT :
+  - `CLIENT_ADMIN` : Créer/modifier/supprimer utilisateurs + Consulter interventions + Télécharger PDF
+  - `CLIENT_USER` : Consulter interventions + Télécharger PDF
+  - `CLIENT_VIEWER` : Consulter interventions (lecture seule, pas de téléchargement)
+- Isolation par entreprise : un CLIENT_ADMIN ne voit que les utilisateurs de son entreprise
+- Changement de rôle = email de notification
+- [WEB] Interface de gestion des rôles
+
+**Tâches :**
+- [API] Validation RBAC dans `ClientUserService`
+- [API] Mapping rôles Keycloak ↔ permissions
+- [WEB] Composant `RoleSelectorComponent`
+
+**Git :** `git add . && git commit -m "feat(US-041): rôles et accès CLIENT" && git push origin feature/V01-S2`
+
+---
+
+#### US-042 — Email de bienvenue et credentials
+
+**Priorité :** 🟠 HAUTE | **SP :** 2 | **Statut :** 🔴 PENDING
+
+**En tant que** système,
+**Je veux** envoyer automatiquement un email de bienvenue avec les credentials,
+**Afin que** le client puisse se connecter.
+
+**Critères d'acceptation :**
+- Email envoyé à l'inscription de l'entreprise (US-037)
+- Email envoyé à la création d'un utilisateur (US-039)
+- Contenu : username, mot de passe temporaire, lien connexion, instructions
+- Template HTML responsive
+- Queue Redis email_queue, retry 3x
+
+**Tâches :**
+- [API] Templates email Thymeleaf (bienvenue, invitation)
+- [API] Intégration `EmailService`
+
+**Git :** `git add . && git commit -m "feat(US-042): email bienvenue et credentials" && git push origin feature/V01-S2`
+
+---
+
+#### US-043 — Tableau de bord CLIENT_ADMIN (Angular)
+
+**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🔴 PENDING
+
+**En tant que** CLIENT_ADMIN,
+**Je veux** un tableau de bord avec les KPIs de mon entreprise,
+**Afin de** piloter l'activité.
+
+**Critères d'acceptation :**
+- Nombre total d'interventions
+- Interventions par statut (PENDING, IN_PROGRESS, COMPLETED)
+- Nombre d'utilisateurs actifs
+- Dernières interventions
+- [WEB] Dashboard CLIENT avec graphiques
+
+**Tâches :**
+- [API] `GET /api/client/dashboard` → KPIs filtrés par company_id
+- [WEB] `ClientDashboardComponent`
+
+**Git :** `git add . && git commit -m "feat(US-043): tableau de bord CLIENT" && git push origin feature/V01-S2`
 
 ---
 
@@ -1083,11 +1224,12 @@ Git : `git add . && git commit -m "feat(US-013M): diagnostic et consommables mob
 **Priorité :** 🔴 CRITIQUE | **SP :** 2 | **Statut :** 🔴 PENDING
 
 **Critères d'acceptation :**
-- [MOBILE] Sections résultat, recommandations, facturation
+- [MOBILE] Sections résultat et recommandations
+- ❌ Section facturation supprimée du périmètre
 
 **Tâches :**
 - [MOBILE] `InterventionFormStep6` (résultat)
-- [MOBILE] `InterventionFormStep7` (facturation)
+- ~~[MOBILE] `InterventionFormStep7` (facturation)~~ SUPPRIMÉ
 
 **Git :** `git add . && git commit -m "feat(US-017M): résultat mobile" && git push origin feature/V1-S2`
 
@@ -1159,17 +1301,10 @@ Git : `git add . && git commit -m "feat(US-013M): diagnostic et consommables mob
 
 ---
 
-#### US-023M — WhatsApp (Mobile)
+~~#### US-023M — WhatsApp (Mobile)~~ ❌ **SUPPRIMÉE**
 
-**Priorité :** 🟠 HAUTE | **SP :** 1 | **Statut :** 🔴 PENDING
-
-**Critères d'acceptation :**
-- [MOBILE] Bouton envoyer par WhatsApp
-
-**Tâches :**
-- [MOBILE] WhatsApp button + deep link
-
-**Git :** `git add . && git commit -m "feat(US-023M): WhatsApp mobile" && git push origin feature/V1-S2`
+> **Décision cadrage 21/07/2026 :** Cette US est supprimée du périmètre.
+> Raison : L'envoi WhatsApp est supprimé du projet. Seul l'email reste.
 
 ---
 
@@ -1204,11 +1339,11 @@ Git : `git add . && git commit -m "feat(US-013M): diagnostic et consommables mob
 **Priorité :** 🟡 MOYENNE | **SP :** 2 | **Statut :** 🔴 PENDING
 
 **Critères d'acceptation :**
-- Soumission portail → push + email aux managers
+- Soumission interne → push + email aux managers
 - < 1 minute
 
 **Tâches :**
-- [API] Injecter `NotificationService` dans `ClientPortalService`
+- [API] Injecter `NotificationService` dans le service de gestion des interventions
 
 **Git :** `git add . && git commit -m "feat(US-025): notification nouveau ticket" && git push origin feature/V1-S2`
 
@@ -1292,17 +1427,17 @@ Git : `git add . && git commit -m "feat(US-013M): diagnostic et consommables mob
 
 ---
 
-## Statut par sprint (02/07/2026)
+## Statut par sprint (21/07/2026 — Post-Cadrage)
 
 | Sprint | Dates | Statut | US COMPLETED | US IN PROGRESS | US PENDING |
 |--------|-------|--------|--------------|----------------|------------|
 | V0-S1 | 1-6 juin | 🟢 COMPLETED | US-001, US-002, US-003, US-004, US-005, US-006, US-007, US-008 | — | — |
 | V0-S2 | 8-12 juin | 🟡 IN_PROGRESS | US-009, US-011, US-014 | US-018 | US-010, US-012, US-013, US-017 |
-| V0-S3 | 15-19 juin | 🟡 IN_PROGRESS | US-015, US-016, US-021 | — | US-019, US-020, US-022, US-023 |
+| V0-S3 | 15-19 juin | 🟡 IN_PROGRESS | US-015, US-016, US-021 | — | US-019, US-020, US-022, ~~US-023~~ |
 | V01-S1 | 22-26 juin | 🟡 IN_PROGRESS | — | — | US-028, US-029, US-007W, US-009W, US-011W |
-| V01-S2 | 29 juin-3 juillet | 🟡 IN_PROGRESS | — | — | US-026, US-027, US-030 |
+| V01-S2 | 29 juin-3 juillet | 🟡 IN_PROGRESS | — | — | ~~US-026~~, ~~US-027~~, US-030, **US-037, US-038, US-039, US-040, US-041, US-042, US-043** |
 | V1-S1 | 6-10 juillet | 🔴 PENDING | — | — | US-007M, US-008M, US-009M, US-011M, US-012M, US-013M, US-018M |
-| V1-S2 | 13-17 juillet | 🔴 PENDING | — | — | US-015M, US-016M, US-017M, US-019M, US-020M, US-021M, US-022M, US-023M, US-024, US-025, US-031, US-032, US-033, US-034 |
+| V1-S2 | 13-17 juillet | 🔴 PENDING | — | — | US-015M, US-016M, US-017M, US-019M, US-020M, US-021M, US-022M, ~~US-023M~~, US-024, US-025, US-031, US-032, US-033, US-034 |
 
 ---
 
@@ -1311,9 +1446,9 @@ Git : `git add . && git commit -m "feat(US-013M): diagnostic et consommables mob
 | Version | Sprints | US | SP | COMPLETED | IN PROGRESS | Livrables |
 |---------|---------|----|----|-----------|-------------|-----------|
 | **V0** | 3 (1-19 juin) | 23 API | ~75 | 10 (US-001→008, 015, 016) | 1 (US-018) | Tous les endpoints backend (photos + signatures portés le 02/07) |
-| **V0.1** | 2 (22 juin-3 juillet) | 9 Web | ~45 | — | — | Dashboard Angular, portail |
+| **V0.1** | 2 (22 juin-3 juillet) | 9 Web + 7 Client Mgmt | ~70 | — | — | Dashboard Angular + Gestion entreprises/clients |
 | **V1** | 2 (6-17 juillet) | 17 Mobile | ~50 | — | — | App Flutter complète |
-| **Total** | **7 sprints** | **~29 US** | **~170 SP** | **10** | **1** | |
+| **Total** | **7 sprints** | **~36 US** | **~195 SP** | **10** | **1** | |
 
 ---
 
@@ -1331,12 +1466,16 @@ US-004 → 005 → 007 (Users)  ←┘
                                                     │
                     ┌────────────────────────────────┘
                     ↓
-              015 → 016 → 021 → 022
-              020            023
+              015 → 016 → 021 → 022 (Email UNIQUEMENT)
+              020
               019
 
-V0.1 : 028 → 029, 026 → 027, 030
-V1   : Tous écrans Mobile + 024 → 025 → 031 → 032 → 033/034
+V0.1 : 028 → 029, 030
+
+Gestion Entreprises (NOUVEAU) :
+  US-004 → 037 (Company) → 038 (1ère connexion) → 039 (Users) → 040 (Consultation) → 041 (RBAC) → 042 (Email) → 043 (Dashboard)
+
+V1 : Tous écrans Mobile + 024 → 025 → 031 → 032 → 033/034
 ```
 
 ---
@@ -1347,7 +1486,9 @@ V1   : Tous écrans Mobile + 024 → 025 → 031 → 032 → 033/034
 |--------|-------------|--------|------------|
 | Complexité OIDC Flutter | Haute | Critique | POC auth dès V1-S1 (6 juillet) |
 | Performance PDF avec photos | Moyenne | Haute | Génération asynchrone Redis queue |
-| Quota API WhatsApp (Meta) | Moyenne | Haute | Fallback email avant mise en production |
+| ~~Quota API WhatsApp (Meta)~~ | ~~Moyenne~~ | ~~Haute~~ | ❌ SUPPRIMÉ — Plus d'intégration WhatsApp |
+| Complexité multi-tenant (multi-client) | Moyenne | Haute | Bien documenter la logique RBAC, tests extensifs |
+| Gestion des réinitialisations de mdp | Haute | Moyenne | Queue Redis + Email Service robustes |
 | Délai validation App Store iOS | Haute | Moyenne | Soumettre TestFlight dès V1-S1 |
 | Problèmes Docker locaux | Haute | Haute | Solutions alternatives documentées dans Setup.md |
 | Planning 7 semaines pour 1 stagiaire | Haute | Haute | Priorité V0 + V0.1 ; V1 peut glisser |
@@ -1368,4 +1509,4 @@ V1   : Tous écrans Mobile + 024 → 025 → 031 → 032 → 033/034
 
 ---
 
-_Version 4.0 — 02/07/2026 — Prochaine révision : fin V01-S2 (03/07/2026)_
+_Version 5.0 — 21/07/2026 (Post-Cadrage) — Prochaine révision : fin V01-S2_

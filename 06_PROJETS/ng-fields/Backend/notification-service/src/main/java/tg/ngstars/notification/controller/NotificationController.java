@@ -1,6 +1,7 @@
 package tg.ngstars.notification.controller;
 
 import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,12 +10,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import tg.ngstars.notification.dto.EmailRequest;
 import tg.ngstars.notification.service.EmailService;
 
 @RestController
 @RequestMapping("/api/notifications")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIAN')")
+@Tag(name = "Email Notifications", description = "Envoi d'emails via templates Thymeleaf")
 public class NotificationController {
 
     private final EmailService emailService;
@@ -24,6 +29,9 @@ public class NotificationController {
     }
 
     @PostMapping("/email")
+    @Operation(summary = "Envoyer un email", description = "Envoie un email via template Thymeleaf. Templates autorises : intervention-notification, password-reset, welcome, intervention-assigned, intervention-completed.")
+    @ApiResponse(responseCode = "202", description = "Email envoye")
+    @ApiResponse(responseCode = "400", description = "Template non autorise")
     public ResponseEntity<Void> sendEmail(@Valid @RequestBody EmailRequest request) {
         emailService.send(request);
         return ResponseEntity.status(HttpStatus.ACCEPTED).build();

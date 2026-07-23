@@ -79,7 +79,6 @@ export class UserFormComponent {
 
   isSubmitting = signal(false);
   error = signal<string | null>(null);
-  error = signal<string | null>(null);
 
   form: FormGroup = this.fb.group({
     name: ['', Validators.required],

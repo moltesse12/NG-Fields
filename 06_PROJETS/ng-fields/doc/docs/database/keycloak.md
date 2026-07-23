@@ -50,7 +50,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
 
 ## 5. Connexion Keycloak → PostgreSQL
 
-Keycloak 26.6.2 (distribution Quarkus) se configure via variables d'environnement :
+Keycloak 26.6.4 (distribution Quarkus) se configure via variables d'environnement :
 
 ```powershell
 # Dans PowerShell, AVANT de lancer Keycloak
@@ -72,7 +72,7 @@ db-password=${KC_DB_PASSWORD}
 ## 6. Démarrage
 
 ```powershell
-cd F:\03_Pro_IT\07_Clients\NG-STARs\06_PROJETS\Projet_NG-Fields\apps\keycloak-26.6.2\bin
+cd F:\03_Pro_IT\07_Clients\NG-STARs\06_PROJETS\Projet_NG-Fields\apps\keycloak-26.6.4\bin
 .\kc.bat start-dev --http-port=8080
 ```
 
@@ -102,5 +102,5 @@ docs/keycloak/
 Après migration vers PostgreSQL, l'ancienne base H2 peut être supprimée :
 
 ```powershell
-Remove-Item -Recurse -Force "F:\...\keycloak-26.6.2\data\h2"
+Remove-Item -Recurse -Force "F:\...\keycloak-26.6.4\data\h2"
 ```

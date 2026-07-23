@@ -13,12 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import tg.ngstars.interv.dto.CreateInterventionRequest;
 import tg.ngstars.interv.dto.CreateInterventionRequest.CreateItemRequest;
+import tg.ngstars.interv.dto.InterventionEvent;
 import tg.ngstars.interv.dto.InterventionResponse;
 import tg.ngstars.interv.dto.InterventionResponse.ItemResponse;
+import tg.ngstars.interv.dto.InterventionStatsResponse;
 import tg.ngstars.interv.dto.ItemRequest;
 import tg.ngstars.interv.dto.SyncRequest;
 import tg.ngstars.interv.dto.SyncResponse;
-import tg.ngstars.interv.dto.UpdateBillingRequest;
 import tg.ngstars.interv.dto.UpdateDiagnosisRequest;
 import tg.ngstars.interv.dto.UpdateEquipmentRequest;
 import tg.ngstars.interv.dto.UpdateInterventionRequest;
@@ -39,10 +40,14 @@ public class InterventionService {
 
     private final InterventionRepository interventionRepository;
     private final InterventionStatusService statusService;
+    private final InterventionEmailService emailService;
+    private final SseEmitterManager sseManager;
 
-    public InterventionService(InterventionRepository interventionRepository, InterventionStatusService statusService) {
+    public InterventionService(InterventionRepository interventionRepository, InterventionStatusService statusService, InterventionEmailService emailService, SseEmitterManager sseManager) {
         this.interventionRepository = interventionRepository;
         this.statusService = statusService;
+        this.emailService = emailService;
+        this.sseManager = sseManager;
     }
 
     @Transactional
@@ -83,8 +88,6 @@ public class InterventionService {
                 .equipmentSerial(request.equipmentSerial())
                 .equipmentLocation(request.equipmentLocation())
                 .reportedIssue(request.reportedIssue())
-                .openprojectTicketId(request.openprojectTicketId())
-                .openprojectTicketUrl(request.openprojectTicketUrl())
                 .diagnosis(request.diagnosis())
                 .workDone(request.workDone())
                 .status(request.status() != null ? request.status() : "PENDING")
@@ -116,7 +119,10 @@ public class InterventionService {
                     .map(InterventionItem::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
         }
 
-        return toResponse(interventionRepository.save(intervention));
+        var saved = interventionRepository.save(intervention);
+        sseManager.sendEvent("INTERVENTION_CREATED",
+                InterventionEvent.created(saved.getId(), saved.getReference(), userId));
+        return toResponse(saved);
     }
 
     public Page<InterventionResponse> getInterventions(String status, UUID technicianId, Pageable pageable) {
@@ -130,6 +136,32 @@ public class InterventionService {
                     .map(this::toResponse);
         return interventionRepository.findByActiveTrueOrderByCreatedAtDesc(pageable)
                 .map(this::toResponse);
+    }
+
+    public Page<InterventionResponse> getInterventionsByCompanyId(UUID companyId, String status, Pageable pageable) {
+        if (status != null)
+            return interventionRepository.findByActiveTrueAndClientIdAndStatusOrderByCreatedAtDesc(companyId, status, pageable)
+                    .map(this::toResponse);
+        return interventionRepository.findByClientIdOrderByCreatedAtDesc(companyId, pageable)
+                .map(this::toResponse);
+    }
+
+    public InterventionStatsResponse getStats() {
+        var countByStatus = interventionRepository.countByStatus().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> (String) row[0],
+                        row -> (Long) row[1]));
+        return new InterventionStatsResponse(
+                interventionRepository.countAll(),
+                interventionRepository.countActive(),
+                countByStatus,
+                interventionRepository.countAssigned(),
+                interventionRepository.countCompleted(),
+                interventionRepository.countPending(),
+                interventionRepository.countCancelled(),
+                interventionRepository.averageDurationMinutes(),
+                interventionRepository.sumEstimatedCost()
+        );
     }
 
     public InterventionResponse getIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
@@ -155,8 +187,6 @@ public class InterventionService {
         intervention.setEquipmentSerial(request.equipmentSerial());
         intervention.setEquipmentLocation(request.equipmentLocation());
         intervention.setReportedIssue(request.reportedIssue());
-        intervention.setOpenprojectTicketId(request.openprojectTicketId());
-        intervention.setOpenprojectTicketUrl(request.openprojectTicketUrl());
         intervention.setDiagnosis(request.diagnosis());
         intervention.setWorkDone(request.workDone());
         if (request.status() != null) intervention.setStatus(request.status());
@@ -195,6 +225,8 @@ public class InterventionService {
         checkOwnership(intervention, userId, isAdminOrManager);
         intervention.setActive(false);
         interventionRepository.save(intervention);
+        sseManager.sendEvent("INTERVENTION_DELETED",
+                InterventionEvent.deleted(id, intervention.getReference(), userId));
     }
 
     public Page<InterventionResponse> getClientInterventions(UUID clientId, UUID userId, boolean isAdminOrManager, Pageable pageable) {
@@ -238,8 +270,6 @@ public class InterventionService {
         if (request.serial() != null) intervention.setEquipmentSerial(request.serial());
         if (request.location() != null) intervention.setEquipmentLocation(request.location());
         if (request.problemDescription() != null) intervention.setReportedIssue(request.problemDescription());
-        if (request.openprojectTicketId() != null) intervention.setOpenprojectTicketId(request.openprojectTicketId());
-        if (request.openprojectTicketUrl() != null) intervention.setOpenprojectTicketUrl(request.openprojectTicketUrl());
         return toResponse(interventionRepository.save(intervention));
     }
 
@@ -257,6 +287,9 @@ public class InterventionService {
         var intervention = findOrThrow(id);
         checkOwnership(intervention, userId, isAdminOrManager);
         intervention.setResult(request.result());
+        if ("UNRESOLVED".equalsIgnoreCase(request.result())) {
+            intervention.setFollowUpRecommended(true);
+        }
         return toResponse(interventionRepository.save(intervention));
     }
 
@@ -280,16 +313,6 @@ public class InterventionService {
         var intervention = findOrThrow(id);
         checkOwnership(intervention, userId, isAdminOrManager);
         intervention.setRecommendations(request.recommendations());
-        return toResponse(interventionRepository.save(intervention));
-    }
-
-    @Transactional
-    public InterventionResponse updateBilling(UUID id, UpdateBillingRequest request, UUID userId, boolean isAdminOrManager) {
-        var intervention = findOrThrow(id);
-        checkOwnership(intervention, userId, isAdminOrManager);
-        intervention.setBillable(request.billable());
-        intervention.setBillingAmount(request.billingAmount());
-        intervention.setBillingNotes(request.billingNotes());
         return toResponse(interventionRepository.save(intervention));
     }
 
@@ -346,31 +369,49 @@ public class InterventionService {
     public InterventionResponse assignIntervention(UUID id, UUID assignedTo, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
         checkOwnership(intervention, userId, isAdminOrManager);
+        var oldStatus = intervention.getStatus();
         intervention.setAssignedTo(assignedTo);
         statusService.assignIntervention(intervention, userId);
-        return toResponse(interventionRepository.save(intervention));
+        var saved = interventionRepository.save(intervention);
+        sseManager.sendEvent("INTERVENTION_ASSIGNED",
+                InterventionEvent.statusChanged(id, saved.getReference(), oldStatus, "ASSIGNED", assignedTo, userId));
+        sseManager.sendToUser(assignedTo, "INTERVENTION_ASSIGNED_TO_YOU",
+                InterventionEvent.assigned(id, saved.getReference(), assignedTo, userId));
+        return toResponse(saved);
     }
 
     @Transactional
     public InterventionResponse startIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
         checkOwnership(intervention, userId, isAdminOrManager);
+        var oldStatus = intervention.getStatus();
         statusService.startIntervention(intervention, userId);
-        return toResponse(interventionRepository.save(intervention));
+        var saved = interventionRepository.save(intervention);
+        sseManager.sendEvent("INTERVENTION_STATUS_CHANGED",
+                InterventionEvent.statusChanged(id, saved.getReference(), oldStatus, "IN_PROGRESS", intervention.getAssignedTo(), userId));
+        return toResponse(saved);
     }
 
     @Transactional
     public InterventionResponse closeIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
+        var oldStatus = intervention.getStatus();
         statusService.closeIntervention(intervention, userId, isAdminOrManager);
-        return toResponse(interventionRepository.save(intervention));
+        var saved = interventionRepository.save(intervention);
+        sseManager.sendEvent("INTERVENTION_STATUS_CHANGED",
+                InterventionEvent.statusChanged(id, saved.getReference(), oldStatus, "COMPLETED", intervention.getAssignedTo(), userId));
+        return toResponse(saved);
     }
 
     @Transactional
     public InterventionResponse cancelIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
+        var oldStatus = intervention.getStatus();
         statusService.cancelIntervention(intervention, userId, isAdminOrManager);
-        return toResponse(interventionRepository.save(intervention));
+        var saved = interventionRepository.save(intervention);
+        sseManager.sendEvent("INTERVENTION_STATUS_CHANGED",
+                InterventionEvent.statusChanged(id, saved.getReference(), oldStatus, "CANCELLED", intervention.getAssignedTo(), userId));
+        return toResponse(saved);
     }
 
     @Transactional
@@ -433,6 +474,14 @@ public class InterventionService {
         return SyncResponse.created(toResponse(interventionRepository.save(intervention)));
     }
 
+    @Transactional
+    public void sendEmailReport(UUID id, String recipientEmail, UUID userId, boolean isAdminOrManager) {
+        var intervention = findOrThrow(id);
+        checkOwnership(intervention, userId, isAdminOrManager);
+        log.info("Sending email report for intervention {} to {}", intervention.getReference(), recipientEmail);
+        emailService.sendInterventionReport(intervention, recipientEmail);
+    }
+
     private InterventionResponse toResponse(Intervention i) {
         var items = i.getItems() != null
                 ? i.getItems().stream().<ItemResponse>map(item -> new ItemResponse(
@@ -447,13 +496,12 @@ public class InterventionService {
                 i.getClientAddress(), i.getEquipmentType(), i.getEquipmentBrand(),
                 i.getEquipmentModel(), i.getEquipmentSerial(),
                 i.getEquipmentLocation(), i.getReportedIssue(),
-                i.getOpenprojectTicketId(), i.getOpenprojectTicketUrl(),
                 i.getDiagnosis(), i.getWorkDone(), i.getStatus(), i.getInterventionDate(),
                 i.getCreatedBy(), i.getAssignedTo(), i.getSiteAddress(),
                 i.getSiteCity(), i.getEstimatedCost(), i.getGpsLatitude(), i.getGpsLongitude(), i.getTotalCost(),
                 i.getClientSignature(), i.getTechnicianSignature(), i.getManagerSignature(), i.getSignedAt(),
                 i.getDepartureTime(), i.getArrivalTime(), i.getStartTime(), i.getEndTime(), i.getDurationMinutes(),
-                i.getResult(), i.getRecommendations(), i.getBillable(), i.getBillingAmount(), i.getBillingNotes(),
+                i.getResult(), i.getFollowUpRecommended(), i.getRecommendations(),
                 i.getLocalId(), i.getNotes(), i.getActive(), i.getCreatedAt(), i.getUpdatedAt(), items);
     }
 }

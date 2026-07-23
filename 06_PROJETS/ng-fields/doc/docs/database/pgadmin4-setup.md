@@ -16,7 +16,7 @@ PostgreSQL 18 (localhost:5432)
 │   ├── Schéma : auth            ← Utilisateurs locaux
 │   ├── Schéma : client          ← Clients et équipements
 │   ├── Schéma : intervention    ← Fiches, photos, signatures, items
-│   ├── Schéma : notification    ← Logs d'envoi (push, email, WhatsApp)
+│   ├── Schéma : notification    ← Logs d'envoi (push, email)
 │   └── Schéma : audit           ← Journal d'audit horodaté
 └── Base : ng_fields_test        ← Tests d'intégration (isolée)
 ```
@@ -134,7 +134,7 @@ CREATE SCHEMA IF NOT EXISTS audit        AUTHORIZATION ng_fields_user;
 COMMENT ON SCHEMA auth         IS 'Utilisateurs locaux, référence keycloak_id';
 COMMENT ON SCHEMA client       IS 'Clients NG-STARs et équipements';
 COMMENT ON SCHEMA intervention IS 'Fiches intervention, photos, signatures, items';
-COMMENT ON SCHEMA notification IS 'Logs envoi push, email, WhatsApp';
+COMMENT ON SCHEMA notification IS 'Logs envoi push, email';
 COMMENT ON SCHEMA audit        IS 'Journal d''audit horodaté';
 
 -- Droits sur les schémas

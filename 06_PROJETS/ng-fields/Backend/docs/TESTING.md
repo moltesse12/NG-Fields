@@ -1,41 +1,27 @@
 # Testing
 
-## Test Overview
+## État actuel
 
-| Service | Unit Tests | Integration Tests | Total |
-|---------|-----------|------------------|-------|
-| intervention-service | 36 | 0 | 36 |
-| media-service | 28 | 0 | 28 |
-| auth-service | 24 | 0 | 24 |
-| client-service | 15 | 0 | 15 |
-| gateway-service | 8 | 0 | 8 |
-| notification-service | 9 | 0 | 9 |
-| report-service | 5 | 0 | 5 |
-| **Total** | **125** | **0** | **125** |
+Les tests unitaires et d'intégration sont à implémenter. Les tests existants ont été supprimés et seront réécrits par l'équipe.
 
-## Running Tests
+La vérification fonctionnelle est assurée par :
+- **Collection Postman** (`Doc/docs/tests/postman-collection.json`) — 32 requêtes couvrant auth, clients, media
+- **Tests manuels** via Swagger UI (`http://localhost:8080/swagger-ui.html`)
+
+## Running Build
 
 ```bash
 # All services
-mvn test
+cd Backend
+mvn clean install
 
 # Single service
-.\mvnw.cmd -f "..\pom.xml" test -pl intervention-service -am
-
-# With coverage
-mvn test jacoco:report
+.\mvnw.cmd -f "..\pom.xml" install -pl intervention-service -am
 ```
 
-## Test Patterns
+## Planifié
 
-- **Unit tests**: Mockito with `@ExtendWith(MockitoExtension.class)`
-- **Controller tests**: `@WebMvcTest` with `MockMvc`
-- **No integration tests**: No Testcontainers, no embedded PostgreSQL
-
-## Key Coverage Areas
-
-- State machine transitions (InterventionStatus)
-- Sync conflict detection
-- File upload security (MIME validation, path traversal, size limits)
-- Email retry logic
-- Analytics aggregation
+- Tests unitaires avec JUnit 5 + Mockito
+- Tests d'intégration avec Testcontainers (PostgreSQL en mémoire)
+- Tests de sécurité (rôles, permissions)
+- Tests bout-en-bout via le gateway

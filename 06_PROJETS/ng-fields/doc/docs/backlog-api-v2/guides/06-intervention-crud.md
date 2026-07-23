@@ -29,7 +29,6 @@
 | 5. Pièces | Items (name, quantity) | |
 | 6. Résultat | `result` (RESOLVED/PARTIAL/UNRESOLVED) | |
 | 7. Recommandations | `recommendations` | |
-| 8. Facturation | `billable`, `billing_notes` | |
 
 ## Guide détaillé
 

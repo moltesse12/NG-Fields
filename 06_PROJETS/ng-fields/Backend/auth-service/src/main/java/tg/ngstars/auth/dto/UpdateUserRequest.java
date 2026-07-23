@@ -18,8 +18,8 @@ public record UpdateUserRequest(
     @Size(min = 6)
     String password,
 
-    @Pattern(regexp = "ADMIN|MANAGER|TECHNICIAN|CLIENT_PORTAL",
-             message = "Role invalide : ADMIN, MANAGER, TECHNICIAN, CLIENT_PORTAL")
+    @Pattern(regexp = "ADMIN|MANAGER|TECHNICIAN|CLIENT_ADMIN|CLIENT_USER|CLIENT_VIEWER",
+             message = "Role invalide : ADMIN, MANAGER, TECHNICIAN, CLIENT_ADMIN, CLIENT_USER, CLIENT_VIEWER")
     String role,
 
     String phone

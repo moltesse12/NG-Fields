@@ -1,8 +1,8 @@
 # Keycloak Reference — NG-Fields
 
-**Version cible :** 26.6.2 (dernière stable, mai 2026)
+**Version cible :** 26.6.4 (dernière stable, mai 2026)
 **Documentation officielle :** https://www.keycloak.org/
-**Image Docker :** `quay.io/keycloak/keycloak:26.6.2`
+**Image Docker :** `quay.io/keycloak/keycloak:26.6.4`
 
 ---
 
@@ -32,7 +32,7 @@
 docker run -p 127.0.0.1:8080:8080 \
   -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
   -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
-  quay.io/keycloak/keycloak:26.6.2 start-dev
+  quay.io/keycloak/keycloak:26.6.4 start-dev
 ```
 
 - Accès Admin Console : `http://localhost:8080/admin`
@@ -44,7 +44,7 @@ docker run -p 127.0.0.1:8080:8080 \
 docker run --name keycloak -p 8443:8443 \
   -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
   -e KC_BOOTSTRAP_ADMIN_PASSWORD=change_me \
-  quay.io/keycloak/keycloak:26.6.2 start \
+  quay.io/keycloak/keycloak:26.6.4 start \
     --hostname=auth.ng-fields.ngs.tg \
     --https-certificate-file=/certs/tls.crt \
     --https-certificate-key-file=/certs/tls.key \
@@ -87,7 +87,7 @@ docker run --name keycloak -p 8443:8443 \
 Pour un démarrage rapide en production, pré-build l'image :
 
 ```dockerfile
-FROM quay.io/keycloak/keycloak:26.6.2 AS builder
+FROM quay.io/keycloak/keycloak:26.6.4 AS builder
 
 ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
@@ -102,7 +102,7 @@ RUN keytool -genkeypair -storepass password -storetype PKCS12 -keyalg RSA -keysi
 
 RUN /opt/keycloak/bin/kc.sh build
 
-FROM quay.io/keycloak/keycloak:26.6.2
+FROM quay.io/keycloak/keycloak:26.6.4
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
 ENV KC_DB=postgres
@@ -127,7 +127,7 @@ docker run --name keycloak -p 8080:8080 \
   -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
   -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
   -v /path/to/realm-export.json:/opt/keycloak/data/import/realm.json \
-  quay.io/keycloak/keycloak:26.6.2 \
+  quay.io/keycloak/keycloak:26.6.4 \
   start-dev --import-realm
 ```
 
@@ -136,7 +136,7 @@ docker run --name keycloak -p 8080:8080 \
 ```bash
 docker run --name keycloak -p 8443:8443 -m 2g \
   -e JAVA_OPTS_KC_HEAP="-XX:MaxRAMPercentage=70 -XX:InitialRAMPercentage=50" \
-  quay.io/keycloak/keycloak:26.6.2 start --optimized
+  quay.io/keycloak/keycloak:26.6.4 start --optimized
 ```
 
 Toujours définir `-m` (memory limit). Recommandé : **2 Go minimum** pour la production.
@@ -184,7 +184,7 @@ bin/kc.[sh|bat] start --db=postgres \
 
 ### Versions PostgreSQL testées
 
-PostgreSQL 14, 15, 16, 17, 18 sont supportés. Pour NG-Fields, **PostgreSQL 15** (via Supabase).
+PostgreSQL 14, 15, 16, 17, 18 sont supportés. Pour NG-Fields, **PostgreSQL 18**.
 
 ---
 
@@ -271,7 +271,7 @@ Même flux, mais :
 - Redirect URI : `http://127.0.0.1` (port aléatoire, ASWebAuthenticationSession/Chrome Custom Tab)
 - Utilise `flutter_appauth` pour gérer le flux
 
-### Client Credentials (M2M — backend → OpenProject)
+### Client Credentials (M2M — backend → services intermes)
 
 ```bash
 curl -X POST https://auth.ng-fields.ngs.tg/realms/ng-fields/protocol/openid-connect/token \
@@ -300,7 +300,7 @@ curl -X POST https://auth.ng-fields.ngs.tg/realms/ng-fields/protocol/openid-conn
 <dependency>
     <groupId>org.keycloak</groupId>
     <artifactId>keycloak-admin-client</artifactId>
-    <version>26.0.9</version>
+    <version>26.6.4</version>
 </dependency>
 ```
 
@@ -331,7 +331,7 @@ RealmRepresentation realm = keycloak.realm("ng-fields").toRepresentation();
 
 ### Compatibilité
 
-Le client `keycloak-admin-client:26.0.9` est compatible avec le serveur `26.6.2`. Pour éviter les problèmes de compatibilité JSON, initialiser `ObjectMapper` :
+Le client `keycloak-admin-client:26.6.4` est compatible avec le serveur `26.6.4`. Pour éviter les problèmes de compatibilité JSON, initialiser `ObjectMapper` :
 
 ```java
 ObjectMapper objectMapper = new ObjectMapper();
@@ -547,7 +547,7 @@ Ne jamais stocker de secrets dans les options de build.
 |-----------|------|------|-------|
 | `ng-fields-web` | Public | Authorization Code + PKCE | Angular |
 | `ng-fields-mobile` | Public | Authorization Code + PKCE | Flutter |
-| `ng-fields-backend` | Confidential | Client Credentials | M2M (OpenProject, etc.) |
+| `ng-fields-backend` | Confidential | Client Credentials | M2M (services intermes) |
 
 ### Rôles
 
@@ -556,7 +556,9 @@ Ne jamais stocker de secrets dans les options de build.
 | `ADMIN` | Tout |
 | `MANAGER` | Dashboard + Notifications + Signature différée + Exports |
 | `TECHNICIAN` | Interventions + Photos + Signatures + Sync |
-| `CLIENT_PORTAL` | Portail de soumission uniquement |
+| `CLIENT_ADMIN` | Admin entreprise — gère les utilisateurs de sa société |
+| `CLIENT_USER` | Utilisateur entreprise — soumet des demandes d'intervention |
+| `CLIENT_VIEWER` | Consultation seule — voit les interventions et rapports |
 
 ### Paramètres de sécurité
 
@@ -575,7 +577,7 @@ Ne jamais stocker de secrets dans les options de build.
 
 ```yaml
 keycloak:
-  image: quay.io/keycloak/keycloak:26.6.2
+  image: quay.io/keycloak/keycloak:26.6.4
   command: start --optimized --import-realm
   environment:
     KC_HOSTNAME: auth.ng-fields.ngs.tg
@@ -607,5 +609,5 @@ keycloak:
 
 ---
 
-*Document généré le 01/06/2026 à partir de la documentation officielle Keycloak 26.6.2*
+*Document généré le 01/06/2026 à partir de la documentation officielle Keycloak 26.6.4*
 *Sources : https://www.keycloak.org/documentation*

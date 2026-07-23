@@ -1,0 +1,2786 @@
+{
+  "info": {
+    "name": "NG-Fields API",
+    "description": "Tests API NG-Fields — Auth, Users, Companies, Client Portal, Interventions, Media",
+    "schema": "https://schema.getpostman.com/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"API is UP\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.status).to.eql(\"UP\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/public/health"
+      }
+    },
+    {
+      "name": "2. Login CLIENT_USER",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Token reçu\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.access_token).to.not.be.empty;",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"userToken\", json.access_token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "client_id", "value": "{{client_id}}" },
+            { "key": "client_secret", "value": "{{client_secret}}" },
+            { "key": "username", "value": "{{clientUserUsername}}" },
+            { "key": "password", "value": "{{clientUserPassword}}" },
+            { "key": "grant_type", "value": "password" }
+          ]
+        },
+        "url": "{{kc_url}}/realms/ng-fields/protocol/openid-connect/token"
+      }
+    },
+    {
+      "name": "3. Login TECHNICIEN",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"technicianToken\", json.access_token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "client_id", "value": "{{client_id}}" },
+            { "key": "client_secret", "value": "{{client_secret}}" },
+            { "key": "username", "value": "{{technicianUsername}}" },
+            { "key": "password", "value": "{{technicianPassword}}" },
+            { "key": "grant_type", "value": "password" }
+          ]
+        },
+        "url": "{{kc_url}}/realms/ng-fields/protocol/openid-connect/token"
+      }
+    },
+    {
+      "name": "4. Login MANAGER",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"managerToken\", json.access_token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "client_id", "value": "{{client_id}}" },
+            { "key": "client_secret", "value": "{{client_secret}}" },
+            { "key": "username", "value": "{{managerUsername}}" },
+            { "key": "password", "value": "{{managerPassword}}" },
+            { "key": "grant_type", "value": "password" }
+          ]
+        },
+        "url": "{{kc_url}}/realms/ng-fields/protocol/openid-connect/token"
+      }
+    },
+    {
+      "name": "5. Login ADMIN",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"adminToken\", json.access_token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "client_id", "value": "{{client_id}}" },
+            { "key": "client_secret", "value": "{{client_secret}}" },
+            { "key": "username", "value": "{{adminUsername}}" },
+            { "key": "password", "value": "{{adminPassword}}" },
+            { "key": "grant_type", "value": "password" }
+          ]
+        },
+        "url": "{{kc_url}}/realms/ng-fields/protocol/openid-connect/token"
+      }
+    },
+    {
+      "name": "6. Identifiants invalides (401 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 401\", function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "",
+              "pm.test(\"Erreur invalid_grant\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.error).to.eql(\"invalid_grant\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "client_id", "value": "{{client_id}}" },
+            { "key": "client_secret", "value": "{{client_secret}}" },
+            { "key": "username", "value": "user_inexistant" },
+            { "key": "password", "value": "mauvais_mdp" },
+            { "key": "grant_type", "value": "password" }
+          ]
+        },
+        "url": "{{kc_url}}/realms/ng-fields/protocol/openid-connect/token"
+      }
+    },
+    {
+      "name": "7. Inscription publique",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Compte créé avec succès\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.message).to.include(\"créé\");",
+              "    pm.expect(json.user.username).to.eql(\"inscrit_test\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"inscrit_test\",\n  \"email\": \"inscrit@test.tg\",\n  \"firstName\": \"Inscrit\",\n  \"lastName\": \"Test\",\n  \"phone\": \"+22890000000\",\n  \"password\": \"InscritPass123!\",\n  \"role\": \"CLIENT_USER\"\n}"
+        },
+        "url": "{{base_url}}/api/public/register"
+      }
+    },
+    {
+      "name": "8. Inscription doublon (400 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Erreur utilisateur existant\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.detail || json.message || json.error).to.include(\"existe\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"inscrit_test\",\n  \"email\": \"autre@test.tg\",\n  \"firstName\": \"Doublon\",\n  \"lastName\": \"Test\",\n  \"phone\": \"+22890000001\",\n  \"password\": \"InscritPass123!\",\n  \"role\": \"CLIENT_USER\"\n}"
+        },
+        "url": "{{base_url}}/api/public/register"
+      }
+    },
+    {
+      "name": "9. GET /users/me (CLIENT_USER)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Profil récupéré\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.username).to.eql(\"client1\");",
+              "    pm.expect(json.id).to.not.be.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{userToken}}" }
+        ],
+        "url": "{{base_url}}/api/users/me"
+      }
+    },
+    {
+      "name": "10. PUT /users/me (CLIENT_USER)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Profil mis à jour\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.firstName).to.eql(\"ClientModifié\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{userToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"ClientModifié\",\n  \"lastName\": \"Portal\",\n  \"phone\": \"+22890000001\"\n}"
+        },
+        "url": "{{base_url}}/api/users/me"
+      }
+    },
+    {
+      "name": "11. GET /users/me (non auth — 401 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 401\", function () {",
+              "    pm.response.to.have.status(401);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/users/me"
+      }
+    },
+    {
+      "name": "12. ADMIN: Create user",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"User créé en Keycloak + DB\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.username).to.eql(\"newuser_test\");",
+              "    pm.expect(json.id).to.not.be.empty;",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"testUserId\", json.id);",
+              "pm.collectionVariables.set(\"testUserKeycloakId\", json.keycloakId);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"newuser_test\",\n  \"email\": \"newuser@test.tg\",\n  \"firstName\": \"New\",\n  \"lastName\": \"User\",\n  \"phone\": \"+22890000000\",\n  \"password\": \"NewUser123!\",\n  \"role\": \"TECHNICIAN\"\n}"
+        },
+        "url": "{{base_url}}/api/admin/users"
+      }
+    },
+    {
+      "name": "13. ADMIN: List users",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Liste non vide\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.be.an(\"array\");",
+              "    pm.expect(json.length).to.be.at.least(1);",
+              "    pm.expect(json[0]).to.have.property(\"username\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/admin/users"
+      }
+    },
+    {
+      "name": "14. ADMIN: Get user by ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"User récupéré\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.id).to.eql(pm.collectionVariables.get(\"testUserId\"));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/admin/users/{{testUserId}}"
+      }
+    },
+    {
+      "name": "15. ADMIN: Update user",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"User modifié\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.firstName).to.eql(\"Updated\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"newuser_test\",\n  \"email\": \"updated@test.tg\",\n  \"firstName\": \"Updated\",\n  \"lastName\": \"User\",\n  \"phone\": \"+22890000001\",\n  \"password\": \"NewUser123!\",\n  \"role\": \"TECHNICIAN\"\n}"
+        },
+        "url": "{{base_url}}/api/admin/users/{{testUserId}}"
+      }
+    },
+    {
+      "name": "16. ADMIN: Assign role",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Rôle changé en MANAGER\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.role).to.eql(\"MANAGER\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"role\": \"MANAGER\" }"
+        },
+        "url": "{{base_url}}/api/admin/users/{{testUserKeycloakId}}/roles"
+      }
+    },
+    {
+      "name": "17. ADMIN: Update status (désactiver)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"User désactivé\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.active).to.be.false;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"enabled\": false }"
+        },
+        "url": "{{base_url}}/api/admin/users/{{testUserKeycloakId}}/status"
+      }
+    },
+    {
+      "name": "18. ADMIN: Reset password",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Email de reset envoyé\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.message).to.include(\"envoyé\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/admin/users/{{testUserKeycloakId}}/reset-password"
+      }
+    },
+    {
+      "name": "19. ADMIN: Delete user",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/admin/users/{{testUserId}}"
+      }
+    },
+    {
+      "name": "20. Créer un client (ADMIN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Client créé avec référence\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.companyName).to.eql(\"NG-STARs SARL\");",
+              "    pm.expect(json.active).to.be.true;",
+              "    pm.expect(json.reference).to.match(/^CLT-/);",
+              "    pm.expect(json.id).to.not.be.empty;",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"testClientId\", json.id);",
+              "pm.collectionVariables.set(\"testClientRef\", json.reference);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"companyName\": \"NG-STARs SARL\",\n  \"email\": \"contact@ngstars.tg\",\n  \"phone\": \"+22890000000\",\n  \"address\": \"Lomé, Togo\",\n  \"contactName\": \"Jean Dupont\",\n  \"contactPhone\": \"+22890000001\",\n  \"latitude\": 6.1319,\n  \"longitude\": 1.2228\n}"
+        },
+        "url": "{{base_url}}/api/clients"
+      }
+    },
+    {
+      "name": "21. Lister les clients (paginé)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Page reçue\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"content\");",
+              "    pm.expect(json).to.have.property(\"totalElements\");",
+              "    pm.expect(json.content.length).to.be.at.least(1);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/clients?page=0&size=20"
+      }
+    },
+    {
+      "name": "22. Rechercher un client",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Résultat trouvé\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"content\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/clients/search?q=NG-STARs&page=0&size=20"
+      }
+    },
+    {
+      "name": "23. Détail d'un client",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Détail correct\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.id).to.eql(pm.collectionVariables.get(\"testClientId\"));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/clients/{{testClientId}}"
+      }
+    },
+    {
+      "name": "24. Modifier un client (ADMIN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Client modifié\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.phone).to.eql(\"+22890000002\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"companyName\": \"NG-STARs SARL\",\n  \"email\": \"contact@ngstars.tg\",\n  \"phone\": \"+22890000002\",\n  \"address\": \"Lomé, Togo\",\n  \"contactName\": \"Jean Dupont\",\n  \"contactPhone\": \"+22890000001\",\n  \"latitude\": 6.1400,\n  \"longitude\": 1.2300\n}"
+        },
+        "url": "{{base_url}}/api/clients/{{testClientId}}"
+      }
+    },
+    {
+      "name": "25. Supprimer (désactiver) un client (ADMIN) — 204",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/clients/{{testClientId}}"
+      }
+    },
+    {
+      "name": "26. Créer un client (CLIENT_USER — 403 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 403\", function () {",
+              "    pm.response.to.have.status(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{userToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"companyName\": \"Test SARL\",\n  \"email\": \"test@test.com\",\n  \"phone\": \"+22890000000\",\n  \"contactName\": \"Test\",\n  \"contactPhone\": \"+22890000001\"\n}"
+        },
+        "url": "{{base_url}}/api/clients"
+      }
+    },
+    {
+      "name": "27. Upload file",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Nom fichier reçu\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.filename).to.not.be.empty;",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"testFilename\", json.filename);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "/C:/temp/test.png"
+            }
+          ]
+        },
+        "url": "{{base_url}}/api/media/upload"
+      }
+    },
+    {
+      "name": "28. Upload base64",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Nom fichier reçu\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.filename).to.not.be.empty;",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"testFilenameBase64\", json.filename);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"data\": \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"\n}"
+        },
+        "url": "{{base_url}}/api/media/upload-base64"
+      }
+    },
+    {
+      "name": "29. Download file",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Content-Type image\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.match(/^image\\//);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/media/{{testFilename}}"
+      }
+    },
+    {
+      "name": "30. Delete file",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/api/media/{{testFilename}}"
+      }
+    },
+    {
+      "name": "31. Lister clients (TECHNICIEN — OK)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "url": "{{base_url}}/api/clients?page=0&size=20"
+      }
+    },
+    {
+      "name": "32. Créer client (TECHNICIEN — 403 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 403\", function () {",
+              "    pm.response.to.have.status(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"companyName\": \"Test SARL\",\n  \"email\": \"test@test.com\"\n}"
+        },
+        "url": "{{base_url}}/api/clients"
+      }
+    }
+    ,
+    {
+      "name": "33. Créer une intervention (TECHNICIEN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Intervention créée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.id).to.not.be.empty;",
+              "    pm.expect(json.reference).to.include(\"INT-\");",
+              "    pm.expect(json.status).to.eql(\"CREATED\");",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"testInterventionId\", json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-POSTMAN-001\",\n  \"clientId\": \"{{testClientId}}\",\n  \"clientName\": \"NG-STARs SARL\",\n  \"equipmentType\": \"Serveur Dell PowerEdge\",\n  \"equipmentBrand\": \"Dell\",\n  \"equipmentModel\": \"R750\",\n  \"equipmentSerial\": \"SN-DELL-001\",\n  \"reportedIssue\": \"Serveur en surchauffe\",\n  \"siteAddress\": \"Lomé, Togo\",\n  \"siteCity\": \"Lomé\",\n  \"notes\": \"Intervention de test Postman\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions"
+      }
+    },
+    {
+      "name": "34. Lister les interventions (ADMIN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Page reçue\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"content\");",
+              "    pm.expect(json.content.length).to.be.at.least(1);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions?page=0&size=20"
+      }
+    },
+    {
+      "name": "35. Détail d'une intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention récupérée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.id).to.eql(pm.collectionVariables.get(\"testInterventionId\"));",
+              "    pm.expect(json.equipmentBrand).to.eql(\"Dell\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}"
+      }
+    },
+    {
+      "name": "36. Modifier une intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention modifiée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.reportedIssue).to.eql(\"Serveur en surchauffe critique\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-POSTMAN-001\",\n  \"clientId\": \"{{testClientId}}\",\n  \"clientName\": \"NG-STARs SARL\",\n  \"equipmentType\": \"Serveur Dell PowerEdge\",\n  \"equipmentBrand\": \"Dell\",\n  \"equipmentModel\": \"R750\",\n  \"equipmentSerial\": \"SN-DELL-001\",\n  \"reportedIssue\": \"Serveur en surchauffe critique\",\n  \"siteAddress\": \"Lomé, Togo\",\n  \"siteCity\": \"Lomé\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}"
+      }
+    },
+    {
+      "name": "37. Planifier l'intervention (schedule)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Schedule mis à jour\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.departureTime).to.not.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"departureTime\": \"2026-07-20T08:00:00+00:00\",\n  \"arrivalTime\": \"2026-07-20T09:00:00+00:00\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/schedule"
+      }
+    },
+    {
+      "name": "38. Ajouter équipement",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Équipement mis à jour\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.equipmentLocation).to.eql(\"Salle serveur B2\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"location\": \"Salle serveur B2\",\n  \"problemDescription\": \"Température CPU > 90°C\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/equipment"
+      }
+    },
+    {
+      "name": "39. Ajouter diagnostic",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Diagnostic ajouté\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.diagnosis).to.include(\"ventilateur\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"diagnosis\": \"Ventilateur défaillant sur le slot 3\",\n  \"workDone\": \"Remplacement du ventilateur\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/diagnosis"
+      }
+    },
+    {
+      "name": "40. Ajouter résultat",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Résultat ajouté\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.result).to.eql(\"Résolu\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"result\": \"Résolu\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/result"
+      }
+    },
+    {
+      "name": "41. Ajouter recommandations",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Recommandations ajoutées\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.recommendations).to.include(\"maintenance\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"recommendations\": \"Prévoir une maintenance préventive trimestrielle\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/recommendations"
+      }
+    },
+    {
+      "name": "42. Ajouter un item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Item ajouté\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.items).to.have.length.above(0);",
+              "    var lastItem = json.items[json.items.length - 1];",
+              "    pm.expect(lastItem.type).to.eql(\"PART\");",
+              "    pm.expect(lastItem.description).to.eql(\"Ventilateur Dell 80mm\");",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "var lastItem = json.items[json.items.length - 1];",
+              "pm.collectionVariables.set(\"testInterventionItemId\", lastItem.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"PART\",\n  \"description\": \"Ventilateur Dell 80mm\",\n  \"quantity\": 1,\n  \"unitPrice\": 25.00\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/items"
+      }
+    },
+    {
+      "name": "43. Modifier un item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Item modifié\", function () {",
+              "    var json = pm.response.json();",
+              "    var item = json.items.find(i => i.id === pm.collectionVariables.get(\"testInterventionItemId\"));",
+              "    pm.expect(item.quantity).to.eql(2);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"PART\",\n  \"description\": \"Ventilateur Dell 80mm\",\n  \"quantity\": 2,\n  \"unitPrice\": 25.00\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/items/{{testInterventionItemId}}"
+      }
+    },
+    {
+      "name": "44. Démarrer l'intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention démarrée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.status).to.eql(\"IN_PROGRESS\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/start"
+      }
+    },
+    {
+      "name": "45. Fermer l'intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention fermée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.status).to.eql(\"COMPLETED\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/close"
+      }
+    },
+    {
+      "name": "46. Télécharger PDF",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Content-Type PDF\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/pdf\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/pdf"
+      }
+    },
+    {
+      "name": "47. Créer intervention (CLIENT_USER — 403 attendu)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 403\", function () {",
+              "    pm.response.to.have.status(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{userToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-FAIL-001\",\n  \"clientId\": \"{{testClientId}}\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions"
+      }
+    },
+    {
+      "name": "48. Interventions par client",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Interventions du client\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"content\");",
+              "    pm.expect(json.content.length).to.be.at.least(1);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/by-client/{{testClientId}}?page=0&size=20"
+      }
+    },
+    {
+      "name": "49. Sync client data (ADMIN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Sync effectué\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"updated\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientId\": \"{{testClientId}}\",\n  \"clientName\": \"NG-STARs SARL Updated\",\n  \"clientEmail\": \"updated@ngstars.tg\",\n  \"clientPhone\": \"+22890111111\",\n  \"clientAddress\": \"Lomé, Togo - nouveau\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/sync/client-data"
+      }
+    },
+    {
+      "name": "50. Sync interventions (TECHNICIEN)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-SYNC-001\",\n  \"clientId\": \"{{testClientId}}\",\n  \"localId\": \"local-uuid-001\",\n  \"status\": \"CREATED\",\n  \"interventionDate\": \"2026-07-20T10:00:00+00:00\",\n  \"clientUpdatedAt\": \"2026-07-20T10:00:00+00:00\"\n}"
+        },
+        "url": "{{base_url}}/api/sync/interventions"
+      }
+    },
+    {
+      "name": "51. Annuler une intervention (nouvelle)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Création OK\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"cancelInterventionId\", json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-CANCEL-001\",\n  \"clientId\": \"{{testClientId}}\",\n  \"siteAddress\": \"Lomé, Togo\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions"
+      }
+    },
+    {
+      "name": "52. Annuler l'intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention annulée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.status).to.eql(\"CANCELLED\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{cancelInterventionId}}/cancel"
+      }
+    },
+    {
+      "name": "53. Assigner une intervention",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Intervention assignée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.assignedTo).to.not.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"assignedTo\": \"00000000-0000-0000-0000-000000000001\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/assign"
+      }
+    },
+    {
+      "name": "54. Créer une entreprise",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Entreprise créée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.name).to.eql(\"Test Entreprise\");",
+              "    pm.expect(json.slug).to.not.be.empty;",
+              "    pm.expect(json.active).to.be.true;",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"testCompanyId\", json.id);",
+              "pm.collectionVariables.set(\"testCompanySlug\", json.slug);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test Entreprise\",\n  \"email\": \"contact@test-entreprise.com\",\n  \"phone\": \"+228 90 11 22 33\",\n  \"address\": \"Lomé, Togo\"\n}"
+        },
+        "url": "{{base_url}}/api/admin/companies"
+      }
+    },
+    {
+      "name": "55. Lister les entreprises",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Liste retournée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.be.an('array');",
+              "    pm.expect(json.length).to.be.greaterThan(0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/admin/companies"
+      }
+    },
+    {
+      "name": "56. Récupérer une entreprise par ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Entreprise récupérée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.id).to.eql(pm.collectionVariables.get(\"testCompanyId\"));",
+              "    pm.expect(json.name).to.eql(\"Test Entreprise\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/admin/companies/{{testCompanyId}}"
+      }
+    },
+    {
+      "name": "57. Modifier une entreprise",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Entreprise modifiée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.name).to.eql(\"Test Entreprise Updated\");",
+              "    pm.expect(json.phone).to.eql(\"+228 99 88 77 66\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test Entreprise Updated\",\n  \"phone\": \"+228 99 88 77 66\",\n  \"address\": \"Kara, Togo\"\n}"
+        },
+        "url": "{{base_url}}/api/admin/companies/{{testCompanyId}}"
+      }
+    },
+    {
+      "name": "58. Désactiver une entreprise",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Entreprise désactivée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.active).to.be.false;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/admin/companies/{{testCompanyId}}/deactivate"
+      }
+    },
+    {
+      "name": "59. Réactiver une entreprise",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Entreprise réactivée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.active).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/admin/companies/{{testCompanyId}}/reactivate"
+      }
+    },
+    {
+      "name": "60. Ajouter un utilisateur à une entreprise",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Utilisateur ajouté\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.role).to.eql(\"CLIENT_ADMIN\");",
+              "    pm.expect(json.firstName).to.eql(\"Admin\");",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"testCompanyUserId\", json.id);",
+              "pm.collectionVariables.set(\"testCompanyUserKeycloakId\", json.keycloakUserId);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Admin\",\n  \"lastName\": \"Entreprise\",\n  \"email\": \"admin@test-entreprise.com\",\n  \"phone\": \"+228 90 11 22 33\",\n  \"role\": \"CLIENT_ADMIN\",\n  \"sendEmail\": true\n}"
+        },
+        "url": "{{base_url}}/api/admin/companies/{{testCompanyId}}/users"
+      }
+    },
+    {
+      "name": "61. Lister les utilisateurs d'une entreprise",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Liste retournée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.be.an('array');",
+              "    pm.expect(json.length).to.be.greaterThan(0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/admin/companies/{{testCompanyId}}/users"
+      }
+    },
+    {
+      "name": "62. Modifier le rôle d'un utilisateur entreprise",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Rôle modifié\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.role).to.eql(\"CLIENT_USER\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"CLIENT_USER\"\n}"
+        },
+        "url": "{{base_url}}/api/admin/companies/{{testCompanyId}}/users/{{testCompanyUserId}}"
+      }
+    },
+    {
+      "name": "63. Retirer un utilisateur d'une entreprise",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/admin/companies/{{testCompanyId}}/users/{{testCompanyUserId}}"
+      }
+    },
+    {
+      "name": "64. Inscription publique entreprise (client)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Inscription réussie\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.message).to.not.be.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"companyName\": \"Nouvelle Entreprise\",\n  \"companyEmail\": \"contact@nouvelle-entreprise.com\",\n  \"companyPhone\": \"+228 91 22 33 44\",\n  \"firstName\": \"Super\",\n  \"lastName\": \"Admin\",\n  \"password\": \"NouvelleEntreprise123!\"\n}"
+        },
+        "url": "{{base_url}}/api/auth/register-client"
+      }
+    },
+    {
+      "name": "65. Login CLIENT_ADMIN",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"clientAdminToken\", json.access_token);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "client_id", "value": "{{client_id}}" },
+            { "key": "client_secret", "value": "{{client_secret}}" },
+            { "key": "username", "value": "{{clientAdminUsername}}" },
+            { "key": "password", "value": "{{clientAdminPassword}}" },
+            { "key": "grant_type", "value": "password" }
+          ]
+        },
+        "url": "{{kc_url}}/realms/ng-fields/protocol/openid-connect/token"
+      }
+    },
+    {
+      "name": "66. Batch sync (US-019)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Batch traité\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.totalProcessed).to.eql(2);",
+              "    pm.expect(json.results).to.have.length(2);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"interventions\": [\n    {\n      \"reference\": \"INT-BATCH-001\",\n      \"clientId\": \"{{testClientId}}\",\n      \"localId\": \"batch-local-001\",\n      \"status\": \"CREATED\",\n      \"siteAddress\": \"Lomé, Togo\"\n    },\n    {\n      \"reference\": \"INT-BATCH-002\",\n      \"clientId\": \"{{testClientId}}\",\n      \"localId\": \"batch-local-002\",\n      \"status\": \"IN_PROGRESS\",\n      \"siteAddress\": \"Kara, Togo\"\n    }\n  ]\n}"
+        },
+        "url": "{{base_url}}/api/sync/batch"
+      }
+    },
+    {
+      "name": "67. Dashboard Manager (US-028)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Dashboard complet\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"totalInterventions\");",
+              "    pm.expect(json).to.have.property(\"totalCompleted\");",
+              "    pm.expect(json).to.have.property(\"totalPending\");",
+              "    pm.expect(json).to.have.property(\"countByStatus\");",
+              "    pm.expect(json).to.have.property(\"totalClients\");",
+              "    pm.expect(json).to.have.property(\"totalTechnicians\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{managerToken}}" }
+        ],
+        "url": "{{base_url}}/api/manager/dashboard"
+      }
+    },
+    {
+      "name": "68. Export CSV (US-028)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Content-Type CSV\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/csv\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{managerToken}}" }
+        ],
+        "url": "{{base_url}}/api/manager/export?format=csv"
+      }
+    },
+    {
+      "name": "69. Export HTML (US-028)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Content-Type HTML\", function () {",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{managerToken}}" }
+        ],
+        "url": "{{base_url}}/api/manager/export?format=html"
+      }
+    },
+    {
+      "name": "70. Créer intervention planifiée (US-029)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.collectionVariables.set(\"plannedInterventionId\", json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{managerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reference\": \"INT-PLAN-001\",\n  \"clientId\": \"{{testClientId}}\",\n  \"clientName\": \"NG-STARs SARL\",\n  \"equipmentType\": \"Imprimante HP\",\n  \"siteAddress\": \"Lomé, Togo\",\n  \"siteCity\": \"Lomé\",\n  \"interventionDate\": \"2026-08-01T09:00:00+00:00\"\n}"
+        },
+        "url": "{{base_url}}/api/manager/interventions"
+      }
+    },
+    {
+      "name": "71. Assigner intervention (US-029)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Assignée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.status).to.eql(\"ASSIGNED\");",
+              "    pm.expect(json.assignedTo).to.not.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{managerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"assignedTo\": \"00000000-0000-0000-0000-000000000001\"\n}"
+        },
+        "url": "{{base_url}}/api/manager/interventions/{{plannedInterventionId}}/assign"
+      }
+    },
+    {
+      "name": "72. Planning hebdomadaire technicien (US-029)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Planning retourné\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"technicianId\");",
+              "    pm.expect(json).to.have.property(\"days\");",
+              "    pm.expect(json.days).to.have.length(7);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{managerToken}}" }
+        ],
+        "url": "{{base_url}}/api/manager/technicians/00000000-0000-0000-0000-000000000001/schedule?weekStart=2026-07-20"
+      }
+    },
+    {
+      "name": "73. Lister interventions (manager view) (US-029)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{managerToken}}" }
+        ],
+        "url": "{{base_url}}/api/manager/interventions"
+      }
+    },
+    {
+      "name": "74. Actuator health (US-030)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Health UP\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.status).to.eql(\"UP\");",
+              "    pm.expect(json.components).to.have.property(\"interventionHealth\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/actuator/health"
+      }
+    },
+    {
+      "name": "75. Actuator prometheus metrics (US-030)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Metrics texte\", function () {",
+              "    pm.expect(pm.response.text()).to.include(\"interventions_created\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/actuator/prometheus"
+      }
+    },
+    {
+      "name": "76. SSE stream (US-035)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "url": "{{base_url}}/api/events/stream"
+      }
+    },
+    {
+      "name": "77. SSE connected count (US-035)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Count retourné\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"connected\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/events/connected"
+      }
+    },
+    {
+      "name": "78. Enregistrer push token (US-024/025)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Token enregistré\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.message).to.include(\"enregistré\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"fcm-token-test-abc123\",\n  \"platform\": \"android\"\n}"
+        },
+        "url": "{{base_url}}/api/notifications/push/token"
+      }
+    },
+    {
+      "name": "79. Envoyer notification push (US-024/025)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 202\", function () {",
+              "    pm.response.to.have.status(202);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"00000000-0000-0000-0000-000000000001\",\n  \"title\": \"Nouvelle intervention\",\n  \"body\": \"Vous avez été assigné à une intervention\",\n  \"data\": {\n    \"interventionId\": \"test-id\",\n    \"type\": \"ASSIGNMENT\"\n  }\n}"
+        },
+        "url": "{{base_url}}/api/notifications/push/send"
+      }
+    },
+    {
+      "name": "80. Envoyer email notification (US-030)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 202\", function () {",
+              "    pm.response.to.have.status(202);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"test@ngstars.tg\",\n  \"subject\": \"Test notification\",\n  \"template\": \"intervention-notification\",\n  \"interventionRef\": \"INT-POSTMAN-001\",\n  \"clientName\": \"NG-STARs SARL\",\n  \"equipmentType\": \"Serveur Dell\",\n  \"status\": \"COMPLETED\"\n}"
+        },
+        "url": "{{base_url}}/api/notifications/email"
+      }
+    },
+    {
+      "name": "81. Envoyer rapport email (US-022)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Email envoyé\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.message).to.include(\"Email sent\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"rapport@ngstars.tg\"\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/send-email"
+      }
+    },
+    {
+      "name": "82. Interventions client portal (US-041)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Page retournée\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"content\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{clientAdminToken}}" }
+        ],
+        "url": "{{base_url}}/api/client/interventions?page=0&size=20"
+      }
+    },
+    {
+      "name": "83. Détail intervention client portal (US-041)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{clientAdminToken}}" }
+        ],
+        "url": "{{base_url}}/api/client/interventions/{{testInterventionId}}"
+      }
+    },
+    {
+      "name": "84. Stats client portal (US-041)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Stats retournées\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"totalInterventions\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{clientAdminToken}}" }
+        ],
+        "url": "{{base_url}}/api/client/interventions/stats"
+      }
+    },
+    {
+      "name": "85. Dashboard client (US-043)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Dashboard client\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"totalInterventions\");",
+              "    pm.expect(json).to.have.property(\"countByStatus\");",
+              "    pm.expect(json).to.have.property(\"totalClients\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{clientAdminToken}}" }
+        ],
+        "url": "{{base_url}}/api/client/dashboard"
+      }
+    },
+    {
+      "name": "86. Stats interventions (US-018)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"KPIs retournés\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property(\"totalInterventions\");",
+              "    pm.expect(json).to.have.property(\"countByStatus\");",
+              "    pm.expect(json).to.have.property(\"averageDurationMinutes\");",
+              "    pm.expect(json).to.have.property(\"estimatedRevenue\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/stats"
+      }
+    },
+    {
+      "name": "87. Modifier GPS (US-020)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"GPS mis à jour\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.gpsLatitude).to.eql(6.1319);",
+              "    pm.expect(json.gpsLongitude).to.eql(1.2228);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"gpsLatitude\": 6.1319,\n  \"gpsLongitude\": 1.2228\n}"
+        },
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}"
+      }
+    },
+    {
+      "name": "88. Changer mot de passe (US-038)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{userToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currentPassword\": \"InscritPass123!\",\n  \"newPassword\": \"NewPass456!\"\n}"
+        },
+        "url": "{{base_url}}/api/users/me/change-password"
+      }
+    },
+    {
+      "name": "89. Supprimer item (US-013)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Item supprimé\", function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json.items.length).to.eql(0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{technicianToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}/items/{{testInterventionItemId}}"
+      }
+    },
+    {
+      "name": "90. Supprimer intervention (US-011)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+        ],
+        "url": "{{base_url}}/api/interventions/{{testInterventionId}}"
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080" },
+    { "key": "kc_url", "value": "http://localhost:8088" },
+    { "key": "client_id", "value": "ng-fields-backend" },
+    { "key": "client_secret", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "managerToken", "value": "" },
+    { "key": "technicianToken", "value": "" },
+    { "key": "userToken", "value": "" },
+    { "key": "clientAdminToken", "value": "" },
+    { "key": "testClientId", "value": "" },
+    { "key": "testClientRef", "value": "" },
+    { "key": "testUserId", "value": "" },
+    { "key": "testUserKeycloakId", "value": "" },
+    { "key": "testFilename", "value": "" },
+    { "key": "testFilenameBase64", "value": "" },
+    { "key": "testInterventionId", "value": "" },
+    { "key": "testInterventionItemId", "value": "" },
+    { "key": "testCompanyId", "value": "" },
+    { "key": "testCompanySlug", "value": "" },
+    { "key": "testCompanyUserId", "value": "" },
+    { "key": "testCompanyUserKeycloakId", "value": "" },
+    { "key": "plannedInterventionId", "value": "" }
+  ]
+}

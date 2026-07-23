@@ -27,24 +27,24 @@ Tous les appels clients passent par le **Gateway** (Spring Cloud Gateway WebFlux
 
 | Couche | Technologie | Version | Usage |
 |--------|-------------|---------|-------|
-| Backend | Spring Boot | 4.1.0 | API REST (5 microservices) |
+| Backend | Spring Boot | 4.1.0 | API REST (7 microservices + shared-lib) |
 | Gateway | Spring Cloud Gateway | 2025.1.2 | Routage, auth, rate limiting |
 | Langage backend | Java | 25 | — |
 | Build | Maven | Wrapper | — |
 | ORM | Spring Data JPA + Hibernate | — | Persistance |
-| Auth | Keycloak (OAuth2/OIDC) | 26.0.9 | SSO + RBAC |
+| Auth | Keycloak (OAuth2/OIDC) | 26.6.4 | SSO + RBAC |
 | API Docs | SpringDoc OpenAPI | 3.0.3 | Swagger UI |
 | PDF | OpenPDF | 1.4.1 | Génération rapports |
 | QR Code | ZXing | 3.5.3 | QR dans les PDF |
 | Base de données | PostgreSQL | 18 | Principale |
 | Migrations | Flyway | — | Versioning schéma |
 | Cache / Rate Limiting | Redis | 7+ | Gateway |
-| Mobile | Flutter | 3.x | App terrain |
-| Langage mobile | Dart | 3.x | — |
+| Mobile | Flutter | 3.x | App terrain (**Non démarré**) |
+| Langage mobile | Dart | 3.x | — (**Non démarré**) |
 | State management | Riverpod | — | Flutter |
 | Navigation | GoRouter | — | Flutter |
 | Base locale | Drift (SQLite) | — | Mode hors-ligne |
-| Web | Angular | 18+ | Dashboard manager |
+| Web | Angular | 22+ | Dashboard manager |
 | CI/CD | GitHub Actions | — | Pipeline |
 | Monitoring | Sentry | free | Errors |
 
@@ -59,8 +59,10 @@ Tous les appels clients passent par le **Gateway** (Spring Cloud Gateway WebFlux
 | client-service | 8082 | Spring Boot MVC | PostgreSQL (schema `client`) |
 | intervention-service | 8083 | Spring Boot MVC | PostgreSQL (schema `intervention`), media-service, OpenPDF |
 | media-service | 8084 | Spring Boot MVC | Filesystem (`./uploads`) |
+| notification-service | 8085 | Spring Boot MVC | SMTP (Thymeleaf templates) |
+| report-service | 8086 | Spring Boot MVC | intervention-service (REST), OpenPDF |
 
-Les tests d'intégration (`@SpringBootTest`) ont été supprimés — la couverture est assurée par la collection Postman.
+Les tests sont à implémenter — couverture assurée par la collection Postman en attendant.
 
 ---
 
@@ -73,15 +75,13 @@ Les tests d'intégration (`@SpringBootTest`) ont été supprimés — la couvert
 | Build | Maven |
 | ORM | Spring Data JPA + Hibernate |
 | Auth | Spring Security + OAuth2 Resource Server |
-| Gateway | Spring Cloud Gateway WebFlux + CircuitBreaker |
+| Gateway | Spring Cloud Gateway WebFlux + CircuitBreaker + GlobalExceptionHandler (RFC 7807) |
 | Migrations | Flyway |
 | Validation | Jakarta Validation + Hibernate Validator |
 | Documentation | SpringDoc OpenAPI (Swagger) 3.0.3 |
 | PDF | OpenPDF + ZXing |
 | Cache / Rate Limiting | Redis (Spring Data Redis Reactive) |
 | Email | Spring Mail (JavaMail) |
-| WhatsApp | Meta Cloud API |
-| OpenProject | API REST v3 |
 | Logs | Logback |
 
 ---
@@ -128,4 +128,4 @@ Les tests d'intégration (`@SpringBootTest`) ont été supprimés — la couvert
 
 ---
 
-_Version 3.0 — 03/07/2026_
+_Version 4.0 — 21/07/2026_

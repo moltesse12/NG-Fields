@@ -16,11 +16,26 @@ spring:
     timeout-per-shutdown-phase: 30s
   config:
     import: optional:file:${ENV_FILE:./.env}[.properties]
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8088/realms/ng-fields}
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ng_fields}?currentSchema=reports&sslmode=${DB_SSLMODE:prefer}
+    username: ${DB_USER:ng_fields_user}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 10000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      pool-name: report-service-hikari-pool
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: reports
+
 
 intervention-service:
   url: ${INTERVENTION_SERVICE_URL:http://localhost:8083}

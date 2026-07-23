@@ -6,10 +6,8 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -68,25 +66,6 @@ public class GlobalExceptionHandler {
         var problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
         problem.setTitle("Forbidden");
         problem.setDetail("Access denied");
-        problem.setType(URI.create("about:blank"));
-        return problem;
-    }
-
-    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ProblemDetail handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        problem.setTitle("Conflict");
-        problem.setDetail("Ce document a été modifié par un autre utilisateur. Veuillez recharger la page.");
-        problem.setType(URI.create("about:blank"));
-        return problem;
-    }
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ProblemDetail handleDataIntegrity(DataIntegrityViolationException ex) {
-        log.error("Data integrity violation", ex);
-        var problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        problem.setTitle("Conflict");
-        problem.setDetail("Violation de contrainte de données. L'opération ne peut pas être effectuée.");
         problem.setType(URI.create("about:blank"));
         return problem;
     }

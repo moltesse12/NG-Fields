@@ -178,7 +178,7 @@ Implémenté via `@PreAuthorize` sur chaque méthode du controller.
 2. Exécuter "20. Créer un client (ADMIN)" → 201 + référence CLT-XXXX
 3. Exécuter "21. Lister les clients (paginé)" → page avec contenu
 4. Exécuter "23. Détail d'un client" → 200
-5. Exécuter "26. Créer client (CLIENT_PORTAL — 403)" → 403
+5. Exécuter "26. Créer client (CLIENT_USER — 403)" → 403
 
 ---
 
@@ -192,7 +192,7 @@ Implémenté via `@PreAuthorize` sur chaque méthode du controller.
 | Détail | `GET /api/clients/{id}` → 200 |
 | Modification | `PUT /api/clients/{id}` → champs mis à jour |
 | Désactivation | `DELETE /api/clients/{id}` → 204, active = false |
-| RBAC | CLIENT_PORTAL → 403 sur POST/PUT/DELETE |
+| RBAC | CLIENT_USER → 403 sur POST/PUT/DELETE |
 
 ---
 
