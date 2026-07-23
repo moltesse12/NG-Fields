@@ -1,41 +1,42 @@
 # Deployment
 
+**Mis à jour :** 23/07/2026
+
 ## Development Setup
 
 ### Prerequisites
 - Java 25
 - Maven 3.9+
-- Docker & Docker Compose
 - PostgreSQL 18+
 - Redis 7+
 - Keycloak 26.6.4
 
 ### Quick Start
 
-1. Start infrastructure:
+1. Create the database:
+```sql
+CREATE USER ng_fields_user WITH PASSWORD 'Pg_ng-fields1234';
+CREATE DATABASE ng_fields OWNER ng_fields_user;
+```
+
+2. Start Keycloak:
 ```bash
-docker compose up -d
-```
-This starts PostgreSQL, Redis, and Keycloak on their default ports.
-
-2. Create the Keycloak realm:
-```
-Access Keycloak Admin Console at http://localhost:8088
-Import the realm configuration (or create manually)
-Realm: ng-fields
-Client: ng-fields-backend (confidential, service account enabled)
+cd keycloak-26.6.4/bin
+./kc.bat start-dev --http-port=8088
 ```
 
-3. Build all services:
+3. Import realm: `Doc/infra/keycloak/realm-export.json`
+
+4. Build all services:
 ```bash
 cd Backend
-# Build shared-lib first (required by all services)
+# Build shared-lib first
 cd shared-lib && mvn clean install -q && cd ..
 # Build all services
 mvn clean install
 ```
 
-4. Run services (each in a separate terminal):
+5. Run services (each in a separate terminal):
 ```bash
 # Gateway (port 8080)
 cd gateway-service && mvn spring-boot:run
@@ -58,6 +59,8 @@ cd notification-service && mvn spring-boot:run
 # Report (port 8086)
 cd report-service && mvn spring-boot:run
 ```
+
+**Note:** Schema is managed by Hibernate `ddl-auto: update` — no migration scripts needed.
 
 ### Service Ports
 
@@ -124,32 +127,9 @@ GitHub Actions workflow (`.github/workflows/backend.yml`):
 
 ---
 
-## Docker Compose (Infrastructure)
+### Schema Management
 
-```yaml
-# docker-compose.yml at Backend root
-version: '3.8'
-services:
-  postgres:
-    image: postgres:18-alpine
-    ports: ["5432:5432"]
-    environment:
-      POSTGRES_DB: ngfields
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.6.4
-    ports: ["8088:8080"]
-    command: start-dev
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-```
+Schema is managed by **Hibernate `ddl-auto: update`**. Tables are created automatically at the first startup. No migration scripts needed.
 
 ---
 

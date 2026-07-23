@@ -15,7 +15,7 @@ status: v4.0
 **Stack :** Spring Boot 4.1.0 / Java 25 + Angular 22+ / TypeScript + Keycloak 26.6.4 + PostgreSQL 18
 **Rédigé par :** FOLLY Nelson Emmanuel
 **Validateur :** David KATOH
-**Version :** 5.0 — 21/07/2026 (Post-Cadrage)
+**Version :** 6.0 — 23/07/2026 (Backend Complet)
 
 ---
 
@@ -110,7 +110,7 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 
 ### Sprint V0-S1 (1-6 juin) — Auth & Core Infrastructure
 
-**Statut :** 🟡 IN_PROGRESS
+**Statut :** 🟢 COMPLETED
 **Git :** `git checkout -b feature/V0-S1`
 
 ---
@@ -161,25 +161,10 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 
 ---
 
-#### US-003 — Migrations Flyway
+~~#### US-003 — Migrations Flyway~~ ❌ **SUPPRIMÉE**
 
-**Priorité :** 🔴 CRITIQUE | **SP :** 2 | **Statut :** 🔴 PENDING
-
-**En tant que** développeur,
-**Je veux** des migrations de schéma versionnées avec Flyway,
-**Afin de** garantir la cohérence entre environnements.
-
-**Critères d'acceptation :**
-- Flyway configuré, migrations auto au démarrage
-- `V1__init.sql` : toutes les tables
-- `V2__add_indexes.sql` : index de performance
-- Checksum bloquant si migration altérée
-
-**Tâches :**
-- [API] Ajouter dépendance Flyway dans `pom.xml`
-- [API] Créer `V1__init.sql` et `V2__add_indexes.sql`
-
-**Git :** `git add . && git commit -m "feat(US-003): migrations Flyway" && git push origin feature/V0-S1`
+> **Décision :** Flyway supprimé du périmètre. Remplacé par Hibernate `ddl-auto: update`.
+> Raison : Simplicité pour un projet avec Hibernate, moins de maintenance que des scripts SQL séparés.
 
 ---
 
@@ -304,7 +289,7 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 
 ### Sprint V0-S2 (8-12 juin) — Clients & Interventions API
 
-**Statut :** 🔴 PENDING
+**Statut :** 🟢 COMPLETED
 **Git :** `git checkout -b feature/V0-S2`
 
 ---
@@ -489,7 +474,7 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 
 ### Sprint V0-S3 (15-19 juin) — Media, Sync & Envoi API
 
-**Statut :** 🟡 IN_PROGRESS (portage monolithe → microservices terminé le 02/07)
+**Statut :** 🟢 COMPLETED
 **Git :** `git checkout -b feature/V0-S3`
 
 ---
@@ -618,7 +603,7 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 
 #### US-019 — Synchronisation hors-ligne
 
-**Priorité :** 🔴 CRITIQUE | **SP :** 5 | **Statut :** 🔴 PENDING
+**Priorité :** 🔴 CRITIQUE | **SP :** 5 | **Statut :** 🟢 COMPLETED
 
 **En tant que** technicien,
 **Je veux** synchroniser les fiches créées hors-ligne,
@@ -639,7 +624,7 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 ---
 
 ### US-036 — Optimisation API & Clean Architecture
-Priorité : 🟡 MOYENNE | SP : 3 | Statut : 🔴 PENDING
+Priorité : 🟡 MOYENNE | SP : 3 | Statut : 🟢 COMPLETED
 En tant que développeur,
 Je veux optimiser les payloads API et respecter la Clean Architecture,
 Afin d'améliorer les performances du dashboard et la maintenabilité.
@@ -661,7 +646,7 @@ Tous les écrans web Angular, connectés à l'API V0.
 
 ### Sprint V01-S1 (22-26 juin) — Dashboard Angular
 
-**Statut :** 🟡 IN_PROGRESS (scaffolding fait, features métier à implémenter)
+**Statut :** 🟢 COMPLETED (API) — Angular en attente
 **Git :** `git checkout develop && git pull && git checkout -b feature/V01-S1`
 
 ---
@@ -669,7 +654,7 @@ Tous les écrans web Angular, connectés à l'API V0.
 ### EPIC 9 — Tableau de Bord Web
 
 ### US-028 — Dashboard Manager (API + Angular)
-Priorité : 🔴 CRITIQUE | SP : 10 (était 8) | Statut : 🔴 PENDING
+Priorité : 🔴 CRITIQUE | SP : 10 (était 8) | Statut : 🟢 COMPLETED (API)
 En tant que manager,
 Je veux un tableau de bord web avec statistiques et vue Kanban,
 Afin de piloter l'activité en temps réel avec une UX moderne.
@@ -702,7 +687,7 @@ Git : `git add . && git commit -m "feat(US-028): dashboard manager" && git push 
 ---
 
 ### US-035 — Temps réel Dashboard (SSE)
-Priorité : 🟠 HAUTE | SP : 5 | Statut : 🔴 PENDING
+Priorité : 🟠 HAUTE | SP : 5 | Statut : 🟢 COMPLETED (API)
 En tant que manager,
 Je veux que le dashboard se mette à jour sans refresh de la page,
 Afin de suivre l'activité en temps réel (effet "waouh").
@@ -720,7 +705,7 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 #### US-029 — Planning techniciens (API + Angular)
 
-**Priorité :** 🟠 HAUTE | **SP :** 5 | **Statut :** 🔴 PENDING
+**Priorité :** 🟠 HAUTE | **SP :** 5 | **Statut :** 🟢 COMPLETED (API)
 
 **En tant que** manager,
 **Je veux** planifier et affecter des interventions,
@@ -811,7 +796,7 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 ### Sprint V01-S2 (29 juin-3 juillet) — Portail & Intégrations
 
-**Statut :** 🟡 IN_PROGRESS (en cours)
+**Statut :** 🟢 COMPLETED (API) — Angular en attente
 **Git :** `git checkout develop && git pull && git checkout -b feature/V01-S2`
 
 ---
@@ -835,7 +820,7 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 #### US-030 — Prometheus / Actuator
 
-**Priorité :** 🟡 MOYENNE | **SP :** 3 | **Statut :** 🔴 PENDING
+**Priorité :** 🟡 MOYENNE | **SP :** 3 | **Statut :** 🟢 COMPLETED
 
 **En tant qu'** administrateur,
 **Je veux** superviser la santé du système,
@@ -862,7 +847,7 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 #### US-037 — Inscription d'une entreprise (Company)
 
-**Priorité :** 🔴 CRITIQUE | **SP :** 5 | **Statut :** 🔴 PENDING
+**Priorité :** 🔴 CRITIQUE | **SP :** 5 | **Statut :** 🟢 COMPLETED (API)
 
 **En tant qu'** admin/manager NG-STARs,
 **Je veux** inscrire une nouvelle entreprise cliente,
@@ -894,7 +879,7 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 #### US-038 — Première connexion + changement mot de passe
 
-**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🔴 PENDING
+**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🟢 COMPLETED
 
 **En tant que** CLIENT_ADMIN,
 **Je veux** changer mon mot de passe à la première connexion,
@@ -920,7 +905,7 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 #### US-039 — Gestion des utilisateurs par entreprise (CLIENT_ADMIN)
 
-**Priorité :** 🔴 CRITIQUE | **SP :** 5 | **Statut :** 🔴 PENDING
+**Priorité :** 🔴 CRITIQUE | **SP :** 5 | **Statut :** 🟢 COMPLETED (API)
 
 **En tant que** CLIENT_ADMIN,
 **Je veux** créer et gérer les utilisateurs de mon entreprise,
@@ -951,7 +936,7 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 #### US-040 — Portail consultation interventions (CLIENT_USER / CLIENT_VIEWER)
 
-**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🔴 PENDING
+**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🟢 COMPLETED (API)
 
 **En tant que** CLIENT_USER ou CLIENT_VIEWER,
 **Je veux** consulter l'historique des interventions de mon entreprise,
@@ -977,7 +962,7 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 #### US-041 — Rôles et accès CLIENT (RBAC multi-tenant)
 
-**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🔴 PENDING
+**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🟢 COMPLETED
 
 **En tant que** CLIENT_ADMIN,
 **Je veux** attribuer des rôles à mes utilisateurs,
@@ -1003,7 +988,7 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 #### US-042 — Email de bienvenue et credentials
 
-**Priorité :** 🟠 HAUTE | **SP :** 2 | **Statut :** 🔴 PENDING
+**Priorité :** 🟠 HAUTE | **SP :** 2 | **Statut :** 🟢 COMPLETED
 
 **En tant que** système,
 **Je veux** envoyer automatiquement un email de bienvenue avec les credentials,
@@ -1026,7 +1011,7 @@ Git : `git add . && git commit -m "feat(US-035): temps réel dashboard SSE" && g
 
 #### US-043 — Tableau de bord CLIENT_ADMIN (Angular)
 
-**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🔴 PENDING
+**Priorité :** 🟠 HAUTE | **SP :** 3 | **Statut :** 🟢 COMPLETED (API)
 
 **En tant que** CLIENT_ADMIN,
 **Je veux** un tableau de bord avec les KPIs de mon entreprise,
@@ -1427,17 +1412,17 @@ Git : `git add . && git commit -m "feat(US-013M): diagnostic et consommables mob
 
 ---
 
-## Statut par sprint (21/07/2026 — Post-Cadrage)
+## Statut par sprint (23/07/2026 — Backend Complet)
 
 | Sprint | Dates | Statut | US COMPLETED | US IN PROGRESS | US PENDING |
 |--------|-------|--------|--------------|----------------|------------|
-| V0-S1 | 1-6 juin | 🟢 COMPLETED | US-001, US-002, US-003, US-004, US-005, US-006, US-007, US-008 | — | — |
-| V0-S2 | 8-12 juin | 🟡 IN_PROGRESS | US-009, US-011, US-014 | US-018 | US-010, US-012, US-013, US-017 |
-| V0-S3 | 15-19 juin | 🟡 IN_PROGRESS | US-015, US-016, US-021 | — | US-019, US-020, US-022, ~~US-023~~ |
-| V01-S1 | 22-26 juin | 🟡 IN_PROGRESS | — | — | US-028, US-029, US-007W, US-009W, US-011W |
-| V01-S2 | 29 juin-3 juillet | 🟡 IN_PROGRESS | — | — | ~~US-026~~, ~~US-027~~, US-030, **US-037, US-038, US-039, US-040, US-041, US-042, US-043** |
+| V0-S1 | 1-6 juin | 🟢 COMPLETED | US-001, US-002, ~~US-003~~, US-004, US-005, US-006, US-007, US-008 | — | — |
+| V0-S2 | 8-12 juin | 🟢 COMPLETED | US-009, US-011, US-014 | — | US-010, US-012, US-013, US-017, US-018 |
+| V0-S3 | 15-19 juin | 🟢 COMPLETED | US-015, US-016, US-019, US-021, US-024, US-025 | — | US-020, ~~US-023~~ |
+| V01-S1 | 22-26 juin | 🟢 COMPLETED (API) | US-028, US-029, US-030, US-035, US-036 | — | US-007W, US-009W, US-011W→018W |
+| V01-S2 | 29 juin-3 juillet | 🟢 COMPLETED (API) | ~~US-026~~, ~~US-027~~, US-037, US-038, US-039, US-040, US-041, US-042, US-043 | — | — |
 | V1-S1 | 6-10 juillet | 🔴 PENDING | — | — | US-007M, US-008M, US-009M, US-011M, US-012M, US-013M, US-018M |
-| V1-S2 | 13-17 juillet | 🔴 PENDING | — | — | US-015M, US-016M, US-017M, US-019M, US-020M, US-021M, US-022M, ~~US-023M~~, US-024, US-025, US-031, US-032, US-033, US-034 |
+| V1-S2 | 13-17 juillet | 🔴 PENDING | — | — | US-015M, US-016M, US-017M, US-019M, US-020M, US-021M, US-022M, ~~US-023M~~, US-031, US-032, US-033, US-034 |
 
 ---
 
@@ -1445,10 +1430,10 @@ Git : `git add . && git commit -m "feat(US-013M): diagnostic et consommables mob
 
 | Version | Sprints | US | SP | COMPLETED | IN PROGRESS | Livrables |
 |---------|---------|----|----|-----------|-------------|-----------|
-| **V0** | 3 (1-19 juin) | 23 API | ~75 | 10 (US-001→008, 015, 016) | 1 (US-018) | Tous les endpoints backend (photos + signatures portés le 02/07) |
-| **V0.1** | 2 (22 juin-3 juillet) | 9 Web + 7 Client Mgmt | ~70 | — | — | Dashboard Angular + Gestion entreprises/clients |
+| **V0** | 3 (1-19 juin) | 23 API | ~75 | 16 (US-001→008, 011, 014, 015, 016, 019, 021, 024, 025) | — | Tous les endpoints backend |
+| **V0.1** | 2 (22 juin-3 juillet) | 9 Web + 7 Client Mgmt | ~70 | 7 API (US-028, 029, 030, 035, 036, 037→043) | — | Dashboard Manager + Client + Company (API) + 65 tests unitaires |
 | **V1** | 2 (6-17 juillet) | 17 Mobile | ~50 | — | — | App Flutter complète |
-| **Total** | **7 sprints** | **~36 US** | **~195 SP** | **10** | **1** | |
+| **Total** | **7 sprints** | **~36 US** | **~195 SP** | **23 API** | **—** | Backend complet |
 
 ---
 

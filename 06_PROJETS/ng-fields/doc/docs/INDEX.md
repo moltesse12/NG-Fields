@@ -1,6 +1,6 @@
 # Documentation Projet NG-Fields
 
-**Mis à jour :** 21/07/2026 (Post-Cadrage)
+**Mis à jour :** 23/07/2026 (Backend Complet)
 
 ## Structure
 

@@ -54,12 +54,20 @@ NG-STARs utilise actuellement une fiche d'intervention papier (FI-01-2025) de 3 
 | Signature numérique (Client + Technicien + Responsable) | 🔴 Obligatoire | ✅ Implémenté |
 | Photos (3-5 par intervention) | 🟠 Important | ✅ Implémenté |
 | GPS/Localisation | 🟠 Important | ✅ Implémenté |
-| Mode hors-ligne | 🟡 Souhaitable | 📅 Planifié |
+| Mode hors-ligne | 🟡 Souhaitable | ✅ Implémenté (API batch sync) |
 | Envoi email avec PDF | 🔴 Obligatoire | ✅ Implémenté |
 | Génération PDF (logo, photos, signature, QR code) | 🔴 Obligatoire | ✅ Implémenté |
-| Dashboard manager | 🟡 Souhaitable | ✅ Implémenté (Angular 22+) |
+| Dashboard manager | 🟡 Souhaitable | ✅ Implémenté (API + Angular 22+) |
 | Gestion clients avec historique | 🟠 Important | ✅ Implémenté |
 | RGPD | 🔴 Obligatoire | ✅ Implémenté |
+| Gestion entreprises multi-tenant | 🟠 Important | ✅ Implémenté (API) |
+| RBAC CLIENT (CLIENT_ADMIN/USER/VIEWER) | 🟠 Important | ✅ Implémenté |
+| Notifications push Firebase | 🟠 Important | ✅ Implémenté (conditional) |
+| SSE Real-time Dashboard | 🟡 Souhaitable | ✅ Implémenté (API) |
+| Planning techniciens | 🟠 Important | ✅ Implémenté (API) |
+| Actuator + Métriques + Logs JSON | 🟡 Souhaitable | ✅ Implémenté |
+| Tests unitaires (65 tests) | 🔴 Obligatoire | ✅ Implémenté |
+| Clean Architecture (DTOs projection) | 🟡 Souhaitable | ✅ Implémenté |
 
 ## 👥 Parties Prenantes
 

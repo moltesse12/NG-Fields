@@ -34,7 +34,7 @@ CREATE USER ng_fields_user WITH PASSWORD '${DB_PASSWORD}';
 CREATE DATABASE ng_fields OWNER ng_fields_user;
 ```
 
-Les schémas (`auth`, `client`, `intervention`) sont créés automatiquement par Flyway au premier démarrage de chaque service.
+Les schémas (`auth`, `client`, `intervention`) sont créés automatiquement par Hibernate `ddl-auto: update` au premier démarrage de chaque service.
 
 ---
 
@@ -159,15 +159,15 @@ http://localhost:8080/api/reports/v3/api-docs
 
 ## 9. Postman
 
-La collection de test se trouve dans `doc/docs/tests/` :
+La collection de test se trouve dans `Backend/postman/` :
 
 ```bash
-postman-collection.json    # 32 requêtes couvrant auth, clients, media
-postman-environment.json   # Variables d'environnement (base_url, kc_url, credentials)
+NG-Fields API.postman_collection.json    # 90 requêtes couvrant tous les US
+NG-Fields Dev.postman_environment.json   # Variables d'environnement (base_url, kc_url, credentials)
 ```
 
 Importer les deux fichiers dans Postman. Les tokens sont récupérés automatiquement par les requêtes Login.
 
 ---
 
-_Version 4.0 — 21/07/2026_
+_Version 5.0 — 23/07/2026 (Backend Complet)_

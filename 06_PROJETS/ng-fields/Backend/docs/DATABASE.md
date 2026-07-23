@@ -1,6 +1,8 @@
 # Database Schema
 
-NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its schema.
+**Mis à jour :** 23/07/2026
+
+NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its schema. Schema management is via **Hibernate `ddl-auto: update`** (no Flyway).
 
 ## Schema: `auth`
 
@@ -223,15 +225,17 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 
 ---
 
-## Flyway Migrations
+## Schema Management
 
-Each service uses Flyway for schema management. Migrations are in `src/main/resources/db/migration/`.
+The schema is managed by **Hibernate `ddl-auto: update`**. Tables are created automatically at the first startup of each service.
 
-| Service | Versions | Description |
-|---------|----------|-------------|
-| auth-service | V1-V4 | Users, audit logs, optimistic locking, **companies + company_users + company_access_log** |
-| client-service | V1-V5 | Clients, reference sequence, trigram index, version, contacts |
-| intervention-service | V1-V6 | Interventions, items, indexes, **suppression facturation** |
-| media-service | V1-V3 | Media files |
-| notification-service | V1-V2 | Email logs |
-| report-service | V1-V2 | Report requests |
+| Service | Tables |
+|---------|--------|
+| auth-service | users, audit_logs, companies, company_users, company_access_log |
+| client-service | clients, contacts |
+| intervention-service | interventions, intervention_items, intervention_photos |
+| media-service | media_files |
+| notification-service | email_logs |
+| report-service | report_requests |
+
+Flyway has been removed from the project scope (decision: simplicity with Hibernate).
