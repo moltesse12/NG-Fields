@@ -1,6 +1,8 @@
 -- V1__init.sql - Auth Service schema
 -- Flyway baseline migration
 
+CREATE SCHEMA IF NOT EXISTS auth;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE users (

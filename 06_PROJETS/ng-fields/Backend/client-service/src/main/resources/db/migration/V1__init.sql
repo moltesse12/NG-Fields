@@ -1,6 +1,8 @@
 -- V1__init.sql - Client Service schema
 -- Flyway baseline migration
 
+CREATE SCHEMA IF NOT EXISTS client;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE clients (

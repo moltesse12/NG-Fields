@@ -1,6 +1,8 @@
 -- V1__init.sql - Intervention Service schema
 -- Flyway baseline migration
 
+CREATE SCHEMA IF NOT EXISTS intervention;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE interventions (

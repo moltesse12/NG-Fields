@@ -1,6 +1,8 @@
 -- V1__init.sql - Report Service schema
 -- Flyway baseline migration
 
+CREATE SCHEMA IF NOT EXISTS reports;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE pdf_templates (
