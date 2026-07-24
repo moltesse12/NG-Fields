@@ -51,7 +51,7 @@ spring:
                 name: myCircuitBreaker
                 fallbackUri: forward:/fallback
 
-        - id: auth-admin
+        - id: auth-admin-users
           uri: ${AUTH_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/admin/users/**
@@ -67,10 +67,26 @@ spring:
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@userKeyResolver}"
 
+        - id: auth-admin-companies
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/admin/companies/**
+          filters:
+            - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+
         - id: auth-me
           uri: ${AUTH_SERVICE_URL:http://localhost:8081}
           predicates:
-            - Path=/api/users/me
+            - Path=/api/users/me/**
           filters:
             - StripPrefix=0
             - name: CircuitBreaker
@@ -110,17 +126,48 @@ spring:
                 redis-rate-limiter.burstCapacity: 60
                 key-resolver: "#{@userKeyResolver}"
 
-        - id: intervention-sync
+        - id: intervention-manager
           uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
           predicates:
-            - Path=/api/interventions/sync/**
-            - Method=POST
+            - Path=/api/manager/**
           filters:
             - StripPrefix=0
             - name: CircuitBreaker
               args:
                 name: myCircuitBreaker
                 fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 60
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: intervention-events
+          uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/events/**
+          filters:
+            - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
+
+        - id: intervention-client
+          uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/client/**
+          filters:
+            - StripPrefix=0
+            - name: CircuitBreaker
+              args:
+                name: myCircuitBreaker
+                fallbackUri: forward:/fallback
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
 
         - id: sync-service
           uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
@@ -234,12 +281,6 @@ resilience4j:
     configs:
       default:
         timeout-duration: 5s
-
-sentry:
-  dsn: ${SENTRY_DSN:}
-  environment: ${SPRING_PROFILES_ACTIVE:dev}
-  traces-sample-rate: 0.2
-  enable-tracing: true
 
 management:
   endpoints:

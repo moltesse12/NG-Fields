@@ -26,6 +26,9 @@ CREATE TABLE clients (
 );
 
 CREATE INDEX idx_clients_company_name ON clients(company_name);
+CREATE INDEX idx_clients_email ON clients(email);
+CREATE INDEX idx_clients_active ON clients(active);
+CREATE INDEX idx_clients_company_id ON clients(company_name);
 
 CREATE TABLE contacts (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

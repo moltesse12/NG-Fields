@@ -64,6 +64,14 @@ spring:
     port: ${SMTP_PORT:1025}
     username: ${SMTP_USER:}
     password: ${SMTP_PASSWORD:}
+  task:
+    execution:
+      pool:
+        core-size: 2
+        max-size: 5
+        queue-capacity: 10
+        keep-alive: 60s
+      thread-name-prefix: async-email-
 
 media-service:
   url: ${MEDIA_SERVICE_URL:http://localhost:8084}
@@ -77,12 +85,6 @@ springdoc:
   swagger-ui:
     enabled: false
     path: /swagger-ui.html
-
-sentry:
-  dsn: ${SENTRY_DSN:}
-  environment: ${SPRING_PROFILES_ACTIVE:dev}
-  traces-sample-rate: 0.2
-  enable-tracing: true
 
 management:
   endpoints:
