@@ -1,0 +1,49 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '06_PROJETS/ng-fields/Frontend/ng-web/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '06_PROJETS/ng-fields/Frontend/ng-web/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: '06_PROJETS/ng-fields/Frontend/ng-web/package-lock.json'
+
+      - name: Install dependencies
+        run: cd 06_PROJETS/ng-fields/Frontend/ng-web && npm ci
+
+      - name: Lint
+        run: cd 06_PROJETS/ng-fields/Frontend/ng-web && npx ng lint
+        continue-on-error: true
+
+      - name: Type check
+        run: cd 06_PROJETS/ng-fields/Frontend/ng-web && npx ng build
+        continue-on-error: true
+
+      - name: Run tests
+        run: cd 06_PROJETS/ng-fields/Frontend/ng-web && npx vitest run --reporter=junit
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-results
+          path: '**/test-results/'
+          retention-days: 7

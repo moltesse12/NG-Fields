@@ -49,4 +49,8 @@ export class UserService {
   updateMe(req: UpdateProfileRequest): Observable<UserResponse> {
     return this.api.put<UserResponse>('/users/me', req);
   }
+
+  changePassword(oldPassword: string, newPassword: string): Observable<{ message: string }> {
+    return this.api.post<{ message: string }>('/users/me/change-password', { oldPassword, newPassword });
+  }
 }

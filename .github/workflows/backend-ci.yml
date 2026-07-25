@@ -1,0 +1,78 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '06_PROJETS/ng-fields/Backend/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '06_PROJETS/ng-fields/Backend/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: ['21']
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: ng_fields
+          POSTGRES_USER: ng_fields_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Create PostgreSQL schemas
+        run: |
+          PGPASSWORD=test_password psql -h localhost -U ng_fields_user -d ng_fields -c "CREATE SCHEMA IF NOT EXISTS auth;"
+          PGPASSWORD=test_password psql -h localhost -U ng_fields_user -d ng_fields -c "CREATE SCHEMA IF NOT EXISTS client;"
+          PGPASSWORD=test_password psql -h localhost -U ng_fields_user -d ng_fields -c "CREATE SCHEMA IF NOT EXISTS intervention;"
+          PGPASSWORD=test_password psql -h localhost -U ng_fields_user -d ng_fields -c "CREATE SCHEMA IF NOT EXISTS reports;"
+
+      - name: Build shared-lib
+        run: cd 06_PROJETS/ng-fields/Backend/shared-lib && mvn install -q -DskipTests
+
+      - name: Build all services
+        run: cd 06_PROJETS/ng-fields/Backend && mvn compile -q
+
+      - name: Run unit tests
+        run: cd 06_PROJETS/ng-fields/Backend && mvn test -q
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: ng_fields
+          DB_USER: ng_fields_user
+          DB_PASSWORD: test_password
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/target/surefire-reports/'
+          retention-days: 7

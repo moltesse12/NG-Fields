@@ -1,6 +1,7 @@
-import { Component, signal , ChangeDetectionStrategy } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconComponent } from '../../../../shared/ui/icon/icon.component';
+import { UserService } from '../../../../core/services/user.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,24 +38,36 @@ import { IconComponent } from '../../../../shared/ui/icon/icon.component';
               <div class="rounded-lg border bg-card p-6">
                 <h3 class="text-lg font-semibold mb-1">Profil</h3>
                 <p class="text-sm text-muted-foreground mb-6">Mettre à jour vos informations personnelles</p>
+                @if (profileSaveSuccess()) {
+                  <div class="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700">Profil mis à jour avec succès</div>
+                }
+                @if (profileSaveError()) {
+                  <div class="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{{ profileSaveError() }}</div>
+                }
                 <div class="space-y-4">
                   <div class="grid gap-2">
-                    <label class="text-sm font-medium">Nom complet</label>
+                    <label class="text-sm font-medium">Prénom</label>
                     <input type="text" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      [ngModel]="profile().name" (ngModelChange)="profile.update(p => ({ ...p, name: $event }))" />
+                      [ngModel]="profile().firstName" (ngModelChange)="profile.update(p => ({ ...p, firstName: $event }))" />
+                  </div>
+                  <div class="grid gap-2">
+                    <label class="text-sm font-medium">Nom</label>
+                    <input type="text" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      [ngModel]="profile().lastName" (ngModelChange)="profile.update(p => ({ ...p, lastName: $event }))" />
                   </div>
                   <div class="grid gap-2">
                     <label class="text-sm font-medium">Email</label>
                     <input type="email" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      [ngModel]="profile().email" (ngModelChange)="profile.update(p => ({ ...p, email: $event }))" />
+                      [ngModel]="profile().email" disabled />
                   </div>
                   <div class="grid gap-2">
                     <label class="text-sm font-medium">Téléphone</label>
                     <input type="tel" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       [ngModel]="profile().phone" (ngModelChange)="profile.update(p => ({ ...p, phone: $event }))" />
                   </div>
-                  <button class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                    Enregistrer
+                  <button class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                    (click)="saveProfile()" [disabled]="profileSaving()">
+                    {{ profileSaving() ? 'Enregistrement...' : 'Enregistrer' }}
                   </button>
                 </div>
               </div>
@@ -86,12 +99,22 @@ import { IconComponent } from '../../../../shared/ui/icon/icon.component';
                 <div class="space-y-6">
                   <div>
                     <h4 class="text-sm font-medium mb-3">Changer le mot de passe</h4>
+                    @if (passwordSaveSuccess()) {
+                      <div class="mb-3 rounded-md bg-green-50 p-3 text-sm text-green-700">Mot de passe mis à jour avec succès</div>
+                    }
+                    @if (passwordSaveError()) {
+                      <div class="mb-3 rounded-md bg-red-50 p-3 text-sm text-red-700">{{ passwordSaveError() }}</div>
+                    }
                     <div class="space-y-3">
-                      <input type="password" placeholder="Mot de passe actuel" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                      <input type="password" placeholder="Nouveau mot de passe" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                      <input type="password" placeholder="Confirmer le mot de passe" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-                      <button class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                        Mettre à jour
+                      <input type="password" placeholder="Mot de passe actuel" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        [(ngModel)]="currentPassword" />
+                      <input type="password" placeholder="Nouveau mot de passe" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        [(ngModel)]="newPassword" />
+                      <input type="password" placeholder="Confirmer le mot de passe" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        [(ngModel)]="confirmPassword" />
+                      <button class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                        (click)="changePassword()" [disabled]="passwordSaving()">
+                        {{ passwordSaving() ? 'Mise à jour...' : 'Mettre à jour' }}
                       </button>
                     </div>
                   </div>
@@ -135,7 +158,9 @@ import { IconComponent } from '../../../../shared/ui/icon/icon.component';
   `,
   styles: [':host { display: block; }'],
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
+  private userService = inject(UserService);
+
   activeTab = signal('profile');
   activeTheme = signal('light');
 
@@ -146,7 +171,17 @@ export class SettingsComponent {
     { id: 'appearance', label: 'Apparence', icon: 'settings' },
   ]);
 
-  profile = signal({ name: 'John Doe', email: 'john.doe@ng-fields.com', phone: '+228 90 12 34 56' });
+  profile = signal({ firstName: '', lastName: '', email: '', phone: '' });
+  profileSaving = signal(false);
+  profileSaveSuccess = signal(false);
+  profileSaveError = signal('');
+
+  currentPassword = '';
+  newPassword = '';
+  confirmPassword = '';
+  passwordSaving = signal(false);
+  passwordSaveSuccess = signal(false);
+  passwordSaveError = signal('');
 
   notifications = signal([
     { id: '1', label: 'Notifications Email', description: 'Recevoir les alertes par email', enabled: true },
@@ -161,6 +196,76 @@ export class SettingsComponent {
     { id: 'dark', name: 'Sombre', preview: 'bg-gray-900 border-2 border-gray-700' },
     { id: 'system', name: 'Système', preview: 'bg-gradient-to-r from-white to-gray-900 border-2 border-gray-400' },
   ]);
+
+  ngOnInit(): void {
+    this.loadProfile();
+  }
+
+  loadProfile(): void {
+    this.userService.getMe().subscribe({
+      next: (user) => {
+        this.profile.set({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone ?? '',
+        });
+      },
+      error: () => {},
+    });
+  }
+
+  saveProfile(): void {
+    this.profileSaving.set(true);
+    this.profileSaveSuccess.set(false);
+    this.profileSaveError.set('');
+
+    const p = this.profile();
+    this.userService.updateMe({ firstName: p.firstName, lastName: p.lastName }).subscribe({
+      next: () => {
+        this.profileSaving.set(false);
+        this.profileSaveSuccess.set(true);
+        setTimeout(() => this.profileSaveSuccess.set(false), 3000);
+      },
+      error: (err) => {
+        this.profileSaving.set(false);
+        this.profileSaveError.set(err.detail || 'Erreur lors de la mise à jour');
+      },
+    });
+  }
+
+  changePassword(): void {
+    this.passwordSaving.set(true);
+    this.passwordSaveSuccess.set(false);
+    this.passwordSaveError.set('');
+
+    if (this.newPassword !== this.confirmPassword) {
+      this.passwordSaving.set(false);
+      this.passwordSaveError.set('Les mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (this.newPassword.length < 8) {
+      this.passwordSaving.set(false);
+      this.passwordSaveError.set('Le mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    this.userService.changePassword(this.currentPassword, this.newPassword).subscribe({
+      next: () => {
+        this.passwordSaving.set(false);
+        this.passwordSaveSuccess.set(true);
+        this.currentPassword = '';
+        this.newPassword = '';
+        this.confirmPassword = '';
+        setTimeout(() => this.passwordSaveSuccess.set(false), 3000);
+      },
+      error: (err) => {
+        this.passwordSaving.set(false);
+        this.passwordSaveError.set(err.detail || 'Erreur lors du changement de mot de passe');
+      },
+    });
+  }
 
   toggleNotification(id: string): void {
     this.notifications.update(notifs => notifs.map(n => n.id === id ? { ...n, enabled: !n.enabled } : n));
