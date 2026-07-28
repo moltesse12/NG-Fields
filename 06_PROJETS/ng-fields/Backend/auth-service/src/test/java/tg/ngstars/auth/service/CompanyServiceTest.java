@@ -37,8 +37,6 @@ import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -128,7 +126,7 @@ class CompanyServiceTest {
             var request = new CreateCompanyRequest(
                     "NG-STARs", "ng@stars.tg", null, null, null, null);
 
-            assertThrows(tg.ngstars.auth.exception.ConflictException.class,
+            assertThrows(tg.ngstars.common.exception.ConflictException.class,
                     () -> companyService.createCompany(request, "admin-id"));
         }
     }
@@ -205,7 +203,7 @@ class CompanyServiceTest {
         @DisplayName("Lance NotFoundException si introuvable")
         void deactivateCompany_notFound_throws() {
             when(companyRepository.findById(companyId)).thenReturn(Optional.empty());
-            assertThrows(tg.ngstars.auth.exception.NotFoundException.class,
+            assertThrows(tg.ngstars.common.exception.NotFoundException.class,
                     () -> companyService.deactivateCompany(companyId, "admin-id"));
         }
     }

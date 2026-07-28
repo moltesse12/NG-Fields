@@ -4,35 +4,21 @@ import java.net.URI;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import tg.ngstars.common.exception.BaseExceptionHandler;
 import tg.ngstars.media.exception.FileAccessException;
 import tg.ngstars.media.exception.StorageLimitReachedException;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+public class GlobalExceptionHandler extends BaseExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
-            .collect(Collectors.toMap(
-                fe -> fe.getField(),
-                fe -> fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "invalide",
-                (a, b) -> a + "; " + b
-            ));
-        var problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        problem.setTitle("Bad Request");
-        problem.setProperty("errors", errors);
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        return super.handleValidation(ex);
     }
 
     @ExceptionHandler(StorageLimitReachedException.class)
@@ -55,37 +41,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleBadRequest(IllegalArgumentException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        problem.setDetail(ex.getMessage());
-        problem.setType(URI.create("about:blank"));
-        return problem;
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
-        problem.setTitle("Forbidden");
-        problem.setDetail("Access denied");
-        problem.setType(URI.create("about:blank"));
-        return problem;
-    }
-
-    @ExceptionHandler(SecurityException.class)
-    public ProblemDetail handleSecurity(SecurityException ex) {
-        var problem = ProblemDetail.forStatus(HttpStatus.UNPROCESSABLE_ENTITY);
-        problem.setTitle("Security Threat Detected");
-        problem.setDetail(ex.getMessage());
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        return super.handleIllegalArgument(ex);
     }
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleException(Exception ex) {
-        log.error("Unhandled exception", ex);
-        var problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
-        problem.setTitle("Internal Server Error");
-        problem.setDetail("An unexpected error occurred");
-        problem.setType(URI.create("about:blank"));
-        return problem;
+        return super.handleException(ex);
     }
 }

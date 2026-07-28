@@ -3,12 +3,14 @@ package tg.ngstars.common.entity;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Getter
 @Setter
 public abstract class BaseEntity {
+
+    protected BaseEntity() {
+    }
 
     private UUID id;
 
@@ -19,8 +21,7 @@ public abstract class BaseEntity {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        BaseEntity that = (BaseEntity) o;
+        if (!(o instanceof BaseEntity that)) return false;
         return id != null && id.equals(that.id);
     }
 

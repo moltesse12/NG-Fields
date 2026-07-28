@@ -6,6 +6,8 @@ import {
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -13,16 +15,23 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Security headers via Helmet
  */
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
+
+/**
+ * Rate limiting — 100 requests per minute per IP
+ */
+app.use(rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { status: 429, title: 'Too Many Requests', detail: 'Rate limit exceeded. Please retry later.' },
+}));
 
 /**
  * Serve static files from /browser

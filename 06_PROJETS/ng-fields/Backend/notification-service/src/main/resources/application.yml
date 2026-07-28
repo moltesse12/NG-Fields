@@ -12,6 +12,9 @@ spring:
     name: notification-service
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  threads:
+    virtual:
+      enabled: true
   lifecycle:
     timeout-per-shutdown-phase: 30s
   config:
@@ -32,12 +35,6 @@ springdoc:
     enabled: false
     path: /swagger-ui.html
 
-sentry:
-  dsn: ${SENTRY_DSN:}
-  environment: ${SPRING_PROFILES_ACTIVE:dev}
-  traces-sample-rate: 0.2
-  enable-tracing: true
-
 firebase:
   enabled: ${FIREBASE_ENABLED:false}
   service-account-path: ${FIREBASE_SERVICE_ACCOUNT:}
@@ -46,10 +43,21 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,loggers
+        include: health,info,metrics,prometheus
   endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    mail:
+      enabled: false
     env:
       keys-to-sanitize: password,secret,token,credential,admin-client-secret,smtp
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 resilience4j:
   retry:

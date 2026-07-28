@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,8 +20,8 @@ import tg.ngstars.auth.dto.CompanyUserResponse;
 import tg.ngstars.auth.dto.CreateCompanyRequest;
 import tg.ngstars.auth.dto.UpdateCompanyRequest;
 import tg.ngstars.auth.dto.UpdateCompanyUserRoleRequest;
-import tg.ngstars.auth.exception.ConflictException;
-import tg.ngstars.auth.exception.NotFoundException;
+import tg.ngstars.common.exception.ConflictException;
+import tg.ngstars.common.exception.NotFoundException;
 import tg.ngstars.auth.model.Company;
 import tg.ngstars.auth.model.CompanyAccessLog;
 import tg.ngstars.auth.model.CompanyUser;
@@ -38,6 +40,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 public class CompanyService {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyService.class);
+    private static final List<String> CLIENT_ROLES = List.of("CLIENT_ADMIN", "CLIENT_USER", "CLIENT_VIEWER");
 
     private final CompanyRepository companyRepository;
     private final CompanyUserRepository companyUserRepository;
@@ -67,6 +70,7 @@ public class CompanyService {
 
     // ── Company CRUD ──────────────────────────────────────────
 
+    @CacheEvict(value = "companies", allEntries = true)
     @Transactional
     public CompanyResponse createCompany(CreateCompanyRequest request, String createdBy) {
         if (companyRepository.existsByName(request.name()))
@@ -88,18 +92,22 @@ public class CompanyService {
         return toCompanyResponse(saved);
     }
 
+    @Cacheable(value = "companies", key = "'all_' + #pageable.pageNumber")
     public Page<CompanyResponse> getAllCompanies(Pageable pageable) {
         return companyRepository.findAll(pageable).map(this::toCompanyResponse);
     }
 
+    @Cacheable(value = "companies", key = "'active'")
     public List<CompanyResponse> getActiveCompanies() {
         return companyRepository.findByActiveTrue().stream().map(this::toCompanyResponse).toList();
     }
 
+    @Cacheable(value = "companies", key = "#id")
     public CompanyResponse getCompany(UUID id) {
         return toCompanyResponse(findCompanyOrThrow(id));
     }
 
+    @CacheEvict(value = "companies", allEntries = true)
     @Transactional
     public CompanyResponse updateCompany(UUID id, UpdateCompanyRequest request, String updatedBy) {
         var company = findCompanyOrThrow(id);
@@ -116,6 +124,7 @@ public class CompanyService {
         return toCompanyResponse(saved);
     }
 
+    @CacheEvict(value = "companies", allEntries = true)
     @Transactional
     public void deactivateCompany(UUID id, String deletedBy) {
         var company = findCompanyOrThrow(id);
@@ -125,8 +134,20 @@ public class CompanyService {
                 "Company deactivated: " + company.getName(), null);
     }
 
+    @CacheEvict(value = "companies", allEntries = true)
+    @Transactional
+    public CompanyResponse reactivateCompany(UUID id, String reactivatedBy) {
+        var company = findCompanyOrThrow(id);
+        company.setActive(true);
+        companyRepository.save(company);
+        auditService.log(parseUuid(reactivatedBy), "COMPANY_REACTIVATED", "Company", id.toString(),
+                "Company reactivated: " + company.getName(), null);
+        return toCompanyResponse(company);
+    }
+
     // ── Company Users ─────────────────────────────────────────
 
+    @CacheEvict(value = "users", key = "#companyId")
     @Transactional
     public CompanyUserResponse addCompanyUser(UUID companyId, AddCompanyUserRequest request, String createdBy) {
         var company = findCompanyOrThrow(companyId);
@@ -162,50 +183,74 @@ public class CompanyService {
             }
 
             assignRealmRole(keycloakId.toString(), request.role());
+        } catch (RuntimeException e) {
+            if (keycloakId != null) {
+                try {
+                    realm.users().get(keycloakId.toString()).remove();
+                    log.warn("Keycloak user {} cleaned up after DB failure", keycloakId);
+                } catch (Exception ignored) {
+                    log.warn("Failed to cleanup Keycloak user {}", keycloakId, ignored);
+                }
+            }
+            throw e;
         }
-
-        var companyUser = new CompanyUser();
-        companyUser.setCompany(company);
-        companyUser.setKeycloakUserId(keycloakId);
-        companyUser.setEmail(request.email());
-        companyUser.setFirstName(request.firstName());
-        companyUser.setLastName(request.lastName());
-        companyUser.setRole(request.role());
-        companyUser.setActive(true);
-
-        var saved = companyUserRepository.save(companyUser);
-
-        var user = new User();
-        user.setKeycloakId(keycloakId);
-        user.setUsername(request.email());
-        user.setEmail(request.email());
-        user.setFirstName(request.firstName());
-        user.setLastName(request.lastName());
-        user.setRole(request.role());
-        user.setCompanyId(companyId);
-        user.setMustChangePassword(true);
-        user.setActive(true);
-        userRepository.save(user);
-
-        auditService.log(parseUuid(createdBy), "COMPANY_USER_ADDED", "CompanyUser", saved.getId().toString(),
-                "User " + request.email() + " added to company " + company.getName(), null);
-        log.info("Company user added: {} to company {} (tempPassword sent by email)", request.email(), company.getName());
 
         try {
-            emailService.sendCredentialsEmail(request.email(), request.firstName(), tempPassword);
-        } catch (Exception e) {
-            log.warn("Failed to send credentials email to {}: {}", request.email(), e.getMessage());
-        }
+            var companyUser = new CompanyUser();
+            companyUser.setCompany(company);
+            companyUser.setKeycloakUserId(keycloakId);
+            companyUser.setEmail(request.email());
+            companyUser.setFirstName(request.firstName());
+            companyUser.setLastName(request.lastName());
+            companyUser.setRole(request.role());
+            companyUser.setActive(true);
 
-        return toCompanyUserResponse(saved);
+            var saved = companyUserRepository.save(companyUser);
+
+            var user = new User();
+            user.setKeycloakId(keycloakId);
+            user.setUsername(request.email());
+            user.setEmail(request.email());
+            user.setFirstName(request.firstName());
+            user.setLastName(request.lastName());
+            user.setRole(request.role());
+            user.setCompanyId(companyId);
+            user.setMustChangePassword(true);
+            user.setActive(true);
+            userRepository.save(user);
+
+            auditService.log(parseUuid(createdBy), "COMPANY_USER_ADDED", "CompanyUser", saved.getId().toString(),
+                    "User " + request.email() + " added to company " + company.getName(), null);
+            log.info("Company user added: {} to company {} (tempPassword sent by email)", request.email(), company.getName());
+
+            try {
+                emailService.sendCredentialsEmail(request.email(), request.firstName(), tempPassword);
+            } catch (Exception e) {
+                log.warn("Failed to send credentials email to {}: {}", request.email(), e.getMessage());
+            }
+
+            return toCompanyUserResponse(saved);
+        } catch (RuntimeException dbEx) {
+            if (keycloakId != null) {
+                try {
+                    realm().users().get(keycloakId.toString()).remove();
+                    log.warn("Keycloak user {} cleaned up after DB failure", keycloakId);
+                } catch (Exception ignored) {
+                    log.warn("Failed to cleanup Keycloak user {}", keycloakId, ignored);
+                }
+            }
+            throw dbEx;
+        }
     }
 
+    @Cacheable(value = "users", key = "#companyId")
     public List<CompanyUserResponse> getCompanyUsers(UUID companyId) {
         findCompanyOrThrow(companyId);
         return companyUserRepository.findByCompanyId(companyId).stream()
                 .map(this::toCompanyUserResponse).toList();
     }
 
+    @CacheEvict(value = "users", key = "#companyId")
     @Transactional
     public CompanyUserResponse updateCompanyUserRole(UUID companyId, UUID userId, UpdateCompanyUserRoleRequest request, String updatedBy) {
         findCompanyOrThrow(companyId);
@@ -216,11 +261,10 @@ public class CompanyService {
         companyUser.setRole(request.role());
 
         if (companyUser.getKeycloakUserId() != null) {
-            var metierRoles = List.of("CLIENT_ADMIN", "CLIENT_USER", "CLIENT_VIEWER");
             var realm = realm();
             var toRemove = realm.users().get(companyUser.getKeycloakUserId().toString())
                     .roles().realmLevel().listAll().stream()
-                    .filter(r -> metierRoles.contains(r.getName()))
+                    .filter(r -> CLIENT_ROLES.contains(r.getName()))
                     .toList();
             if (!toRemove.isEmpty())
                 realm.users().get(companyUser.getKeycloakUserId().toString())
@@ -234,6 +278,7 @@ public class CompanyService {
         return toCompanyUserResponse(saved);
     }
 
+    @CacheEvict(value = "users", key = "#companyId")
     @Transactional
     public void deactivateCompanyUser(UUID companyId, UUID userId, String deletedBy) {
         findCompanyOrThrow(companyId);
@@ -249,6 +294,11 @@ public class CompanyService {
             var kcUser = realm.users().get(companyUser.getKeycloakUserId().toString()).toRepresentation();
             kcUser.setEnabled(false);
             realm.users().get(companyUser.getKeycloakUserId().toString()).update(kcUser);
+
+            userRepository.findByKeycloakId(companyUser.getKeycloakUserId()).ifPresent(u -> {
+                u.setActive(false);
+                userRepository.save(u);
+            });
         }
 
         auditService.log(parseUuid(deletedBy), "COMPANY_USER_DEACTIVATED", "CompanyUser", userId.toString(),
@@ -257,6 +307,7 @@ public class CompanyService {
 
     // ── Access Log ────────────────────────────────────────────
 
+    @Transactional
     public void logAccess(UUID companyId, UUID companyUserId, String action, String resource, UUID resourceId, String ip) {
         var company = findCompanyOrThrow(companyId);
         var logEntry = new CompanyAccessLog();
@@ -269,7 +320,7 @@ public class CompanyService {
         logEntry.setResourceId(resourceId);
         if (ip != null) {
             try { logEntry.setIpAddress(java.net.InetAddress.getByName(ip)); }
-            catch (Exception ignored) {}
+            catch (Exception e) { log.warn("Invalid IP address in access log: {}", ip); }
         }
         accessLogRepository.save(logEntry);
     }
@@ -282,7 +333,13 @@ public class CompanyService {
     }
 
     private static String generateTempPassword() {
-        return "Ng" + UUID.randomUUID().toString().replace("-", "").substring(0, 10) + "!";
+        var random = new java.security.SecureRandom();
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+        var sb = new StringBuilder(16);
+        for (int i = 0; i < 16; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     private static UUID parseUuid(String value) {
@@ -307,7 +364,7 @@ public class CompanyService {
             var roleRep = r.roles().get(role).toRepresentation();
             r.users().get(userId).roles().realmLevel().add(List.of(roleRep));
         } catch (jakarta.ws.rs.NotFoundException e) {
-            throw new tg.ngstars.auth.exception.NotFoundException("Role '" + role + "' not configured in Keycloak");
+            throw new NotFoundException("Role '" + role + "' not configured in Keycloak");
         }
     }
 

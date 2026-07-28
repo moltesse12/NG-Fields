@@ -2,7 +2,7 @@ package tg.ngstars.auth.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.resend.Resend;
@@ -14,13 +14,15 @@ import io.github.resilience4j.retry.annotation.Retry;
 import tg.ngstars.auth.config.ResendProperties;
 
 @Service
-@EnableConfigurationProperties(ResendProperties.class)
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     private final Resend resend;
     private final ResendProperties properties;
+
+    @Value("${app.login-url:http://localhost:4200/login}")
+    private String loginUrl;
 
     public EmailService(ResendProperties properties) {
         this.properties = properties;
@@ -74,6 +76,12 @@ public class EmailService {
         }
     }
 
+    private static String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&#39;");
+    }
+
     private String buildCredentialsHtml(String firstName, String toEmail, String tempPassword) {
         return """
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -97,7 +105,7 @@ public class EmailService {
                     Ceci est un email automatique. Ne repondez pas a cet email.
                   </p>
                 </div>
-                """.formatted(firstName, toEmail, tempPassword, getLoginUrl());
+                """.formatted(escapeHtml(firstName), escapeHtml(toEmail), tempPassword, loginUrl);
     }
 
     private String buildPasswordResetHtml(String firstName, String resetLink) {
@@ -115,7 +123,7 @@ public class EmailService {
                     Si vous n'avez pas demande cette reinitialisation, ignorez cet email.
                   </p>
                 </div>
-                """.formatted(firstName, resetLink);
+                """.formatted(escapeHtml(firstName), resetLink);
     }
 
     private String buildVerificationHtml(String firstName, String verificationLink) {
@@ -134,10 +142,7 @@ public class EmailService {
                     Ce lien expire dans 15 minutes. Si vous n'avez pas cree de compte, ignorez cet email.
                   </p>
                 </div>
-                """.formatted(firstName, verificationLink);
+                """.formatted(escapeHtml(firstName), verificationLink);
     }
 
-    private String getLoginUrl() {
-        return System.getenv().getOrDefault("APP_LOGIN_URL", "http://localhost:4200/login");
-    }
 }

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,6 +37,7 @@ import tg.ngstars.interv.service.SecurityUtils;
 @RequestMapping("/api/manager")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 @Tag(name = "Manager Planning", description = "Gestion planning, assignation et interventions planifiees")
+@Timed
 public class ManagerController {
 
     private final InterventionService interventionService;

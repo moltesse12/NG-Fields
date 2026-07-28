@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.micrometer.core.annotation.Timed;
+
 import tg.ngstars.auth.dto.AddCompanyUserRequest;
 import tg.ngstars.auth.dto.CompanyResponse;
 import tg.ngstars.auth.dto.CompanyUserResponse;
@@ -34,6 +36,7 @@ import tg.ngstars.auth.service.CompanyService;
 @RestController
 @RequestMapping("/api/admin/companies")
 @PreAuthorize("hasRole('ADMIN')")
+@Timed
 public class CompanyController {
 
     private final CompanyService companyService;
@@ -81,6 +84,13 @@ public class CompanyController {
             @AuthenticationPrincipal Jwt jwt) {
         companyService.deactivateCompany(id, jwt.getSubject());
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/reactivate")
+    public ResponseEntity<CompanyResponse> reactivateCompany(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(companyService.reactivateCompany(id, jwt.getSubject()));
     }
 
     // ── Company Users ─────────────────────────────────────────

@@ -43,7 +43,7 @@ public class PhotoService {
     }
 
     @Transactional
-    public synchronized PhotoResponse addPhoto(
+    public PhotoResponse addPhoto(
             UUID interventionId,
             MultipartFile file,
             String type,

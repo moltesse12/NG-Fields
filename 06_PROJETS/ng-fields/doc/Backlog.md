@@ -126,7 +126,7 @@ Tous les endpoints backend, zéro frontend. L'API est testable via Swagger/Postm
 **Afin de** démarrer le développement dans des conditions reproductibles.
 
 **Critères d'acceptation :**
-- PostgreSQL 18 en local (user `ng_fields_user`, password `Pg_ng-fields1234`)
+- PostgreSQL 18 en local (user `ng_fields_user`, password from `.env`)
 - Hibernate `ddl-auto: update` crée les schémas automatiquement
 - `.env` externalisé, `.gitignore` configuré
 - Spring Boot répond sur `localhost:8081` (health OK)

@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +17,9 @@ import lombok.Setter;
 @Entity
 @Table(name = "failed_login_attempts",
        indexes = {
-           @Index(name = "idx_failed_login_username", columnList = "username")
+           @Index(name = "idx_failed_login_username", columnList = "username"),
+           @Index(name = "idx_failed_login_ip", columnList = "ip_address"),
+           @Index(name = "idx_failed_login_username_attempt", columnList = "username, successful, attempted_at")
        })
 @Getter @Setter
 public class FailedLoginAttempt {
@@ -27,7 +30,7 @@ public class FailedLoginAttempt {
     @Column(nullable = false)
     private String username;
 
-    @Column(nullable = false)
+    @Column(name = "ip_address", nullable = false)
     private String ipAddress;
 
     @Column(nullable = false)
@@ -38,6 +41,9 @@ public class FailedLoginAttempt {
 
     @Column(name = "locked_until")
     private OffsetDateTime lockedUntil;
+
+    @Version
+    private Long version;
 
     @PrePersist
     public void prePersist() {

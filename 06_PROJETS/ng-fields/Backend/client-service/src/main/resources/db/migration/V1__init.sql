@@ -3,6 +3,8 @@
 
 CREATE SCHEMA IF NOT EXISTS client;
 
+SET search_path TO client, public;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE clients (
@@ -28,7 +30,8 @@ CREATE TABLE clients (
 CREATE INDEX idx_clients_company_name ON clients(company_name);
 CREATE INDEX idx_clients_email ON clients(email);
 CREATE INDEX idx_clients_active ON clients(active);
-CREATE INDEX idx_clients_company_id ON clients(company_name);
+
+CREATE SEQUENCE IF NOT EXISTS client_ref_seq START WITH 1;
 
 CREATE TABLE contacts (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

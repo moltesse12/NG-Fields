@@ -6,9 +6,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import tg.ngstars.auth.config.KeycloakProperties;
+import tg.ngstars.auth.config.ResendProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties(KeycloakProperties.class)
+@EnableConfigurationProperties({KeycloakProperties.class, ResendProperties.class})
 @EnableScheduling
 public class AuthServiceApplication {
 

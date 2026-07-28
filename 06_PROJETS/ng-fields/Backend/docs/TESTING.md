@@ -1,6 +1,6 @@
 # Testing
 
-**Mis à jour :** 23/07/2026 (Backend Complet)
+**Mis à jour :** 24/07/2026 (Audit sécurité complet)
 
 ## Tests unitaires — 72 tests (tous passent)
 
@@ -19,16 +19,11 @@
 | `UserServiceTest` | 11 | CRUD, roles Keycloak, changePassword (vérification old mdp), updateRole |
 | `CompanyServiceTest` | 10 | CRUD, addCompanyUser, soft delete, multi-tenant |
 
-### notification-service (3 tests)
+### notification-service (10 tests)
 
 | Fichier | Tests | Couverture |
 |---------|-------|-----------|
 | `PushServiceNoopTest` | 3 | sendPush (noop), registerToken (noop), fallback Firebase |
-
-### report-service (7 tests)
-
-| Fichier | Tests | Couverture |
-|---------|-------|-----------|
 | `TemplateRenderingTest` | 7 | Email templates rendering (5 templates), PDF template config validation (2 tests) |
 
 ## Commandes

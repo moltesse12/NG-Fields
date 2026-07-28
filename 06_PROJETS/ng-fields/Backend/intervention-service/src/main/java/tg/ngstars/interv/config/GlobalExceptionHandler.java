@@ -66,7 +66,7 @@ public class GlobalExceptionHandler extends BaseExceptionHandler {
         log.error("IO error", ex);
         var problem = ProblemDetail.forStatus(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR);
         problem.setTitle("Internal Server Error");
-        problem.setDetail("Erreur d'entree/sortie: " + ex.getMessage());
+        problem.setDetail("Erreur d'entree/sortie");
         problem.setType(java.net.URI.create("about:blank"));
         return problem;
     }

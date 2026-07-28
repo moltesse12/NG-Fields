@@ -19,219 +19,221 @@ spring:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8088/realms/ng-fields}
   cloud:
     gateway:
-      httpclient:
-        connect-timeout: 3000
-        response-timeout: 5s
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: 5000
+            response-timeout: 30s
 
-      routes:
-        - id: auth-register
-          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/api/public/register
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 3
-                redis-rate-limiter.burstCapacity: 6
-                key-resolver: "#{@remoteAddrKeyResolver}"
+          routes:
+            - id: auth-register
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/public/register
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 3
+                    redis-rate-limiter.burstCapacity: 6
+                    key-resolver: "#{@remoteAddrKeyResolver}"
 
-        - id: auth-public
-          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/api/public/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
+            - id: auth-public
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/public/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
 
-        - id: auth-admin-users
-          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/api/admin/users/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                key-resolver: "#{@userKeyResolver}"
+            - id: auth-admin-users
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/admin/users/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
 
-        - id: auth-admin-companies
-          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/api/admin/companies/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                key-resolver: "#{@userKeyResolver}"
+            - id: auth-admin-companies
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/admin/companies/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
 
-        - id: auth-me
-          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/api/users/me/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
+            - id: auth-me
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/users/me/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
 
-        - id: client-service
-          uri: ${CLIENT_SERVICE_URL:http://localhost:8082}
-          predicates:
-            - Path=/api/clients/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 20
-                redis-rate-limiter.burstCapacity: 40
-                key-resolver: "#{@userKeyResolver}"
+            - id: client-service
+              uri: ${CLIENT_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/clients/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@userKeyResolver}"
 
-        - id: intervention-service
-          uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
-          predicates:
-            - Path=/api/interventions/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 30
-                redis-rate-limiter.burstCapacity: 60
-                key-resolver: "#{@userKeyResolver}"
+            - id: intervention-service
+              uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/interventions/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 30
+                    redis-rate-limiter.burstCapacity: 60
+                    key-resolver: "#{@userKeyResolver}"
 
-        - id: intervention-manager
-          uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
-          predicates:
-            - Path=/api/manager/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 30
-                redis-rate-limiter.burstCapacity: 60
-                key-resolver: "#{@userKeyResolver}"
+            - id: intervention-manager
+              uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/manager/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 30
+                    redis-rate-limiter.burstCapacity: 60
+                    key-resolver: "#{@userKeyResolver}"
 
-        - id: intervention-events
-          uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
-          predicates:
-            - Path=/api/events/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
+            - id: intervention-events
+              uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/events/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
 
-        - id: intervention-client
-          uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
-          predicates:
-            - Path=/api/client/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 20
-                redis-rate-limiter.burstCapacity: 40
-                key-resolver: "#{@userKeyResolver}"
+            - id: intervention-client
+              uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/client/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@userKeyResolver}"
 
-        - id: sync-service
-          uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
-          predicates:
-            - Path=/api/sync/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                key-resolver: "#{@userKeyResolver}"
+            - id: sync-service
+              uri: ${INTERVENTION_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/sync/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
 
-        - id: media-service
-          uri: ${MEDIA_SERVICE_URL:http://localhost:8084}
-          predicates:
-            - Path=/api/media/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 20
-                redis-rate-limiter.burstCapacity: 40
-                key-resolver: "#{@userKeyResolver}"
+            - id: media-service
+              uri: ${MEDIA_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/api/media/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    key-resolver: "#{@userKeyResolver}"
 
-        - id: notification-service
-          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
-          predicates:
-            - Path=/api/notifications/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                key-resolver: "#{@userKeyResolver}"
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/api/notifications/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
 
-        - id: report-service
-          uri: ${REPORT_SERVICE_URL:http://localhost:8086}
-          predicates:
-            - Path=/api/reports/**
-          filters:
-            - StripPrefix=0
-            - name: CircuitBreaker
-              args:
-                name: myCircuitBreaker
-                fallbackUri: forward:/fallback
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 5
-                redis-rate-limiter.burstCapacity: 10
-                key-resolver: "#{@userKeyResolver}"
+            - id: report-service
+              uri: ${REPORT_SERVICE_URL:http://localhost:8086}
+              predicates:
+                - Path=/api/reports/**
+              filters:
+                - StripPrefix=0
+                - name: CircuitBreaker
+                  args:
+                    name: myCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 5
+                    redis-rate-limiter.burstCapacity: 10
+                    key-resolver: "#{@userKeyResolver}"
 
   data:
     redis:
@@ -280,18 +282,24 @@ resilience4j:
   timelimiter:
     configs:
       default:
-        timeout-duration: 5s
+        timeout-duration: 30s
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,loggers
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: when-authorized
     env:
       keys-to-sanitize: password,secret,token,credential,admin-client-secret,smtp
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 logging:
   level:

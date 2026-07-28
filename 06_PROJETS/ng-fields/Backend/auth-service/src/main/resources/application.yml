@@ -8,6 +8,9 @@ spring:
     name: auth-service
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  threads:
+    virtual:
+      enabled: true
   lifecycle:
     timeout-per-shutdown-phase: 30s
   config:
@@ -17,7 +20,7 @@ spring:
     username: ${DB_USER:ng_fields_user}
     password: ${DB_PASSWORD}
     hikari:
-      maximum-pool-size: 20
+      maximum-pool-size: 15
       minimum-idle: 5
       connection-timeout: 10000
       idle-timeout: 300000
@@ -25,6 +28,8 @@ spring:
       leak-detection-threshold: 10000
       pool-name: auth-service-hikari-pool
       metrics-enabled: true
+      register-mbeans: true
+      validation-timeout: 3000
   jpa:
     hibernate:
       ddl-auto: validate
@@ -56,9 +61,10 @@ app:
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:4200,http://localhost:8100}
   jwt:
-    secret: ${JWT_SECRET:YW5nLXN0YXJzLXNlY3JldC1rZXktZm9yLWVtYWlsLXZlcmlmaWNhdGlvbi0yMDI0}
+    secret: ${JWT_SECRET:?JWT_SECRET environment variable must be set}
   frontend:
     url: ${FRONTEND_URL:http://localhost:4200}
+  login-url: ${APP_LOGIN_URL:http://localhost:4200/login}
   security:
     lockout:
       max-attempts: 10
@@ -71,6 +77,8 @@ keycloak:
   admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:ng-fields-backend}
   admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:}
   realm: ${KEYCLOAK_REALM:ng-fields}
+  verification-client-id: ${KEYCLOAK_VERIFICATION_CLIENT_ID:ng-fields-backend}
+  verification-client-secret: ${KEYCLOAK_VERIFICATION_CLIENT_SECRET:}
 
 resend:
   api-key: ${RESEND_API_KEY:}
@@ -88,27 +96,29 @@ resilience4j:
         retry-exceptions:
           - java.lang.RuntimeException
         ignore-exceptions:
-          - tg.ngstars.auth.exception.NotFoundException
+          - tg.ngstars.common.exception.NotFoundException
 
 springdoc:
   swagger-ui:
     enabled: false
     path: /swagger-ui.html
 
-sentry:
-  dsn: ${SENTRY_DSN:}
-  environment: ${SPRING_PROFILES_ACTIVE:dev}
-  traces-sample-rate: 0.2
-  enable-tracing: true
-
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,loggers
+        include: health,info,metrics,prometheus
   endpoint:
+    health:
+      show-details: when-authorized
     env:
-      keys-to-sanitize: password,secret,token,credential,admin-client-secret
+      keys-to-sanitize: password,secret,token,credential,admin-client-secret,smtp
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 logging:
   level:

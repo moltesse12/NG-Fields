@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: ng_fields
       POSTGRES_USER: ng_fields_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-ngfields-dev}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
     command:
       - postgres
       - -c
@@ -29,7 +29,7 @@ services:
   db-backup:
     image: postgres:18-alpine
     environment:
-      PGPASSWORD: ${DB_PASSWORD:-ngfields-dev}
+      PGPASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
     volumes:
       - ./backups:/backups
     entrypoint: >
@@ -64,9 +64,9 @@ services:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/ng_fields
       KC_DB_USERNAME: ng_fields_user
-      KC_DB_PASSWORD: ${DB_PASSWORD:-ngfields-dev}
+      KC_DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
       KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:-admin123}
+      KEYCLOAK_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?KC_ADMIN_PASSWORD must be set in .env}
     ports:
       - "8088:8080"
     volumes:
@@ -81,7 +81,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ng_fields
       SPRING_DATASOURCE_USERNAME: ng_fields_user
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-ngfields-dev}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
       SPRING_REDIS_HOST: redis
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ng-fields
     ports:

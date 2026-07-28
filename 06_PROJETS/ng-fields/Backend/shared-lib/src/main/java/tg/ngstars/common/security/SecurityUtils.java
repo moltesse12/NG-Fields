@@ -30,7 +30,10 @@ public final class SecurityUtils {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth instanceof JwtAuthenticationToken jwtAuth) {
             Jwt jwt = jwtAuth.getToken();
-            return jwt.getClaimAsString("preferred_username");
+            String username = jwt.getClaimAsString("preferred_username");
+            if (username != null) {
+                return username;
+            }
         }
         throw new IllegalStateException("No authenticated user found");
     }

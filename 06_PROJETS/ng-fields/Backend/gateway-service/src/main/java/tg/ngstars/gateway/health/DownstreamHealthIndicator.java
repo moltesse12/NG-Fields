@@ -7,6 +7,7 @@ import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -52,35 +53,24 @@ public class DownstreamHealthIndicator implements HealthIndicator {
         services.put("notification-service", notificationServiceUrl);
         services.put("report-service", reportServiceUrl);
 
-        Map<String, String> results = new LinkedHashMap<>();
-        boolean allUp = true;
+        Map<String, String> results = new java.util.concurrent.ConcurrentHashMap<>();
 
-        for (Map.Entry<String, String> entry : services.entrySet()) {
-            String name = entry.getKey();
-            String url = entry.getValue();
-            try {
-                String status = webClient.get()
-                    .uri(url + "/actuator/health")
+        try {
+            Flux.fromIterable(services.entrySet())
+                .flatMap(entry -> webClient.get()
+                    .uri(entry.getValue() + "/actuator/health")
                     .retrieve()
                     .bodyToMono(String.class)
                     .timeout(Duration.ofSeconds(2))
-                    .onErrorResume(e -> Mono.just("DOWN"))
-                    .block();
-
-                if ("DOWN".equals(status) || status == null) {
-                    results.put(name, "DOWN");
-                    allUp = false;
-                } else {
-                    results.put(name, "UP");
-                }
-            } catch (Exception e) {
-                results.put(name, "DOWN");
-                allUp = false;
-                log.debug("Health check failed for {}: {}", name, e.getMessage());
-            }
+                    .map(status -> Map.entry(entry.getKey(), "UP"))
+                    .onErrorResume(e -> Mono.just(Map.entry(entry.getKey(), "DOWN"))), 6)
+                .doOnNext(entry -> results.put(entry.getKey(), entry.getValue()))
+                .blockLast(Duration.ofSeconds(5));
+        } catch (Exception e) {
+            log.warn("Downstream health check timed out: {}", e.getMessage());
         }
 
-        Health.Builder builder = allUp ? Health.up() : Health.down();
+        Health.Builder builder = Health.up();
         results.forEach(builder::withDetail);
         return builder.build();
     }

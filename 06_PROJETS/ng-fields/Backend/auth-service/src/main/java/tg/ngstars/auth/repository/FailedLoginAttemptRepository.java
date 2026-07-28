@@ -18,7 +18,7 @@ public interface FailedLoginAttemptRepository extends JpaRepository<FailedLoginA
 
     long countByIpAddressAndSuccessfulFalseAndAttemptedAtAfter(String ipAddress, OffsetDateTime since);
 
-    List<FailedLoginAttempt> findTop20ByUsernameOrderByAttemptedAtDesc(String username);
+    List<FailedLoginAttempt> findTop1ByUsernameOrderByAttemptedAtDesc(String username);
 
     @Modifying
     @Query("DELETE FROM FailedLoginAttempt f WHERE f.attemptedAt < :cutoff")

@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import tg.ngstars.common.exception.BaseExceptionHandler;
 import tg.ngstars.common.exception.ConflictException;
+import tg.ngstars.common.exception.ForbiddenException;
 import tg.ngstars.common.exception.NotFoundException;
 
 @RestControllerAdvice
@@ -17,6 +18,16 @@ public class GlobalExceptionHandler extends BaseExceptionHandler {
     @ExceptionHandler(ConflictException.class)
     public org.springframework.http.ProblemDetail handleConflict(ConflictException ex) {
         return super.handleConflict(ex);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public org.springframework.http.ProblemDetail handleForbidden(ForbiddenException ex) {
+        return super.handleForbidden(ex);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public org.springframework.http.ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {
+        return super.handleIllegalArgument(ex);
     }
 
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)

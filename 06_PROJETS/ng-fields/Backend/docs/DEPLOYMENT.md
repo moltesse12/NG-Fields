@@ -1,6 +1,6 @@
 # Deployment
 
-**Mis à jour :** 23/07/2026
+**Mis à jour :** 24/07/2026 (Audit sécurité complet)
 
 ## Development Setup
 
@@ -15,7 +15,7 @@
 
 1. Create the database:
 ```sql
-CREATE USER ng_fields_user WITH PASSWORD 'Pg_ng-fields1234';
+CREATE USER ng_fields_user WITH PASSWORD 'CHANGE_ME';
 CREATE DATABASE ng_fields OWNER ng_fields_user;
 ```
 
@@ -85,18 +85,22 @@ cd report-service && mvn spring-boot:run
 
 Copy `.env.example` to `.env` and fill in production values. Key variables:
 
-| Variable | Description |
-|----------|-------------|
-| `KEYCLOAK_ISSUER_URI` | Keycloak realm URI |
-| `KEYCLOAK_CLIENT_SECRET` | Backend client secret |
-| `POSTGRES_HOST` | Database host |
-| `POSTGRES_PASSWORD` | Database password |
-| `REDIS_PASSWORD` | Redis password |
-| `SENTRY_DSN` | Sentry error tracking DSN |
-| `SPRING_PROFILES_ACTIVE` | Set to `prod` |
-| `LOG_REQUEST_RESPONSE` | Enable request/response body logging (`true`/`false`, default `false`) |
-| `FIREBASE_ENABLED` | Enable Firebase push notifications (`true`/`false`, default `false`) |
-| `FIREBASE_SERVICE_ACCOUNT_PATH` | Path to Firebase service account JSON |
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `KEYCLOAK_ISSUER_URI` | Keycloak realm URI | Yes |
+| `KEYCLOAK_CLIENT_SECRET` | Backend client secret | Yes |
+| `JWT_SECRET` | HMAC secret for internal JWT tokens (email verification, temp passwords) | Yes (≥32 bytes) |
+| `KEYCLOAK_VERIFICATION_CLIENT_ID` | Keycloak client for email verification tokens | Yes |
+| `KEYCLOAK_VERIFICATION_CLIENT_SECRET` | Client secret for email verification | Yes |
+| `APP_LOGIN_URL` | Frontend login URL for redirect links in emails | Yes |
+| `POSTGRES_HOST` | Database host | Yes |
+| `POSTGRES_PASSWORD` | Database password | Yes |
+| `REDIS_PASSWORD` | Redis password | Yes |
+| `SENTRY_DSN` | Sentry error tracking DSN | No |
+| `SPRING_PROFILES_ACTIVE` | Set to `prod` | Yes |
+| `LOG_REQUEST_RESPONSE` | Enable request/response body logging (`true`/`false`, default `false`) | No |
+| `FIREBASE_ENABLED` | Enable Firebase push notifications (`true`/`false`, default `false`) | No |
+| `FIREBASE_SERVICE_ACCOUNT_PATH` | Path to Firebase service account JSON | No |
 
 ### Production Profile
 

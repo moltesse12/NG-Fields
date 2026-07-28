@@ -4,8 +4,11 @@ import java.net.InetAddress;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -14,16 +17,17 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "company_access_log")
+@BatchSize(size = 20)
 public class CompanyAccessLog {
 
     @Id
     private UUID id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private CompanyUser user;
 

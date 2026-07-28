@@ -1,5 +1,11 @@
 package tg.ngstars.auth.service;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,6 +16,8 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,12 +38,14 @@ import tg.ngstars.auth.repository.UserRepository;
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final List<String> METIER_ROLES = List.of("ADMIN", "MANAGER", "TECHNICIAN", "CLIENT_ADMIN", "CLIENT_USER", "CLIENT_VIEWER");
 
     private final UserRepository userRepository;
     private final AuditService auditService;
     private final EmailService emailService;
     private final Keycloak keycloak;
     private final KeycloakProperties keycloakProperties;
+    private final HttpClient httpClient;
 
     public UserService(UserRepository userRepository, AuditService auditService,
             EmailService emailService,
@@ -45,15 +55,17 @@ public class UserService {
         this.emailService = emailService;
         this.keycloak = keycloak;
         this.keycloakProperties = keycloakProperties;
+        this.httpClient = HttpClient.newHttpClient();
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     @Transactional
     public UserResponse createUser(CreateUserRequest request, String createdBy, String ip) {
         UUID createdById = userIdOrNull(createdBy);
         if (userRepository.existsByUsername(request.username()))
-            throw new ConflictException("Username '" + request.username() + "' deja utilise");
+            throw new ConflictException("Username '" + request.username() + "' already exists");
         if (userRepository.existsByEmail(request.email()))
-            throw new ConflictException("Email '" + request.email() + "' deja utilise");
+            throw new ConflictException("Email '" + request.email() + "' already exists");
 
         var kcUser = new UserRepresentation();
         kcUser.setUsername(request.username());
@@ -74,12 +86,12 @@ public class UserService {
                     keycloakId = UUID.fromString(existing.get().getId());
                     log.warn("Keycloak user {} already exists, reusing keycloakId={}", request.username(), keycloakId);
                 } else {
-                    throw new ConflictException("Utilisateur Keycloak deja existant: " + request.username());
+                    throw new ConflictException("Keycloak user already exists: " + request.username());
                 }
             } else if (response.getStatus() != 201) {
                 var errorBody = response.readEntity(String.class);
                 log.error("Keycloak user creation failed: status={}, body={}", response.getStatus(), errorBody);
-                throw new RuntimeException("Echec creation compte: " + response.getStatus());
+                throw new RuntimeException("Account creation failed: " + response.getStatus());
             }
 
             if (keycloakId == null) {
@@ -87,8 +99,7 @@ public class UserService {
                 keycloakId = UUID.fromString(location.getPath().substring(location.getPath().lastIndexOf('/') + 1));
             }
 
-            if (request.role() != null)
-                assignRealmRole(keycloakId.toString(), request.role());
+            assignRealmRole(keycloakId.toString(), request.role());
 
             var user = new User();
             user.setKeycloakId(keycloakId);
@@ -103,8 +114,8 @@ public class UserService {
             userRepository.save(user);
 
             auditService.log(createdById, "USER_CREATED", "User", user.getId().toString(),
-                    "Compte cree: " + request.username(), ip);
-            log.info("Compte cree: {} (keycloakId={})", request.username(), keycloakId);
+                    "Account created: " + request.username(), ip);
+            log.info("Account created: {} (keycloakId={})", request.username(), keycloakId);
 
             return toResponse(user);
         } catch (RuntimeException e) {
@@ -120,22 +131,26 @@ public class UserService {
         }
     }
 
+    @Cacheable(value = "users", key = "'all_' + #pageable.pageNumber")
     @Transactional(readOnly = true)
     public Page<UserResponse> getAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable).map(this::toResponse);
     }
 
+    @Cacheable(value = "users", key = "#id")
     @Transactional(readOnly = true)
     public UserResponse getUser(UUID id) {
         return toResponse(userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + id)));
+                .orElseThrow(() -> new NotFoundException("User not found: " + id)));
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     @Transactional
     public UserResponse updateUser(UUID id, UpdateUserRequest request, String updatedBy) {
         var user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + id));
+                .orElseThrow(() -> new NotFoundException("User not found: " + id));
 
+        var oldRole = user.getRole();
         user.setUsername(request.username());
         user.setEmail(request.email());
         user.setFirstName(request.firstName());
@@ -154,10 +169,9 @@ public class UserService {
 
         if (request.password() != null)
             userResource.resetPassword(passwordCredential(request.password()));
-        if (request.role() != null && !request.role().equals(user.getRole())) {
-            var metierRoles = List.of("ADMIN", "MANAGER", "TECHNICIAN", "CLIENT_ADMIN", "CLIENT_USER", "CLIENT_VIEWER");
+        if (request.role() != null && !request.role().equals(oldRole)) {
             var toRemove = realm().users().get(kcIdStr).roles().realmLevel().listAll().stream()
-                    .filter(r -> metierRoles.contains(r.getName()))
+                    .filter(r -> METIER_ROLES.contains(r.getName()))
                     .toList();
             if (!toRemove.isEmpty())
                 realm().users().get(kcIdStr).roles().realmLevel().remove(toRemove);
@@ -165,16 +179,18 @@ public class UserService {
         }
 
         auditService.log(userIdOrNull(updatedBy), "USER_UPDATED", "User", user.getId().toString(),
-                "Compte mis a jour: " + user.getUsername(), null);
+                "User updated: " + user.getUsername(), null);
 
         return toResponse(user);
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     @Transactional
     public void deleteUser(UUID id, String deletedBy) {
         var user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + id));
+                .orElseThrow(() -> new NotFoundException("User not found: " + id));
         user.setActive(false);
+        userRepository.save(user);
 
         var kcIdStr = user.getKeycloakId().toString();
         var kcUser = realm().users().get(kcIdStr).toRepresentation();
@@ -182,21 +198,21 @@ public class UserService {
         realm().users().get(kcIdStr).update(kcUser);
 
         auditService.log(userIdOrNull(deletedBy), "USER_DELETED", "User",
-                user.getId().toString(), "Compte desactive: " + user.getEmail(), null);
+                user.getId().toString(), "Account deactivated: " + user.getEmail(), null);
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     @Transactional
     public UserResponse assignRole(UUID keycloakId, String newRole, String adminId) {
         var user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + keycloakId));
+                .orElseThrow(() -> new NotFoundException("User not found: " + keycloakId));
         user.setRole(newRole);
 
         var kcIdStr = keycloakId.toString();
         var realm = realm();
 
-        var metierRoles = List.of("ADMIN", "MANAGER", "TECHNICIAN", "CLIENT_ADMIN", "CLIENT_USER", "CLIENT_VIEWER");
         var toRemove = realm.users().get(kcIdStr).roles().realmLevel().listAll().stream()
-                .filter(r -> metierRoles.contains(r.getName()))
+                .filter(r -> METIER_ROLES.contains(r.getName()))
                 .toList();
         if (!toRemove.isEmpty())
             realm.users().get(kcIdStr).roles().realmLevel().remove(toRemove);
@@ -205,21 +221,22 @@ public class UserService {
             var role = realm.roles().get(newRole).toRepresentation();
             realm.users().get(kcIdStr).roles().realmLevel().add(List.of(role));
         } catch (NotFoundException e) {
-            throw new NotFoundException("Role '" + newRole + "' non configure dans Keycloak");
+            throw new NotFoundException("Role '" + newRole + "' not configured in Keycloak");
         }
 
         auditService.log(userIdOrNull(adminId), "ROLE_ASSIGNED", "User",
-                user.getId().toString(), "Role " + newRole + " assigne a " + user.getUsername(), null);
+                user.getId().toString(), "Role " + newRole + " assigned to " + user.getUsername(), null);
 
         return toResponse(user);
     }
 
+    @CacheEvict(value = "users", allEntries = true)
     @Transactional
     public UserResponse updateUserStatus(UUID keycloakId, boolean enabled, String adminId) {
         var user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + keycloakId));
+                .orElseThrow(() -> new NotFoundException("User not found: " + keycloakId));
 
-        if (Boolean.valueOf(user.getActive()).equals(enabled)) {
+        if (Boolean.TRUE.equals(user.getActive()) == enabled) {
             return toResponse(user);
         }
 
@@ -232,7 +249,7 @@ public class UserService {
 
         var action = enabled ? "ACCOUNT_ENABLED" : "ACCOUNT_DISABLED";
         auditService.log(userIdOrNull(adminId), action, "User",
-                user.getId().toString(), "Compte " + user.getUsername() + ": " + (enabled ? "active" : "desactive"), null);
+                user.getId().toString(), "Account " + user.getUsername() + ": " + (enabled ? "enabled" : "disabled"), null);
 
         return toResponse(user);
     }
@@ -240,24 +257,24 @@ public class UserService {
     @Transactional
     public void sendPasswordReset(UUID keycloakId, String adminId) {
         userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + keycloakId));
+                .orElseThrow(() -> new NotFoundException("User not found: " + keycloakId));
         realm().users().get(keycloakId.toString())
                 .executeActionsEmail(List.of("UPDATE_PASSWORD"));
         auditService.log(userIdOrNull(adminId), "PASSWORD_RESET_SENT", "User",
-                keycloakId.toString(), "Email de reinitialisation envoye", null);
-        log.info("Email de reinitialisation envoye pour keycloakId={}", keycloakId);
+                keycloakId.toString(), "Password reset email sent", null);
+        log.info("Password reset email sent for keycloakId={}", keycloakId);
     }
 
     @Transactional(readOnly = true)
     public UserResponse getProfile(UUID keycloakId) {
         return toResponse(userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new NotFoundException("Profil introuvable")));
+                .orElseThrow(() -> new NotFoundException("Profile not found")));
     }
 
     @Transactional
     public void markEmailVerified(UUID userId) {
         var user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + userId));
+                .orElseThrow(() -> new NotFoundException("User not found: " + userId));
         user.setEmailVerified(true);
         userRepository.save(user);
         log.info("Email verified for userId={}", userId);
@@ -266,7 +283,7 @@ public class UserService {
     @Transactional
     public UserResponse updateProfile(UUID keycloakId, UpdateProfileRequest request) {
         var user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new NotFoundException("Profil introuvable"));
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
 
         user.setFirstName(request.firstName());
         user.setLastName(request.lastName());
@@ -279,7 +296,7 @@ public class UserService {
         userResource.update(kcUser);
 
         auditService.log(keycloakId, "PROFILE_UPDATED", "User",
-                user.getId().toString(), "Profil mis a jour: " + user.getUsername(), null);
+                user.getId().toString(), "Profile updated: " + user.getUsername(), null);
 
         return toResponse(user);
     }
@@ -287,30 +304,9 @@ public class UserService {
     @Transactional
     public void changePassword(UUID keycloakId, ChangePasswordRequest request) {
         var user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new NotFoundException("Utilisateur introuvable: " + keycloakId));
+                .orElseThrow(() -> new NotFoundException("User not found: " + keycloakId));
 
-        // Vérifier l'ancien mot de passe via Keycloak token endpoint
-        var tokenUrl = keycloakProperties.authServerUrl() + "/realms/" + keycloakProperties.realm() + "/protocol/openid-connect/token";
-        var httpClient = java.net.http.HttpClient.newHttpClient();
-        var body = "client_id=" + keycloakProperties.adminClientId()
-                + "&client_secret=" + keycloakProperties.adminClientSecret()
-                + "&username=" + user.getUsername()
-                + "&password=" + request.currentPassword()
-                + "&grant_type=password";
-        try {
-            var tokenRequest = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create(tokenUrl))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body))
-                    .build();
-            var tokenResponse = httpClient.send(tokenRequest, java.net.http.HttpResponse.BodyHandlers.ofString());
-            if (tokenResponse.statusCode() != 200) {
-                throw new IllegalArgumentException("L'ancien mot de passe est incorrect");
-            }
-        } catch (java.io.IOException | InterruptedException e) {
-            log.warn("Erreur vérification mot de passe Keycloak: {}", e.getMessage());
-            throw new RuntimeException("Impossible de vérifier le mot de passe");
-        }
+        verifyCurrentPassword(user.getUsername(), request.currentPassword());
 
         validatePasswordStrength(request.newPassword());
 
@@ -325,34 +321,79 @@ public class UserService {
         }
 
         auditService.log(keycloakId, "PASSWORD_CHANGED", "User",
-                user.getId().toString(), "Mot de passe modifie: " + user.getUsername(), null);
-        log.info("Mot de passe modifie pour keycloakId={}", keycloakId);
+                user.getId().toString(), "Password changed: " + user.getUsername(), null);
+        log.info("Password changed for keycloakId={}", keycloakId);
+    }
+
+    // Uses Keycloak ROPC (Resource Owner Password Credentials) grant for password verification.
+    // Requires the verification client to have "Direct Access Grants Enabled" in Keycloak.
+    // Note: ROPC is deprecated in OAuth 2.1 and disabled by default in Keycloak 26+.
+    private void verifyCurrentPassword(String username, String currentPassword) {
+        if (keycloakProperties.verificationClientId() == null
+                || keycloakProperties.verificationClientId().isBlank()) {
+            throw new IllegalStateException(
+                "Password verification is not configured: set KEYCLOAK_VERIFICATION_CLIENT_ID");
+        }
+        var tokenUrl = keycloakProperties.authServerUrl() + "/realms/"
+                + keycloakProperties.realm() + "/protocol/openid-connect/token";
+        var body = "client_id=" + URLEncoder.encode(keycloakProperties.verificationClientId(), StandardCharsets.UTF_8)
+                + "&client_secret=" + URLEncoder.encode(keycloakProperties.verificationClientSecret(), StandardCharsets.UTF_8)
+                + "&username=" + URLEncoder.encode(username, StandardCharsets.UTF_8)
+                + "&password=" + URLEncoder.encode(currentPassword, StandardCharsets.UTF_8)
+                + "&grant_type=password";
+        try {
+            var request = HttpRequest.newBuilder()
+                    .uri(URI.create(tokenUrl))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                throw new IllegalArgumentException("Current password is incorrect");
+            }
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            log.warn("Password verification failed for {}: {}", username, e.getMessage());
+            throw new RuntimeException("Unable to verify current password");
+        }
     }
 
     private void validatePasswordStrength(String password) {
         if (password.length() < 8)
-            throw new IllegalArgumentException("Le mot de passe doit contenir au moins 8 caracteres");
+            throw new IllegalArgumentException("Password must contain at least 8 characters");
         if (!password.matches(".*[A-Z].*"))
-            throw new IllegalArgumentException("Le mot de passe doit contenir au moins une majuscule");
+            throw new IllegalArgumentException("Password must contain at least one uppercase letter");
         if (!password.matches(".*[a-z].*"))
-            throw new IllegalArgumentException("Le mot de passe doit contenir au moins une minuscule");
+            throw new IllegalArgumentException("Password must contain at least one lowercase letter");
         if (!password.matches(".*\\d.*"))
-            throw new IllegalArgumentException("Le mot de passe doit contenir au moins un chiffre");
+            throw new IllegalArgumentException("Password must contain at least one digit");
         if (!password.matches(".*[^a-zA-Z0-9].*"))
-            throw new IllegalArgumentException("Le mot de passe doit contenir au moins un caractere special");
+            throw new IllegalArgumentException("Password must contain at least one special character");
     }
 
+    @Transactional
     public UserResponse registerClient(CreateUserRequest request, String ip) {
         var response = createUser(new CreateUserRequest(
                 request.username(), request.email(),
                 request.firstName(), request.lastName(),
                 request.password(), "CLIENT_USER", request.phone()), "SELF_REGISTER", ip);
 
-        var user = userRepository.findById(response.id()).orElseThrow();
-        user.setMustChangePassword(true);
-        userRepository.save(user);
-
-        return toResponse(user);
+        try {
+            var user = userRepository.findById(response.id()).orElseThrow();
+            user.setMustChangePassword(true);
+            userRepository.save(user);
+            return toResponse(user);
+        } catch (RuntimeException e) {
+            log.warn("Failed to set mustChangePassword for userId={}, cleaning up KC user", response.id());
+            try {
+                var realm = realm();
+                realm.users().get(response.keycloakId().toString()).remove();
+            } catch (Exception ignored) {
+                log.warn("Failed to cleanup Keycloak user after registerClient failure");
+            }
+            throw e;
+        }
     }
 
     private void assignRealmRole(String userId, String role) {
@@ -361,7 +402,7 @@ public class UserService {
             var roleRep = r.roles().get(role).toRepresentation();
             r.users().get(userId).roles().realmLevel().add(List.of(roleRep));
         } catch (jakarta.ws.rs.NotFoundException e) {
-            throw new tg.ngstars.auth.exception.NotFoundException("Role '" + role + "' non configure dans Keycloak");
+            throw new NotFoundException("Role '" + role + "' not configured in Keycloak");
         }
     }
 

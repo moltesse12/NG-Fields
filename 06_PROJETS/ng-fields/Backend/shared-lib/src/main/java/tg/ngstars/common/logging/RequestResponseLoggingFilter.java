@@ -17,7 +17,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -33,6 +35,10 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
             "client_secret", "admin-client-secret", "authorization");
     private static final Set<String> SKIP_PATHS = Set.of(
             "/actuator", "/health", "/swagger-ui", "/v3/api-docs");
+    private static final List<Pattern> SENSITIVE_PATTERNS = SENSITIVE_BODY_FIELDS.stream()
+            .map(field -> Pattern.compile(
+                    "(?i)(\"" + Pattern.quote(field) + "\"\\s*:\s*\")([^\"]{1,50})(\")"))
+            .toList();
 
     @Value("${logging.request-response.enabled:false}")
     private boolean enabled;
@@ -116,10 +122,8 @@ public class RequestResponseLoggingFilter extends OncePerRequestFilter {
     private String sanitizeBody(String body) {
         if (body == null || body.isBlank()) return body;
         var sanitized = body;
-        for (var field : SENSITIVE_BODY_FIELDS) {
-            sanitized = sanitized.replaceAll(
-                    "(?i)(\"" + field + "\"\\s*:\s*\")([^\"]{1,50})(\")",
-                    "$1***$3");
+        for (var pattern : SENSITIVE_PATTERNS) {
+            sanitized = pattern.matcher(sanitized).replaceAll("$1***$3");
         }
         return sanitized;
     }

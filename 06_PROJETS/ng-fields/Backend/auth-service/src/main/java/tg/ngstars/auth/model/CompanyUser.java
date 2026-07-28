@@ -3,8 +3,11 @@ package tg.ngstars.auth.model;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
@@ -21,12 +24,13 @@ import jakarta.persistence.Version;
        indexes = {
            @Index(name = "idx_company_users_company_id", columnList = "company_id")
        })
+@BatchSize(size = 20)
 public class CompanyUser {
 
     @Id
     private UUID id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 

@@ -3,6 +3,8 @@
 
 CREATE SCHEMA IF NOT EXISTS auth;
 
+SET search_path TO auth, public;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE users (
@@ -98,3 +100,5 @@ CREATE TABLE failed_login_attempts (
 );
 
 CREATE INDEX idx_failed_login_username ON failed_login_attempts(username);
+CREATE INDEX idx_failed_login_ip ON failed_login_attempts(ip_address);
+CREATE INDEX idx_failed_login_username_attempt ON failed_login_attempts(username, successful, attempted_at);

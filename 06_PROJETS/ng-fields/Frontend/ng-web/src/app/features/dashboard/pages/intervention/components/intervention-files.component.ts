@@ -56,8 +56,7 @@ export class InterventionFilesComponent {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
-    // ponytail: log selected files, real upload when API exists
-    console.log('Fichiers sélectionnés:', Array.from(input.files).map(f => f.name));
+    // TODO: real upload when API exists
     input.value = '';
   }
 

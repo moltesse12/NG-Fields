@@ -10,6 +10,7 @@ import tg.ngstars.interv.model.Intervention;
 import tg.ngstars.interv.model.InterventionStatus;
 
 import java.time.OffsetDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -18,6 +19,14 @@ public class InterventionStatusService {
     private static final Logger log = LoggerFactory.getLogger(InterventionStatusService.class);
 
     public InterventionStatusService() {
+    }
+
+    public void validateInitialStatus(String status) {
+        var valid = Set.of("PENDING", "ASSIGNED");
+        if (!valid.contains(status.toUpperCase())) {
+            throw new tg.ngstars.common.exception.ConflictException(
+                    "Cannot create intervention with status " + status + ". Allowed: PENDING, ASSIGNED");
+        }
     }
 
     public void validateTransition(Intervention intervention, String targetStatus) {

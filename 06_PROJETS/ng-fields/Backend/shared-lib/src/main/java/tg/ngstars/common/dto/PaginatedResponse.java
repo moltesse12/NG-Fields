@@ -10,6 +10,7 @@ public record PaginatedResponse<T>(
     int totalPages
 ) {
     public static <T> PaginatedResponse<T> of(List<T> content, int page, int size, long totalElements) {
+        if (size <= 0) throw new IllegalArgumentException("Page size must be positive");
         int totalPages = (int) Math.ceil((double) totalElements / size);
         return new PaginatedResponse<>(content, page, size, totalElements, totalPages);
     }

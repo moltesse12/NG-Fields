@@ -14,8 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class DeadLetterQueueService {
@@ -30,7 +29,6 @@ public class DeadLetterQueueService {
             @Value("${notification.dlq-dir:./dlq}") String dlqDir) {
         this.dlqDir = Path.of(dlqDir);
         this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
         try {
             Files.createDirectories(this.dlqDir);
         } catch (IOException e) {
@@ -59,7 +57,7 @@ public class DeadLetterQueueService {
         try {
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), entry);
             log.warn("Ajouté à la DLQ: type={}, recipient={}, error={}", type, recipient, errorMessage);
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Échec écriture DLQ: {}", e.getMessage());
         }
     }
@@ -72,7 +70,7 @@ public class DeadLetterQueueService {
                     .forEach(p -> {
                         try {
                             entries.add(objectMapper.readValue(p.toFile(), DlqEntry.class));
-                        } catch (IOException e) {
+                        } catch (Exception e) {
                             log.warn("Impossible de lire l'entrée DLQ: {}", p.getFileName());
                         }
                     });

@@ -4,7 +4,6 @@ import org.slf4j.MDC;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -20,7 +19,7 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String correlationId = exchange.getRequest().getHeaders().getFirst(CORRELATION_ID_HEADER);
-        if (correlationId == null || correlationId.isBlank()) {
+        if (correlationId == null || correlationId.isBlank() || correlationId.length() > 128) {
             correlationId = UUID.randomUUID().toString();
         }
 
@@ -28,7 +27,7 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
         MDC.put(MDC_KEY, finalCorrelationId);
 
         ServerWebExchange mutatedExchange = exchange.mutate()
-            .request(r -> r.header(CORRELATION_ID_HEADER, finalCorrelationId))
+            .request(r -> r.headers(h -> h.set(CORRELATION_ID_HEADER, finalCorrelationId)))
             .build();
 
         return chain.filter(mutatedExchange)

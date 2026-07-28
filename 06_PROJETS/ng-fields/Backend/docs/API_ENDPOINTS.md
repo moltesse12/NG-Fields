@@ -1,6 +1,6 @@
 # API Endpoints — NG-Fields Backend
 
-**Mis à jour :** 23/07/2026 (Backend Complet)
+**Mis à jour :** 24/07/2026 (Audit sécurité complet)
 **Total :** 91 endpoints
 
 ---

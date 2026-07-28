@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,6 +18,7 @@ import tg.ngstars.interv.service.SecurityUtils;
 @RequestMapping("/api/client/dashboard")
 @PreAuthorize("hasAnyRole('CLIENT_ADMIN', 'CLIENT_USER', 'CLIENT_VIEWER')")
 @Tag(name = "Client Dashboard", description = "KPIs et statistiques filtres par entreprise")
+@Timed
 public class ClientDashboardController {
 
     private final DashboardService dashboardService;

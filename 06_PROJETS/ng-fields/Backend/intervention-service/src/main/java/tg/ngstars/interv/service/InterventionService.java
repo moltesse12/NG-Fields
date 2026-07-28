@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -44,14 +46,16 @@ public class InterventionService {
     private final SseEmitterManager sseManager;
     private final PhotoService photoService;
     private final InterventionLockManager lockManager;
+    private final SecurityUtils securityUtils;
 
-    public InterventionService(InterventionRepository interventionRepository, InterventionStatusService statusService, InterventionEmailService emailService, SseEmitterManager sseManager, PhotoService photoService, InterventionLockManager lockManager) {
+    public InterventionService(InterventionRepository interventionRepository, InterventionStatusService statusService, InterventionEmailService emailService, SseEmitterManager sseManager, PhotoService photoService, InterventionLockManager lockManager, SecurityUtils securityUtils) {
         this.interventionRepository = interventionRepository;
         this.statusService = statusService;
         this.emailService = emailService;
         this.sseManager = sseManager;
         this.photoService = photoService;
         this.lockManager = lockManager;
+        this.securityUtils = securityUtils;
     }
 
     @Transactional
@@ -75,9 +79,13 @@ public class InterventionService {
     }
 
     @Transactional
+    @CacheEvict(value = "interventionStats", allEntries = true)
     public InterventionResponse createIntervention(CreateInterventionRequest request, UUID userId) {
         if (interventionRepository.existsByReference(request.reference()))
             throw new IllegalArgumentException("Reference already exists: " + request.reference());
+
+        var status = request.status() != null ? request.status() : "PENDING";
+        statusService.validateInitialStatus(status);
 
         var intervention = Intervention.builder()
                 .reference(request.reference())
@@ -94,7 +102,7 @@ public class InterventionService {
                 .reportedIssue(request.reportedIssue())
                 .diagnosis(request.diagnosis())
                 .workDone(request.workDone())
-                .status(request.status() != null ? request.status() : "PENDING")
+                .status(status)
                 .interventionDate(request.interventionDate())
                 .createdBy(userId)
                 .assignedTo(request.assignedTo())
@@ -106,26 +114,14 @@ public class InterventionService {
                 .build();
 
         if (request.items() != null) {
-            var items = request.items().stream().map(itemReq -> {
-                var unitPrice = itemReq.unitPrice() != null ? itemReq.unitPrice() : BigDecimal.ZERO;
-                var quantity = itemReq.quantity() != null ? itemReq.quantity() : 1;
-                return InterventionItem.builder()
-                        .intervention(intervention)
-                        .type(itemReq.type())
-                        .description(itemReq.description())
-                        .quantity(quantity)
-                        .unitPrice(unitPrice)
-                        .total(unitPrice.multiply(BigDecimal.valueOf(quantity)))
-                        .build();
-            }).toList();
+            var items = request.items().stream()
+                    .map(itemReq -> mapToItem(itemReq, intervention))
+                    .toList();
             intervention.setItems(items);
-            intervention.setTotalCost(intervention.getItems().stream()
-                    .map(InterventionItem::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
+            intervention.setTotalCost(recalculateTotal(intervention));
         }
 
         var saved = interventionRepository.save(intervention);
-        sseManager.sendEvent("INTERVENTION_CREATED",
-                InterventionEvent.created(saved.getId(), saved.getReference(), userId));
         return toResponse(saved);
     }
 
@@ -150,6 +146,7 @@ public class InterventionService {
                 .map(this::toResponse);
     }
 
+    @Cacheable(value = "interventionStats", key = "'global'")
     public InterventionStatsResponse getStats() {
         var countByStatus = interventionRepository.countByStatus().stream()
                 .collect(java.util.stream.Collectors.toMap(
@@ -159,10 +156,10 @@ public class InterventionService {
                 interventionRepository.countAll(),
                 interventionRepository.countActive(),
                 countByStatus,
-                interventionRepository.countAssigned(),
-                interventionRepository.countCompleted(),
-                interventionRepository.countPending(),
-                interventionRepository.countCancelled(),
+                countByStatus.getOrDefault("ASSIGNED", 0L),
+                countByStatus.getOrDefault("COMPLETED", 0L),
+                countByStatus.getOrDefault("PENDING", 0L),
+                countByStatus.getOrDefault("CANCELLED", 0L),
                 interventionRepository.averageDurationMinutes(),
                 interventionRepository.sumEstimatedCost()
         );
@@ -175,55 +172,50 @@ public class InterventionService {
     }
 
     @Transactional
+    @CacheEvict(value = "interventionStats", allEntries = true)
     public InterventionResponse updateIntervention(UUID id, CreateInterventionRequest request, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
         checkOwnership(intervention, userId, isAdminOrManager);
 
-        intervention.setReference(request.reference());
-        intervention.setClientId(request.clientId());
-        intervention.setClientName(request.clientName());
-        intervention.setClientEmail(request.clientEmail());
-        intervention.setClientPhone(request.clientPhone());
-        intervention.setClientAddress(request.clientAddress());
-        intervention.setEquipmentType(request.equipmentType());
-        intervention.setEquipmentBrand(request.equipmentBrand());
-        intervention.setEquipmentModel(request.equipmentModel());
-        intervention.setEquipmentSerial(request.equipmentSerial());
-        intervention.setEquipmentLocation(request.equipmentLocation());
-        intervention.setReportedIssue(request.reportedIssue());
-        intervention.setDiagnosis(request.diagnosis());
-        intervention.setWorkDone(request.workDone());
-        if (request.status() != null) intervention.setStatus(request.status());
-        intervention.setInterventionDate(request.interventionDate());
-        intervention.setAssignedTo(request.assignedTo());
-        intervention.setSiteAddress(request.siteAddress());
-        intervention.setSiteCity(request.siteCity());
-        intervention.setEstimatedCost(request.estimatedCost());
-        intervention.setNotes(request.notes());
+        if (request.reference() != null) intervention.setReference(request.reference());
+        if (request.clientId() != null) intervention.setClientId(request.clientId());
+        if (request.clientName() != null) intervention.setClientName(request.clientName());
+        if (request.clientEmail() != null) intervention.setClientEmail(request.clientEmail());
+        if (request.clientPhone() != null) intervention.setClientPhone(request.clientPhone());
+        if (request.clientAddress() != null) intervention.setClientAddress(request.clientAddress());
+        if (request.equipmentType() != null) intervention.setEquipmentType(request.equipmentType());
+        if (request.equipmentBrand() != null) intervention.setEquipmentBrand(request.equipmentBrand());
+        if (request.equipmentModel() != null) intervention.setEquipmentModel(request.equipmentModel());
+        if (request.equipmentSerial() != null) intervention.setEquipmentSerial(request.equipmentSerial());
+        if (request.equipmentLocation() != null) intervention.setEquipmentLocation(request.equipmentLocation());
+        if (request.reportedIssue() != null) intervention.setReportedIssue(request.reportedIssue());
+        if (request.diagnosis() != null) intervention.setDiagnosis(request.diagnosis());
+        if (request.workDone() != null) intervention.setWorkDone(request.workDone());
+        if (request.status() != null) {
+            statusService.validateTransition(intervention, request.status());
+            intervention.setStatus(request.status());
+        }
+        if (request.interventionDate() != null) intervention.setInterventionDate(request.interventionDate());
+        if (request.assignedTo() != null) intervention.setAssignedTo(request.assignedTo());
+        if (request.siteAddress() != null) intervention.setSiteAddress(request.siteAddress());
+        if (request.siteCity() != null) intervention.setSiteCity(request.siteCity());
+        if (request.estimatedCost() != null) intervention.setEstimatedCost(request.estimatedCost());
+        if (request.notes() != null) intervention.setNotes(request.notes());
 
         if (request.items() != null) {
             intervention.getItems().clear();
-            var items = request.items().stream().map(itemReq -> {
-                var unitPrice = itemReq.unitPrice() != null ? itemReq.unitPrice() : BigDecimal.ZERO;
-                var quantity = itemReq.quantity() != null ? itemReq.quantity() : 1;
-                return InterventionItem.builder()
-                        .intervention(intervention)
-                        .type(itemReq.type())
-                        .description(itemReq.description())
-                        .quantity(quantity)
-                        .unitPrice(unitPrice)
-                        .total(unitPrice.multiply(BigDecimal.valueOf(quantity)))
-                        .build();
-            }).toList();
+            var items = request.items().stream()
+                    .map(itemReq -> mapToItem(itemReq, intervention))
+                    .toList();
             intervention.getItems().addAll(items);
-            intervention.setTotalCost(items.stream()
-                    .map(InterventionItem::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
+            intervention.setTotalCost(recalculateTotal(intervention));
         }
 
         return toResponse(interventionRepository.save(intervention));
     }
 
     @Transactional
+    @CacheEvict(value = "interventionStats", allEntries = true)
     public void deleteIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
         checkOwnership(intervention, userId, isAdminOrManager);
@@ -237,6 +229,12 @@ public class InterventionService {
     }
 
     public Page<InterventionResponse> getClientInterventions(UUID clientId, UUID userId, boolean isAdminOrManager, Pageable pageable) {
+        if (!isAdminOrManager) {
+            var userCompanyId = securityUtils.getCompanyId();
+            if (userCompanyId == null || !userCompanyId.equals(clientId)) {
+                throw new ForbiddenException("Not authorized to view interventions for this client");
+            }
+        }
         return interventionRepository.findByClientIdOrderByCreatedAtDesc(clientId, pageable)
                 .map(this::toResponse);
     }
@@ -280,8 +278,8 @@ public class InterventionService {
             long overlaps = interventionRepository.countOverlappingInterventions(
                     intervention.getAssignedTo(), id, intervention.getStartTime(), intervention.getEndTime());
             if (overlaps > 0) {
-                log.warn("Conflit d'agenda detecte pour technicien {} a {}: {} interventions chevauchantes",
-                        intervention.getAssignedTo(), intervention.getStartTime(), overlaps);
+                throw new tg.ngstars.common.exception.ConflictException(
+                        "Schedule conflict: " + overlaps + " overlapping intervention(s) for this technician");
             }
         }
 
@@ -422,6 +420,7 @@ public class InterventionService {
     @Transactional
     public InterventionResponse closeIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
+        checkOwnership(intervention, userId, isAdminOrManager);
         var oldStatus = intervention.getStatus();
         statusService.closeIntervention(intervention, userId, isAdminOrManager);
         var saved = interventionRepository.save(intervention);
@@ -433,6 +432,7 @@ public class InterventionService {
     @Transactional
     public InterventionResponse cancelIntervention(UUID id, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
+        checkOwnership(intervention, userId, isAdminOrManager);
         var oldStatus = intervention.getStatus();
         statusService.cancelIntervention(intervention, userId, isAdminOrManager);
         var saved = interventionRepository.save(intervention);
@@ -505,8 +505,36 @@ public class InterventionService {
     public void sendEmailReport(UUID id, String recipientEmail, UUID userId, boolean isAdminOrManager) {
         var intervention = findOrThrow(id);
         checkOwnership(intervention, userId, isAdminOrManager);
+
+        if (recipientEmail == null || recipientEmail.isBlank()
+                || !recipientEmail.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            throw new IllegalArgumentException("Invalid recipient email: " + recipientEmail);
+        }
+
         log.info("Sending email report for intervention {} to {}", intervention.getReference(), recipientEmail);
         emailService.sendInterventionReport(intervention, recipientEmail);
+    }
+
+    private InterventionItem mapToItem(CreateItemRequest itemReq, Intervention intervention) {
+        var unitPrice = itemReq.unitPrice() != null ? itemReq.unitPrice() : BigDecimal.ZERO;
+        var quantity = itemReq.quantity() != null ? itemReq.quantity() : 1;
+        return InterventionItem.builder()
+                .intervention(intervention)
+                .type(itemReq.type())
+                .description(itemReq.description())
+                .quantity(quantity)
+                .unitPrice(unitPrice)
+                .total(unitPrice.multiply(BigDecimal.valueOf(quantity)))
+                .build();
+    }
+
+    private BigDecimal recalculateTotal(Intervention intervention) {
+        if (intervention.getItems() == null || intervention.getItems().isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        return intervention.getItems().stream()
+                .map(InterventionItem::getTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private InterventionResponse toResponse(Intervention i) {

@@ -66,9 +66,6 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @Column(name = "updated_by")
-    private UUID updatedBy;
-
     @Version
     private Long version;
 
@@ -111,7 +108,5 @@ public class User {
     public void setEmailVerified(Boolean emailVerified) { this.emailVerified = emailVerified; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
-    public UUID getUpdatedBy() { return updatedBy; }
-    public void setUpdatedBy(UUID updatedBy) { this.updatedBy = updatedBy; }
     public Long getVersion() { return version; }
 }

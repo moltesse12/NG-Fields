@@ -1,6 +1,6 @@
 # Database Schema
 
-**Mis à jour :** 23/07/2026
+**Mis à jour :** 24/07/2026 (V2 migration)
 
 NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its schema. Schema management is via **Flyway** (auth, client, intervention, report) with Hibernate in `ddl-auto: validate` mode.
 
@@ -8,7 +8,7 @@ NG-Fields uses PostgreSQL with multi-schema architecture. Each service owns its 
 
 | Service | Strategy | Migration |
 |---------|----------|-----------|
-| auth-service | Flyway | `V1__init.sql` |
+| auth-service | Flyway | `V1__init.sql`, `V2__failed_login_indexes_and_version.sql` |
 | client-service | Flyway | `V1__init.sql` |
 | intervention-service | Flyway | `V1__init.sql` |
 | report-service | Flyway | `V1__init.sql` |
@@ -111,8 +111,9 @@ Flyway runs automatically at startup (`spring.flyway.baseline-on-migrate: true`)
 | successful | BOOLEAN | NOT NULL |
 | attempted_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() |
 | locked_until | TIMESTAMPTZ | |
+| version | BIGINT | DEFAULT 0 (V2) |
 
-**Indexes:** `idx_failed_login_username`
+**Indexes:** `idx_failed_login_username`, `idx_failed_login_ip` (V2), `idx_failed_login_username_attempt` (V2)
 
 ---
 
@@ -302,6 +303,7 @@ Flyway runs automatically at startup (`spring.flyway.baseline-on-migrate: true`)
 | File | Service | Content |
 |------|---------|---------|
 | `auth-service/.../db/migration/V1__init.sql` | auth | users, audit_logs, companies, company_users, company_access_log, failed_login_attempts |
+| `auth-service/.../db/migration/V2__failed_login_indexes_and_version.sql` | auth | Ajout colonne `version` + indexes sur `failed_login_attempts` (ip, username+successful+attempted_at) |
 | `client-service/.../db/migration/V1__init.sql` | client | clients, contacts |
 | `intervention-service/.../db/migration/V1__init.sql` | intervention | interventions, intervention_items, intervention_photos |
 | `report-service/.../db/migration/V1__init.sql` | report | pdf_templates, email_templates |

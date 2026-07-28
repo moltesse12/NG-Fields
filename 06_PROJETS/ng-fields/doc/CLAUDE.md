@@ -5,12 +5,12 @@
 - **Frontend:** Angular 22+ standalone, TypeScript 5.9, Tailwind CSS 4, Vitest, angular-auth-oidc-client, Chart.js
 - **Auth:** Keycloak 26.6.4 (OAuth2/OpenID Connect)
 - **Mobile:** Flutter/Dart (Riverpod, GoRouter, Drift/SQLite) — **Non démarré**, répertoire vide
-- **DB:** PostgreSQL 18 — `ddl-auto: update` (Hibernate), schéma unique `ng_fields`
+- **DB:** PostgreSQL 18 — `ddl-auto: validate` (Hibernate) + Flyway migrations (auth, client, intervention, report), schémas multi-tenant (`auth`, `client`, `intervention`, `report`)
 - **PDF:** OpenPDF + ZXing (QR codes)
 - **Push:** Firebase Admin SDK (conditional, toggle `firebase.enabled`)
 - **Email:** Resend API (auth-service + intervention-service)
 - **Logs:** Logback + logstash-logback-encoder 8.0 (JSON structuré)
-- **Tests:** JUnit 5 + Mockito — **65 unit tests** (intervention: 49, auth: 21, notification: 3)
+- **Tests:** JUnit 5 + Mockito — **72 unit tests** (intervention: 49, auth: 21, notification: 10)
 - **CI/CD:** GitHub Actions
 
 ## Structure des dossiers
@@ -32,7 +32,7 @@
 - Les entités JPA utilisent `@PrePersist`/`@PreUpdate` pour les timestamps
 - L'ID client `localId` sert à l'idempotence de synchronisation offline→online
 - La génération PDF utilise OpenPDF (pas iText)
-- Hibernate `ddl-auto: update` remplace Flyway pour la gestion du schéma
+- Hibernate `ddl-auto: validate` + Flyway migrations pour la gestion du schéma
 - Toujours logger les actions importantes
 - **Ne jamais ajouter de commentaires** sauf demande explicite
 
@@ -79,12 +79,12 @@ cd Frontend/ng-web && npm run build             # Build production
 - **Pourquoi Vitest et pas Jasmine/Karma** : 10-50x plus rapide, même API que Jest, compatible avec Angular CLI 21
 - **Pourquoi OnPush partout** : arbre de détection minimal, pas de zone.js overhead sur les composants leaf
 - **Pourquoi ApiService centralisé** : interceptors auth, error handling, typage uniforme, moins de duplication que HttpClient brut dans chaque service
-- **Pourquoi ddl-auto: update et pas Flyway** : simplicité pour un projet avec Hibernate, moins de maintenance que des scripts SQL séparés
+- **Pourquoi ddl-auto: validate + Flyway** : Hibernate validate vérifie la cohérence au démarrage, Flyway gère les migrations traçables (V1__init + V2__add_indexes)
 - **Pourquoi Firebase Admin SDK (conditional)** : toggle `firebase.enabled` permet de démarrer sans credentials Firebase en dev, PushServiceNoop en fallback
 - **Pourquoi Resend et pas JavaMailSender** : API moderne, deliverability supérieure, pas de configuration SMTP
 - **Pourquoi logstash-logback-encoder** : JSON structuré pour ELK/Grafana, compatible Spring Boot 4.1.0
 
-## État d'avancement Backend (23/07/2026)
+## État d'avancement Backend (24/07/2026)
 
 ### US complétées
 | US | Description | Statut |
@@ -118,18 +118,19 @@ cd Frontend/ng-web && npm run build             # Build production
 ### US supprimées
 | US | Raison |
 |----|--------|
-| US-003 | Flyway supprimé → ddl-auto: update |
+| US-003 | ~~Flyway supprimé~~ → restauré (Hibernate ddl-auto: validate + Flyway V1/V2) |
 | US-023 | WhatsApp supprimé (email UNIQUEMENT) |
 | US-026 | Portail client public supprimé |
 | US-027 | OpenProject supprimé |
 
-### Tests unitaires (65 tests)
+### Tests unitaires (72 tests)
 - `InterventionServiceTest` — 25 tests
 - `InterventionStatusServiceTest` — 16 tests
 - `ExportServiceTest` — 8 tests (CSV/HTML escaping inclus)
 - `UserServiceTest` — 11 tests
 - `CompanyServiceTest` — 10 tests
 - `PushServiceNoopTest` — 3 tests
+- `TemplateRenderingTest` — 7 tests (email templates + PDF config validation)
 
 ### Bugfixes critiques
 - `InterventionService.getStats()`: `countAll()` pour totalInterventions
@@ -138,6 +139,14 @@ cd Frontend/ng-web && npm run build             # Build production
 - `UserService.changePassword()`: vérifie ancien mdp via token endpoint Keycloak
 - `CompanyService.addCompanyUser()`: retire tempPassword des logs
 
+### Sécurité renforcée (audit complet)
+- Brute force : OWASP hybride — 10 tentatives → 30min lockout, tentative par IP avec TTL
+- Vérification old password : throw au lieu de silent skip si non configuré
+- RegisterClient : rollback Keycloak si échec DB
+- Email templates : HTML escape des noms utilisateur (XSS)
+- EmailVerification : validation HMAC key ≥32 bytes au démarrage
+- RateLimitConfig : `compute` au lieu de `computeIfAbsent` pour limits dynamiques
+
 ### Postman
-- Collection: 90 endpoints couvrant tous les US
+- Collection: 91 endpoints couvrant tous les US
 - Fichier: `Backend/postman/NG-Fields API.postman_collection.json`

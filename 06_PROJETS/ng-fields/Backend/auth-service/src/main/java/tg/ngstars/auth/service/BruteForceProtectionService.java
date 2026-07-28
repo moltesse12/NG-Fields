@@ -36,8 +36,9 @@ public class BruteForceProtectionService {
         this.failedLoginAttemptRepository = failedLoginAttemptRepository;
     }
 
+    @Transactional
     public boolean isLockedOut(String username) {
-        var lastLockout = failedLoginAttemptRepository.findTop20ByUsernameOrderByAttemptedAtDesc(username)
+        var lastLockout = failedLoginAttemptRepository.findTop1ByUsernameOrderByAttemptedAtDesc(username)
             .stream()
             .filter(a -> a.getLockedUntil() != null)
             .findFirst();
@@ -59,12 +60,14 @@ public class BruteForceProtectionService {
         return false;
     }
 
+    @Transactional(readOnly = true)
     public boolean isIpBlocked(String ipAddress) {
         long failedCount = failedLoginAttemptRepository
             .countByIpAddressAndSuccessfulFalseAndAttemptedAtAfter(ipAddress, OffsetDateTime.now().minusMinutes(windowMinutes));
         return failedCount >= ipMaxAttempts;
     }
 
+    @Transactional
     public void recordFailedAttempt(String username, String ipAddress) {
         var attempt = new FailedLoginAttempt(username, ipAddress, false);
         failedLoginAttemptRepository.save(attempt);
@@ -79,13 +82,14 @@ public class BruteForceProtectionService {
         log.debug("Failed login attempt: username={}, ipAddress={}, totalFailed={}", username, ipAddress, failedCount);
     }
 
+    @Transactional
     public void recordSuccessfulAttempt(String username, String ipAddress) {
         var attempt = new FailedLoginAttempt(username, ipAddress, true);
         failedLoginAttemptRepository.save(attempt);
     }
 
-    private void lockAccount(String username) {
-        var lastAttempt = failedLoginAttemptRepository.findTop20ByUsernameOrderByAttemptedAtDesc(username)
+    void lockAccount(String username) {
+        var lastAttempt = failedLoginAttemptRepository.findTop1ByUsernameOrderByAttemptedAtDesc(username)
             .stream()
             .findFirst();
 

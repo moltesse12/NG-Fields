@@ -3,6 +3,8 @@
 
 CREATE SCHEMA IF NOT EXISTS intervention;
 
+SET search_path TO intervention, public;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE interventions (

@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import tg.ngstars.media.config.MediaProperties;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class CompanyQuotaTracker {
@@ -20,11 +20,13 @@ public class CompanyQuotaTracker {
     private static final Logger log = LoggerFactory.getLogger(CompanyQuotaTracker.class);
 
     private final MediaProperties properties;
+    private final ObjectMapper objectMapper;
     private final Path quotaFile;
     private final ConcurrentHashMap<String, Long> companyUsage = new ConcurrentHashMap<>();
 
     public CompanyQuotaTracker(MediaProperties properties, ObjectMapper objectMapper) throws IOException {
         this.properties = properties;
+        this.objectMapper = objectMapper;
         this.quotaFile = Path.of(properties.uploadDir()).resolve(".company-quotas.json");
 
         if (Files.exists(quotaFile)) {
@@ -69,7 +71,6 @@ public class CompanyQuotaTracker {
     private void persist() {
         var tmp = quotaFile.resolveSibling(quotaFile.getFileName() + ".tmp");
         try (var writer = Files.newBufferedWriter(tmp)) {
-            var objectMapper = new ObjectMapper();
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(writer, companyUsage);
             Files.move(tmp, quotaFile,
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING,

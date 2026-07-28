@@ -3,6 +3,8 @@
 
 CREATE SCHEMA IF NOT EXISTS reports;
 
+SET search_path TO reports, public;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE pdf_templates (

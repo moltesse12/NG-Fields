@@ -14,7 +14,7 @@ Le backend NG-Fields est une architecture **microservices** (Spring Boot 4.1.0 /
 | Auth | Keycloak (OAuth2/JWT) | 26.0.9 |
 | Base de données | PostgreSQL | 18 |
 | ORM | JPA / Hibernate | `ddl-auto: validate` |
-| Migrations | Flyway | 11 (auth, client, intervention, report) |
+| Migrations | Flyway | V1/V2 (auth, client, intervention, report) |
 | API Docs | SpringDoc OpenAPI | 3.0.3 |
 | PDF | OpenPDF (LibrePDF) | 3.0.5 |
 | Email | Resend API | — |
@@ -368,6 +368,12 @@ Client → Gateway → [JWT] → Service → Keycloak (validation JWT)
 - **Request/response logging** : `RequestResponseLoggingFilter` dans shared-lib (toggled via `LOG_REQUEST_RESPONSE=true`)
 - **Secrets sanitization** : Actuator env endpoint filtre les clés sensibles
 - **Optimistic locking** : `@Version` sur toutes les entités critiques
+- **Password verification** : `verifyCurrentPassword` throw `UnsupportedOperationException` si Keycloak non configuré (pas de silent skip)
+- **KC rollback** : `registerClient` nettoie Keycloak si échec DB
+- **Email XSS protection** : HTML escape des noms utilisateur dans tous les templates email
+- **HMAC key validation** : `@PostConstruct` vérifie longueur clé ≥32 bytes (email verification)
+- **Dynamic rate limits** : `RateLimitConfig` utilise `compute()` pour limits par entreprise
+- **BruteForce readOnly** : `isIpBlocked` avec `@Transactional(readOnly=true)`
 
 ### Configuration CORS
 
@@ -388,7 +394,15 @@ Origines autorisées : `http://localhost:4200` (Angular), `http://localhost:8100
 
 ### Gestion du schéma
 
-Le schéma est géré par **Flyway** avec des migrations SQL (`V1__init.sql`) pour les services auth, client, intervention et report. Hibernate est en mode `ddl-auto: validate` — il ne crée ni ne modifie les tables, il vérifie uniquement la cohérence.
+Le schéma est géré par **Flyway** avec des migrations SQL pour les services auth, client, intervention et report. Hibernate est en mode `ddl-auto: validate` — il ne crée ni ne modifie les tables, il vérifie uniquement la cohérence.
+
+| Service | Migration | Contenu |
+|---------|-----------|---------|
+| auth | `V1__init.sql` | users, audit_logs, companies, company_users, company_access_log, failed_login_attempts |
+| auth | `V2__failed_login_indexes_and_version.sql` | Ajout colonne `version` + indexes sur `failed_login_attempts` |
+| client | `V1__init.sql` | clients, contacts |
+| intervention | `V1__init.sql` | interventions, intervention_items, intervention_photos |
+| report | `V1__init.sql` | pdf_templates, email_templates |
 
 Les migrations Flyway s'exécutent automatiquement au démarrage de chaque service (`spring.flyway.baseline-on-migrate: true`).
 
@@ -400,6 +414,7 @@ Des index ont été ajoutés sur les colonnes de recherche fréquente :
 |---|---|---|
 | auth | `users` | `idx_users_username`, `idx_users_company_id` |
 | auth | `audit_logs` | `idx_audit_user_id`, `idx_audit_created_at` |
+| auth | `failed_login_attempts` | `idx_failed_login_username`, `idx_failed_login_ip`, `idx_failed_login_username_attempt` (V2) |
 | client | `clients` | `idx_clients_email`, `idx_clients_active`, `idx_clients_company_id` |
 | intervention | `interventions` | `idx_interventions_status`, `idx_interventions_technician_id`, `idx_interventions_created_at` |
 

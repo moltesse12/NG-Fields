@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -46,6 +47,7 @@ import tg.ngstars.interv.service.SecurityUtils;
 @RequestMapping("/api/interventions")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIAN', 'CLIENT_ADMIN', 'CLIENT_USER', 'CLIENT_VIEWER')")
 @Tag(name = "Interventions", description = "CRUD complet des interventions")
+@Timed
 public class InterventionController {
 
     private final InterventionService interventionService;

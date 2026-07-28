@@ -1,5 +1,7 @@
 package tg.ngstars.report.controller;
 
+import io.micrometer.core.annotation.Timed;
+
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/reports/email-templates")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+@Timed
 public class EmailTemplateController {
 
     private final EmailTemplateService service;

@@ -28,17 +28,11 @@ jobs:
       - name: Install dependencies
         run: cd 06_PROJETS/ng-fields/Frontend/ng-web && npm ci
 
-      - name: Lint
-        run: cd 06_PROJETS/ng-fields/Frontend/ng-web && npx ng lint
-        continue-on-error: true
-
-      - name: Type check
+      - name: Type check & Build
         run: cd 06_PROJETS/ng-fields/Frontend/ng-web && npx ng build
-        continue-on-error: true
 
       - name: Run tests
         run: cd 06_PROJETS/ng-fields/Frontend/ng-web && npx vitest run --reporter=junit
-        continue-on-error: true
 
       - name: Upload test results
         if: always()

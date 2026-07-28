@@ -16,11 +16,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.micrometer.core.annotation.Timed;
+
 import tg.ngstars.interv.dto.PhotoResponse;
 import tg.ngstars.interv.service.PhotoService;
 
 @RestController
 @RequestMapping("/api/interventions/{id}/photos")
+@Timed
 public class PhotoController {
 
     private static final List<String> ALLOWED_MIME_TYPES = List.of(

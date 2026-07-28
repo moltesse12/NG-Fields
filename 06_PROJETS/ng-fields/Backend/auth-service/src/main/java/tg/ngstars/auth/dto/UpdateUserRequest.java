@@ -15,11 +15,12 @@ public record UpdateUserRequest(
     @NotBlank @Size(max = 100)
     String lastName,
 
-    @Size(min = 6)
+    @Size(min = 8)
     String password,
 
+    @NotBlank
     @Pattern(regexp = "ADMIN|MANAGER|TECHNICIAN|CLIENT_ADMIN|CLIENT_USER|CLIENT_VIEWER",
-             message = "Role invalide : ADMIN, MANAGER, TECHNICIAN, CLIENT_ADMIN, CLIENT_USER, CLIENT_VIEWER")
+             message = "Invalid role: must be one of ADMIN, MANAGER, TECHNICIAN, CLIENT_ADMIN, CLIENT_USER, CLIENT_VIEWER")
     String role,
 
     String phone

@@ -2,6 +2,8 @@ package tg.ngstars.report.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tg.ngstars.report.dto.CreatePdfTemplateRequest;
@@ -10,6 +12,7 @@ import tg.ngstars.report.dto.UpdatePdfTemplateRequest;
 import tg.ngstars.report.model.PdfTemplate;
 import tg.ngstars.report.repository.PdfTemplateRepository;
 
+import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,11 +22,14 @@ public class PdfTemplateService {
     private static final Logger log = LoggerFactory.getLogger(PdfTemplateService.class);
 
     private final PdfTemplateRepository repository;
+    private final ObjectMapper objectMapper;
 
-    public PdfTemplateService(PdfTemplateRepository repository) {
+    public PdfTemplateService(PdfTemplateRepository repository, ObjectMapper objectMapper) {
         this.repository = repository;
+        this.objectMapper = objectMapper;
     }
 
+    @Cacheable(value = "pdfTemplates", key = "#templateType")
     @Transactional(readOnly = true)
     public List<PdfTemplateResponse> listAll(String templateType) {
         var templates = (templateType != null)
@@ -32,6 +38,7 @@ public class PdfTemplateService {
         return templates.stream().map(this::toResponse).toList();
     }
 
+    @Cacheable(value = "pdfTemplates", key = "#id")
     @Transactional(readOnly = true)
     public PdfTemplateResponse getById(UUID id) {
         var template = repository.findById(id)
@@ -39,6 +46,7 @@ public class PdfTemplateService {
         return toResponse(template);
     }
 
+    @Cacheable(value = "pdfTemplates", key = "'default_' + #templateType")
     @Transactional(readOnly = true)
     public PdfTemplateResponse getDefault(String templateType) {
         var type = templateType != null ? templateType : "INTERVENTION_REPORT";
@@ -47,6 +55,7 @@ public class PdfTemplateService {
         return toResponse(template);
     }
 
+    @CacheEvict(value = "pdfTemplates", allEntries = true)
     @Transactional
     public PdfTemplateResponse create(CreatePdfTemplateRequest request, String userKeycloakId) {
         var template = new PdfTemplate();
@@ -61,6 +70,7 @@ public class PdfTemplateService {
         return toResponse(saved);
     }
 
+    @CacheEvict(value = "pdfTemplates", allEntries = true)
     @Transactional
     public PdfTemplateResponse update(UUID id, UpdatePdfTemplateRequest request) {
         var template = repository.findById(id)
@@ -79,6 +89,7 @@ public class PdfTemplateService {
         return toResponse(saved);
     }
 
+    @CacheEvict(value = "pdfTemplates", allEntries = true)
     @Transactional
     public void delete(UUID id) {
         if (!repository.existsById(id)) {
@@ -99,8 +110,7 @@ public class PdfTemplateService {
     private String validateJson(String json) {
         if (json == null || json.isBlank()) return "{}";
         try {
-            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            mapper.readTree(json);
+            objectMapper.readTree(json);
             return json;
         } catch (Exception e) {
             log.warn("Invalid JSON config rejected: {}", e.getMessage());

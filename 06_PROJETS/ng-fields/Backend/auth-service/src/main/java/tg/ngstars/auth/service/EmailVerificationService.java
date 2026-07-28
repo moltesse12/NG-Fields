@@ -3,6 +3,7 @@ package tg.ngstars.auth.service;
 import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
+import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +62,7 @@ public class EmailVerificationService {
 
             String purpose = claims.get("purpose", String.class);
             if (!PURPOSE.equals(purpose)) {
-                return VerificationResult.invalid("Token invalide");
+                return VerificationResult.invalid("Invalid token");
             }
 
             UUID userId = UUID.fromString(claims.getSubject());
@@ -71,16 +72,34 @@ public class EmailVerificationService {
 
         } catch (ExpiredJwtException e) {
             log.warn("Email verification token expired");
-            return VerificationResult.expired("Ce lien de verification a expire");
+            return VerificationResult.expired("This verification link has expired");
         } catch (SecurityException | MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
             log.warn("Invalid email verification token: {}", e.getMessage());
-            return VerificationResult.invalid("Token invalide");
+            return VerificationResult.invalid("Invalid token");
         }
     }
 
-    private Key getSigningKey() {
+    @jakarta.annotation.PostConstruct
+    void validateKey() {
         if (jwtSecret == null || jwtSecret.isBlank()) {
-            jwtSecret = "ng-stars-default-secret-key-for-email-verification-2024";
+            return;
+        }
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(jwtSecret);
+        } catch (IllegalArgumentException e) {
+            keyBytes = jwtSecret.getBytes();
+        }
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException(
+                "app.jwt.secret must be at least 32 bytes (256 bits) for HMAC-SHA. Got: " + keyBytes.length + " bytes");
+        }
+    }
+
+    private SecretKey getSigningKey() {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException(
+                "app.jwt.secret must be configured for email verification tokens");
         }
         byte[] keyBytes;
         try {

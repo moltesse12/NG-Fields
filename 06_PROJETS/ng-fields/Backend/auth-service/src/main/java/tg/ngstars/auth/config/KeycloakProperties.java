@@ -7,5 +7,7 @@ public record KeycloakProperties(
     String authServerUrl,
     String adminClientId,
     String adminClientSecret,
-    String realm
+    String realm,
+    String verificationClientId,
+    String verificationClientSecret
 ) {}

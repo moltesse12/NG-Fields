@@ -46,7 +46,6 @@ NG-STARs est une entreprise togolaise de services informatiques et de conseil en
 - Formation aux technologies numériques et accompagnement au changement
 - Déploiement de réseaux et de solutions cloud
 - Conseil en architecture informatique et transformation digitale
-
 Forte d'une équipe de développeurs et techniciens expérimentés de niveau senior, NG-STARs accompagne ses clients dans la modernisation de leurs outils informatiques. Le projet s'inscrit dans cette dynamique, en appliquant cette expertise à ses propres processus internes.
 
 ### 1.2 Contexte du projet
@@ -56,7 +55,6 @@ La gestion des interventions techniques terrain constitue le cœur de métier op
 À ce jour, l'ensemble de ce processus de documentation repose sur une fiche d'intervention papier de 3 pages (référence FI-01-2025), conçue en interne. Ce support, bien que fonctionnel dans ses grandes lignes, présente des limitations croissantes au regard des exigences actuelles de réactivité, de traçabilité et de pilotage par la donnée.
 
 ---
-
 ## 2. PROBLÉMATIQUE
 
 À l'ère de la transformation numérique, les entreprises de services techniques sont confrontées à une exigence croissante de réactivité, de traçabilité et de fiabilité dans la gestion de leurs opérations terrain. La digitalisation des processus métier n'est plus un avantage concurrentiel optionnel, mais une condition nécessaire à la performance et à la compétitivité. Dans ce contexte, les organisations qui maintiennent des processus manuels s'exposent à des risques opérationnels, juridiques et stratégiques de plus en plus difficiles à absorber.

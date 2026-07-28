@@ -1,4 +1,32 @@
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8088/realms/ng-fields
   mail:
     host: localhost
     port: 2525
+
+firebase:
+  enabled: false
+
+notification:
+  dlq-dir: ./test-dlq
+  audit-dir: ./test-audit
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    env:
+      enabled: false
+
+logging:
+  level:
+    tg.ngstars.notification: DEBUG
+    org.springframework.security: DEBUG

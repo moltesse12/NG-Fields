@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -35,6 +36,7 @@ import tg.ngstars.client.service.ClientService;
 @RestController
 @RequestMapping("/api/clients")
 @Tag(name = "Clients", description = "Gestion des fiches clients et contacts")
+@Timed
 public class ClientController {
 
     private final ClientService clientService;

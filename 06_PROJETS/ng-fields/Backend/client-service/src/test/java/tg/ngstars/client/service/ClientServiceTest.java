@@ -21,8 +21,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import tg.ngstars.client.dto.*;
-import tg.ngstars.client.exception.ConflictException;
-import tg.ngstars.client.exception.NotFoundException;
+import tg.ngstars.common.exception.ConflictException;
+import tg.ngstars.common.exception.NotFoundException;
 import tg.ngstars.client.model.Client;
 import tg.ngstars.client.model.Contact;
 import tg.ngstars.client.model.ContactRole;

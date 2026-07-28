@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.micrometer.core.annotation.Timed;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import tg.ngstars.media.service.FileAccessAuditLogger;
 import tg.ngstars.media.service.FileService;
@@ -31,6 +33,7 @@ import tg.ngstars.media.service.FileService;
 @RestController
 @RequestMapping("/api/media")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIAN')")
+@Timed
 public class FileController {
 
     private final FileService fileService;

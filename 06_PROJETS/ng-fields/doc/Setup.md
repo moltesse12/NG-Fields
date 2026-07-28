@@ -34,7 +34,7 @@ CREATE USER ng_fields_user WITH PASSWORD '${DB_PASSWORD}';
 CREATE DATABASE ng_fields OWNER ng_fields_user;
 ```
 
-Les schémas (`auth`, `client`, `intervention`) sont créés automatiquement par Hibernate `ddl-auto: update` au premier démarrage de chaque service.
+Les schémas (`auth`, `client`, `intervention`, `reports`) et tables sont créés automatiquement par Flyway au premier démarrage de chaque service. Hibernate utilise `ddl-auto: validate` pour vérifier la cohérence du schéma.
 
 ---
 

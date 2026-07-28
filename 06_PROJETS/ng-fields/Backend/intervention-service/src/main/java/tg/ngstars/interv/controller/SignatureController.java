@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.micrometer.core.annotation.Timed;
+
 import tg.ngstars.interv.dto.SignatureRequest;
 import tg.ngstars.interv.dto.SignatureResponse;
 import tg.ngstars.interv.service.SignatureService;
@@ -19,6 +21,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/interventions/{id}/signatures")
+@Timed
 public class SignatureController {
 
     private final SignatureService signatureService;

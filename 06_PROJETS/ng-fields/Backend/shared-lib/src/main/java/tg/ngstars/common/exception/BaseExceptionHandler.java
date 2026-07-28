@@ -36,7 +36,7 @@ public abstract class BaseExceptionHandler {
         Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
             .collect(Collectors.toMap(
                 fe -> fe.getField(),
-                fe -> fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "invalide",
+                fe -> fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "invalid",
                 (a, b) -> a + "; " + b));
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         detail.setTitle("Bad Request");
@@ -89,7 +89,7 @@ public abstract class BaseExceptionHandler {
     protected ProblemDetail handleOptimisticLock(ObjectOptimisticLockingFailureException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
         detail.setTitle("Conflict");
-        detail.setDetail("Ce document a ete modifie par un autre utilisateur. Veuillez recharger la page.");
+        detail.setDetail("This document has been modified by another user. Please reload the page.");
         detail.setType(URI.create("about:blank"));
         return detail;
     }
@@ -98,7 +98,7 @@ public abstract class BaseExceptionHandler {
         log.error("Data integrity violation", ex);
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
         detail.setTitle("Conflict");
-        detail.setDetail("Violation de contrainte de donnees. L'operation ne peut pas etre effectuee.");
+        detail.setDetail("Data constraint violation. The operation cannot be completed.");
         detail.setType(URI.create("about:blank"));
         return detail;
     }
@@ -123,7 +123,7 @@ public abstract class BaseExceptionHandler {
         log.error("Unexpected error", ex);
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         detail.setTitle("Internal Server Error");
-        detail.setDetail("Une erreur inattendue s'est produite");
+        detail.setDetail("An unexpected error occurred");
         detail.setType(URI.create("about:blank"));
         return detail;
     }

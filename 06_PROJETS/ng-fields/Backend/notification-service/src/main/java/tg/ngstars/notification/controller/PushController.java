@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +26,7 @@ import tg.ngstars.notification.service.RateLimiter;
 @RequestMapping("/api/notifications")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIAN')")
 @Tag(name = "Notifications", description = "Push notifications et gestion des tokens")
+@Timed
 public class PushController {
 
     private static final int MAX_PUSH_PER_MINUTE = 20;

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +21,7 @@ import tg.ngstars.interv.service.SseEmitterManager;
 @RequestMapping("/api/events")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIAN')")
 @Tag(name = "Events SSE", description = "Server-Sent Events pour le temps reel des interventions")
+@Timed
 public class EventController {
 
     private final SseEmitterManager sseManager;

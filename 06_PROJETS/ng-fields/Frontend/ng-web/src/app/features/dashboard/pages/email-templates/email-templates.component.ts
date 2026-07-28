@@ -1,5 +1,5 @@
-import { Component, signal, computed, OnInit, inject, ChangeDetectionStrategy, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, computed, OnInit, inject, ChangeDetectionStrategy, ElementRef, ViewChild, AfterViewChecked, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { IconComponent } from '../../../../shared/ui/icon/icon.component';
@@ -200,6 +200,8 @@ import {
 export class EmailTemplatesComponent implements OnInit {
   private tplService = inject(EmailTemplateService);
   private sanitizer = inject(DomSanitizer);
+  private platformId = inject(PLATFORM_ID);
+  private baseUrl = isPlatformBrowser(this.platformId) ? window.location.origin : '';
 
   templates = signal<EmailTemplateResponse[]>([]);
   editing = signal(false);
@@ -230,8 +232,8 @@ export class EmailTemplatesComponent implements OnInit {
     html = html.replace(/\{\{firstName\}\}/g, '<strong>John</strong>');
     html = html.replace(/\{\{email\}\}/g, 'john&#64;example.com');
     html = html.replace(/\{\{tempPassword\}\}/g, '<code>TempPass123!</code>');
-    html = html.replace(/\{\{loginUrl\}\}/g, 'http://localhost:4200/login');
-    html = html.replace(/\{\{resetLink\}\}/g, 'http://localhost:4200/reset-password?token=xxx');
+    html = html.replace(/\{\{loginUrl\}\}/g, `${this.baseUrl}/login`);
+    html = html.replace(/\{\{resetLink\}\}/g, `${this.baseUrl}/reset-password?token=xxx`);
     return html || '<p class="text-gray-400 italic">Apercu de l email...</p>';
   });
 

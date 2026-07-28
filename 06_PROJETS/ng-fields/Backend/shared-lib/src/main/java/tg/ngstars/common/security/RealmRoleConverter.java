@@ -15,19 +15,19 @@ public class RealmRoleConverter implements Converter<Jwt, Collection<GrantedAuth
 
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {
-        final Map<String, Object> realmAccess = (Map<String, Object>) jwt.getClaims().get("realm_access");
-        
-        if (realmAccess == null || realmAccess.isEmpty()) {
+        Object realmAccessObj = jwt.getClaims().get("realm_access");
+        if (!(realmAccessObj instanceof Map<?, ?> realmAccess)) {
             return Collections.emptyList();
         }
 
-        final List<String> roles = (List<String>) realmAccess.get("roles");
-        
-        if (roles == null || roles.isEmpty()) {
+        Object rolesObj = realmAccess.get("roles");
+        if (!(rolesObj instanceof List<?> roles)) {
             return Collections.emptyList();
         }
 
         return roles.stream()
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                 .collect(Collectors.toUnmodifiableList());
     }

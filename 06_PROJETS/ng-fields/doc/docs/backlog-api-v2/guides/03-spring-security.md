@@ -82,7 +82,7 @@ spring:
     url: jdbc:postgresql://localhost:5432/ng_fields
     driver-class-name: org.postgresql.Driver
     username: ng_fields_user
-    password: ${DB_PASSWORD:Pg_ng-fields1234}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:

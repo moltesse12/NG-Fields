@@ -1,6 +1,6 @@
 # NG-Fields Backend - Documentation
 
-**Mis à jour :** 23/07/2026 (Backend Complet)
+**Mis à jour :** 24/07/2026 (Audit sécurité complet)
 
 ## Architecture
 
@@ -27,8 +27,8 @@ Microservices architecture with 7 services + 1 shared library.
 ## Documentation Files
 
 - [API Endpoints](API_ENDPOINTS.md) — 91 endpoints
-- [Security](SECURITY.md) — Brute force, AV scanning, HTML sanitization, rate limiting
-- [Database](DATABASE.md) — Flyway migrations + Hibernate validate
+- [Security](SECURITY.md) — Brute force, AV scanning, HTML sanitization, rate limiting, email XSS protection, KC rollback
+- [Database](DATABASE.md) — Flyway V1/V2 migrations + Hibernate validate
 - [Testing](TESTING.md) — 72 unit tests
 - [Deployment](DEPLOYMENT.md) — Flyway, env vars, monitoring
 - [Architecture](../ARCHITECTURE.md)
@@ -43,7 +43,7 @@ cd Backend && mvn test
 cd Backend/intervention-service && mvn test
 ```
 
-72 unit tests across 4 services (intervention: 49, auth: 21, notification: 3, report: 7).
+72 unit tests across 4 services (intervention: 49, auth: 21, notification: 10).
 
 ## Postman
 

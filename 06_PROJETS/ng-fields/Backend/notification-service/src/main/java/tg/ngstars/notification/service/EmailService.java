@@ -53,12 +53,16 @@ public class EmailService {
         ctx.setVariables(vars);
         var html = templateEngine.process("email/" + template, ctx);
 
-        var mime = mailSender.createMimeMessage();
-        var helper = new MimeMessageHelper(mime, true, "UTF-8");
-        helper.setTo(request.to());
-        helper.setSubject(request.subject());
-        helper.setText(html, true);
-        mailSender.send(mime);
+        try {
+            var mime = mailSender.createMimeMessage();
+            var helper = new MimeMessageHelper(mime, true, "UTF-8");
+            helper.setTo(request.to());
+            helper.setSubject(request.subject());
+            helper.setText(html, true);
+            mailSender.send(mime);
+        } catch (jakarta.mail.MessagingException e) {
+            throw new RuntimeException("Failed to send email to " + request.to(), e);
+        }
 
         log.info("Email sent to {} subject='{}'", request.to(), request.subject());
         auditLogger.logSent(request.to(), request.subject(), template, "SENT");

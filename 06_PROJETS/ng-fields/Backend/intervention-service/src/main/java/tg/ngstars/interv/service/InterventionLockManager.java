@@ -21,14 +21,17 @@ public class InterventionLockManager {
 
     public void lock(UUID interventionId) {
         getLock(interventionId).lock();
-        log.debug("Lock acquis pour intervention {}", interventionId);
+        log.debug("Lock acquired for intervention {}", interventionId);
     }
 
     public void unlock(UUID interventionId) {
         var lock = locks.get(interventionId);
         if (lock != null && lock.isHeldByCurrentThread()) {
             lock.unlock();
-            log.debug("Lock libéré pour intervention {}", interventionId);
+            if (!lock.isLocked() && !lock.hasQueuedThreads()) {
+                locks.remove(interventionId);
+            }
+            log.debug("Lock released for intervention {}", interventionId);
         }
     }
 

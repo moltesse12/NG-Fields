@@ -9,7 +9,7 @@ status: v5.0
 
 # Stack Technique — NG-Fields
 
-**Mis à jour :** 23/07/2026 (Backend Complet)
+**Mis à jour :** 24/07/2026 (Audit sécurité complet)
 
 ## Architecture microservices
 
@@ -41,19 +41,19 @@ Tous les appels clients passent par le **Gateway** (Spring Cloud Gateway WebFlux
 | Gateway | Spring Cloud Gateway | 2025.1.2 | Routage, auth, rate limiting |
 | Langage backend | Java | 25 | — |
 | Build | Maven | Wrapper | — |
-| ORM | Spring Data JPA + Hibernate | — | Persistance, `ddl-auto: update` |
+| ORM | Spring Data JPA + Hibernate | — | Persistance, `ddl-auto: validate` |
 | Auth | Keycloak (OAuth2/OIDC) | 26.6.4 | SSO + RBAC |
 | API Docs | SpringDoc OpenAPI | 3.0.3 | Swagger UI |
 | PDF | OpenPDF | 1.4.1 | Génération rapports |
 | QR Code | ZXing | 3.5.3 | QR dans les PDF |
 | Base de données | PostgreSQL | 18 | Principale |
-| Migrations | Hibernate DDL | — | `ddl-auto: update` (Flyway supprimé) |
+| Migrations | Flyway | V1/V2 | auth, client, intervention, report (`ddl-auto: validate`) |
 | Cache / Rate Limiting | Redis | 7+ | Gateway |
 | Email | Resend API | — | Emails transactionnels |
 | Push | Firebase Admin SDK | 9.2.0 | Push notifications (conditional) |
 | SSE | SseEmitter | — | Real-time dashboard |
 | Logs | Logback + logstash-logback-encoder | 8.0 | JSON structuré |
-| Tests | JUnit 5 + Mockito | — | 65 unit tests |
+| Tests | JUnit 5 + Mockito | — | 72 unit tests |
 | Mobile | Flutter | 3.x | App terrain (**Non démarré**) |
 | Langage mobile | Dart | 3.x | — (**Non démarré**) |
 | State management | Riverpod | — | Flutter |
@@ -86,10 +86,10 @@ Tous les appels clients passent par le **Gateway** (Spring Cloud Gateway WebFlux
 | Framework | Spring Boot 4.1.0 |
 | Runtime | Java 25 |
 | Build | Maven |
-| ORM | Spring Data JPA + Hibernate (`ddl-auto: update`) |
+| ORM | Spring Data JPA + Hibernate (`ddl-auto: validate`) |
 | Auth | Spring Security + OAuth2 Resource Server |
 | Gateway | Spring Cloud Gateway WebFlux + CircuitBreaker + GlobalExceptionHandler (RFC 7807) |
-| Migrations | Hibernate DDL (`ddl-auto: update`) — Flyway supprimé |
+| Migrations | Flyway V1/V2 + Hibernate validate |
 | Validation | Jakarta Validation + Hibernate Validator |
 | Documentation | SpringDoc OpenAPI (Swagger) 3.0.3 |
 | PDF | OpenPDF + ZXing |
@@ -98,7 +98,7 @@ Tous les appels clients passent par le **Gateway** (Spring Cloud Gateway WebFlux
 | Push | Firebase Admin SDK (`@ConditionalOnProperty`) |
 | SSE | SseEmitter (Server-Sent Events) |
 | Logs | Logback + logstash-logback-encoder 8.0 (JSON structuré) |
-| Tests | JUnit 5 + Mockito — **65 unit tests** |
+| Tests | JUnit 5 + Mockito — **72 unit tests** |
 
 ---
 
@@ -110,7 +110,7 @@ Tous les appels clients passent par le **Gateway** (Spring Cloud Gateway WebFlux
 | Cache / Rate Limiting | Redis 7+ |
 | Files | Filesystem (`./uploads/`) |
 | Mobile offline | Drift (SQLite) |
-| Schema management | Hibernate `ddl-auto: update` |
+| Schema management | Flyway + Hibernate `ddl-auto: validate` |
 
 ---
 
@@ -147,4 +147,4 @@ Tous les appels clients passent par le **Gateway** (Spring Cloud Gateway WebFlux
 
 ---
 
-_Version 5.0 — 23/07/2026 (Backend Complet)_
+_Version 5.1 — 24/07/2026 (Audit sécurité complet)_

@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import tg.ngstars.client.dto.ClientResponse;
 import tg.ngstars.client.dto.ContactDto;
@@ -41,6 +43,7 @@ public class ClientService {
         this.interventionSyncClient = interventionSyncClient;
     }
 
+    @CacheEvict(value = "clients", allEntries = true)
     @Transactional
     public ClientResponse createClient(CreateClientRequest request, String createdBy) {
         if (clientRepository.existsByEmail(request.email())) {
@@ -70,12 +73,14 @@ public class ClientService {
         return toResponse(saved);
     }
 
+    @Cacheable(value = "clients", key = "'list_' + #page + '_' + #size")
     @Transactional(readOnly = true)
     public Page<ClientResponse> listClients(int page, int size) {
         var pageable = PageRequest.of(page, size, Sort.by("companyName").ascending());
         return clientRepository.findByActiveTrue(pageable).map(this::toResponse);
     }
 
+    @Cacheable(value = "clients", key = "#id")
     @Transactional(readOnly = true)
     public ClientResponse getClient(UUID id) {
         return clientRepository.findById(id)
@@ -83,6 +88,7 @@ public class ClientService {
                 .orElseThrow(() -> new NotFoundException("Client introuvable : id=" + id));
     }
 
+    @CacheEvict(value = "clients", allEntries = true)
     @Transactional
     public ClientResponse updateClient(UUID id, UpdateClientRequest request) {
         var client = clientRepository.findById(id)
@@ -111,6 +117,7 @@ public class ClientService {
         return toResponse(saved);
     }
 
+    @CacheEvict(value = "clients", allEntries = true)
     @Transactional
     public void deactivateClient(UUID id) {
         var client = clientRepository.findById(id)
@@ -120,6 +127,7 @@ public class ClientService {
         log.info("Client desactive : {}", client.getCompanyName());
     }
 
+    @CacheEvict(value = "clients", allEntries = true)
     @Transactional
     public ClientResponse reactivateClient(UUID id) {
         var client = clientRepository.findById(id)
@@ -133,12 +141,14 @@ public class ClientService {
         return toResponse(saved);
     }
 
+    @Cacheable(value = "clients", key = "'search_' + #query + '_' + #page + '_' + #size")
     @Transactional(readOnly = true)
     public Page<ClientResponse> searchClients(String query, int page, int size) {
         var pageable = PageRequest.of(page, size, Sort.by("companyName").ascending());
         return clientRepository.search(query, pageable).map(this::toResponse);
     }
 
+    @CacheEvict(value = "clients", allEntries = true)
     @Transactional
     public ContactDto addContact(UUID clientId, CreateContactRequest request) {
         var client = clientRepository.findById(clientId)
@@ -158,6 +168,7 @@ public class ClientService {
         return toContactDto(saved);
     }
 
+    @Cacheable(value = "client_contacts", key = "#clientId")
     @Transactional(readOnly = true)
     public List<ContactDto> getContacts(UUID clientId) {
         if (!clientRepository.existsById(clientId))
@@ -167,6 +178,7 @@ public class ClientService {
                 .toList();
     }
 
+    @CacheEvict(value = "clients", allEntries = true)
     @Transactional
     public void removeContact(UUID clientId, UUID contactId) {
         var contact = contactRepository.findById(contactId)

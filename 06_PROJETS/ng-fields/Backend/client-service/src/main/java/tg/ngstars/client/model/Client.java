@@ -3,6 +3,8 @@ package tg.ngstars.client.model;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -37,6 +39,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@BatchSize(size = 20)
 public class Client {
 
     @Id

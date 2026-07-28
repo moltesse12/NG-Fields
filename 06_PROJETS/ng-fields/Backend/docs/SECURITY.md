@@ -1,6 +1,6 @@
 # Security
 
-**Mis à jour :** 23/07/2026
+**Mis à jour :** 24/07/2026 (Audit sécurité complet)
 
 ## Authentication
 - Keycloak OAuth2/JWT for all services
@@ -24,12 +24,23 @@
 - **Secrets sanitization**: Actuator env endpoint filters sensitive keys
 - **RFC 7807 Problem Detail**: Gateway returns standardized error responses (`application/problem+json`)
 - **Optimistic locking**: `@Version` on all critical entities
-- **Password verification**: changePassword verifies old password via Keycloak token endpoint
+- **Password verification**: changePassword verifies old password via Keycloak token endpoint (throws if not configured)
 - **Role cleanup**: updateUser removes old Keycloak roles before adding new (prevents accumulation)
 - **Temp password not logged**: addCompanyUser no longer logs generated passwords
 - **Intervention lock**: `InterventionLockManager` prevents concurrent modifications
 - **Schedule conflict detection**: Overlap validation before intervention assignment
 - **Image metadata stripping**: `ImageMetadataStripper` removes EXIF/GPS data from uploaded photos
+- **Email XSS protection**: HTML escape of `firstName` in all email templates (intervention-notification, password-reset, welcome, intervention-assigned, intervention-completed)
+- **KC rollback**: `registerClient` cleans up Keycloak user if database insert fails
+- **HMAC key validation**: `EmailVerificationService` validates HMAC key length ≥32 bytes at startup (`@PostConstruct`)
+- **Dynamic rate limits**: `RateLimitConfig` uses `compute()` for per-company rate limits (thread-safe)
+- **BruteForce readOnly**: `isIpBlocked` uses `@Transactional(readOnly=true)`
+- **Route ID logging**: Gateway filters use `GATEWAY_ROUTE_ATTR` + `Route` object (no `ClassCastException`)
+- **Correlation ID**: `@Order(Ordered.HIGHEST_PRECEDENCE)` + `.headers(h -> h.set())` (no duplicate headers)
+- **Gateway error handling**: `GlobalExceptionHandler` injects Spring `ObjectMapper` for RFC 7807
+- **Gateway timeout fix**: `LOWEST_PRECEDENCE-1/-2` instead of `+1/+2` (integer overflow prevention)
+- **Thread-safe health**: `DownstreamHealthIndicator` uses `ConcurrentHashMap` + serialized flatMap
+- **Rate limit headers**: `ServerHttpResponseDecorator` ensures headers set before body
 
 ## Security Headers
 - X-Content-Type-Options: nosniff

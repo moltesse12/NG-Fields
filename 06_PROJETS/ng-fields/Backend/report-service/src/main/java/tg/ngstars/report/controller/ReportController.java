@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import io.micrometer.core.annotation.Timed;
+
 import tg.ngstars.report.dto.AnalyticsDto;
 import tg.ngstars.report.dto.PdfTemplateResponse;
 import tg.ngstars.report.service.AnalyticsService;
@@ -22,6 +24,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/reports")
 @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+@Timed
 public class ReportController {
 
     private final ReportService reportService;

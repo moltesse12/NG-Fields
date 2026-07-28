@@ -16,6 +16,7 @@ import tg.ngstars.report.client.InterventionClient;
 import tg.ngstars.report.dto.InterventionReportDto;
 import tg.ngstars.report.dto.PdfTemplateResponse;
 
+import tools.jackson.databind.ObjectMapper;
 import java.awt.Color;
 import java.io.OutputStream;
 import java.util.List;
@@ -27,9 +28,11 @@ public class PdfReportService {
     private static final Logger log = LoggerFactory.getLogger(PdfReportService.class);
 
     private final InterventionClient interventionClient;
+    private final ObjectMapper objectMapper;
 
-    public PdfReportService(InterventionClient interventionClient) {
+    public PdfReportService(InterventionClient interventionClient, ObjectMapper objectMapper) {
         this.interventionClient = interventionClient;
+        this.objectMapper = objectMapper;
     }
 
     public StreamingResponseBody generateInterventionsPdf() {
@@ -64,9 +67,8 @@ public class PdfReportService {
             return Map.of();
         }
         try {
-            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             @SuppressWarnings("unchecked")
-            var config = mapper.readValue(template.config(), Map.class);
+            var config = objectMapper.readValue(template.config(), Map.class);
             return config;
         } catch (Exception e) {
             log.warn("Failed to parse template config, using defaults", e);

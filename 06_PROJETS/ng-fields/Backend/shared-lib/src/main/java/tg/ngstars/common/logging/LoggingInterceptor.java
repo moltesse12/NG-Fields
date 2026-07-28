@@ -21,17 +21,16 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-        long startTime = (long) request.getAttribute("requestStartTime");
-        long duration = System.currentTimeMillis() - startTime;
+        Object startTimeObj = request.getAttribute("requestStartTime");
+        if (startTimeObj == null) return;
+        long duration = System.currentTimeMillis() - (long) startTimeObj;
         int status = response.getStatus();
-        String level = status >= 500 ? "ERROR" : status >= 400 ? "WARN" : "INFO";
-        
-        if ("INFO".equals(level)) {
-            log.info("{} {} → {} ({}ms)", request.getMethod(), request.getRequestURI(), status, duration);
-        } else if ("WARN".equals(level)) {
+        if (status >= 500) {
+            log.error("{} {} → {} ({}ms)", request.getMethod(), request.getRequestURI(), status, duration);
+        } else if (status >= 400) {
             log.warn("{} {} → {} ({}ms)", request.getMethod(), request.getRequestURI(), status, duration);
         } else {
-            log.error("{} {} → {} ({}ms)", request.getMethod(), request.getRequestURI(), status, duration);
+            log.debug("{} {} → {} ({}ms)", request.getMethod(), request.getRequestURI(), status, duration);
         }
 
         if (ex != null) {

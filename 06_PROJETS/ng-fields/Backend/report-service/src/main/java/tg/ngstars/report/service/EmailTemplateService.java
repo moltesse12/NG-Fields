@@ -2,6 +2,8 @@ package tg.ngstars.report.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tg.ngstars.report.dto.CreateEmailTemplateRequest;
@@ -23,23 +25,27 @@ public class EmailTemplateService {
         this.repository = repository;
     }
 
+    @Cacheable(value = "emailTemplates", key = "'all'")
     @Transactional(readOnly = true)
     public List<EmailTemplateResponse> listAll() {
         return repository.findAll().stream().map(this::toResponse).toList();
     }
 
+    @Cacheable(value = "emailTemplates", key = "#id")
     @Transactional(readOnly = true)
     public EmailTemplateResponse getById(UUID id) {
         return toResponse(repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Template email non trouve: " + id)));
     }
 
+    @Cacheable(value = "emailTemplates", key = "#key")
     @Transactional(readOnly = true)
     public EmailTemplateResponse getByKey(String key) {
         return toResponse(repository.findByTemplateKey(key)
                 .orElseThrow(() -> new IllegalArgumentException("Template email non trouve: " + key)));
     }
 
+    @CacheEvict(value = "emailTemplates", allEntries = true)
     @Transactional
     public EmailTemplateResponse create(CreateEmailTemplateRequest request, String userKeycloakId) {
         var tpl = new EmailTemplate();
@@ -54,6 +60,7 @@ public class EmailTemplateService {
         return toResponse(saved);
     }
 
+    @CacheEvict(value = "emailTemplates", allEntries = true)
     @Transactional
     public EmailTemplateResponse update(UUID id, UpdateEmailTemplateRequest request) {
         var tpl = repository.findById(id)
@@ -68,6 +75,7 @@ public class EmailTemplateService {
         return toResponse(saved);
     }
 
+    @CacheEvict(value = "emailTemplates", allEntries = true)
     @Transactional
     public void delete(UUID id) {
         if (!repository.existsById(id)) throw new IllegalArgumentException("Template email non trouve: " + id);

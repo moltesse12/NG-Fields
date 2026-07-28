@@ -6,20 +6,8 @@
     <springProperty scope="context" name="LOG_LEVEL" source="logging.level.root" defaultValue="INFO"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeMdcKeyName>correlationId</includeMdcKeyName>
-            <fieldNames>
-                <timestamp>[ignore]</timestamp>
-                <message>message</message>
-                <logger>logger_name</logger>
-                <thread>thread_name</thread>
-                <level>level</level>
-                <stackTrace>stack_trace</stackTrace>
-            </fieldNames>
-            <customFields>
-                {"app":"${APP_NAME}"}
-            </customFields>
-            <timeZone>UTC</timeZone>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %clr(%5p) %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40c{36}){cyan} %clr(:){faint} %m%n</pattern>
         </encoder>
     </appender>
 
@@ -30,20 +18,8 @@
             <maxHistory>30</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeMdcKeyName>correlationId</includeMdcKeyName>
-            <fieldNames>
-                <timestamp>[ignore]</timestamp>
-                <message>message</message>
-                <logger>logger_name</logger>
-                <thread>thread_name</thread>
-                <level>level</level>
-                <stackTrace>stack_trace</stackTrace>
-            </fieldNames>
-            <customFields>
-                {"app":"${APP_NAME}"}
-            </customFields>
-            <timeZone>UTC</timeZone>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
